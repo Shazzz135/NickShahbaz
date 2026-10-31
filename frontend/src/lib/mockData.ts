@@ -1,0 +1,102 @@
+import type { Database } from '../types/database.types';
+
+export type ProjectRow = Database['public']['Tables']['projects']['Row'];
+export type ExperienceRow = Database['public']['Tables']['experiences']['Row'];
+export type InquiryRow = Database['public']['Tables']['inquiries']['Row'];
+export type SiteMetaRow = Database['public']['Tables']['site_meta']['Row'];
+
+export const mockProjects: ProjectRow[] = [
+  {
+    id: 'mock-1',
+    title: 'Enterprise AI Workflow Platform',
+    slug: 'enterprise-ai-workflow',
+    subtitle: 'High-throughput agentic automation & orchestration system',
+    description: 'Architected and built a distributed application pipeline integrating custom LLM agents with real-time vector search and asynchronous task processing.',
+    category: 'Full-Stack',
+    tags: ['React', 'TypeScript', 'Node.js', 'PostgreSQL', 'Docker', 'Tailwind'],
+    featured: true,
+    thumbnail_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
+    preview_video_url: null,
+    live_url: 'https://example.com',
+    github_url: 'https://github.com/Shazzz135',
+    architecture_overview: 'Event-driven architecture backed by Docker microservices, WebGL dashboard visualizations, and sub-50ms database latency.',
+    metrics: { uptime: '99.98%', users: '25,000+', latency: '<45ms' },
+    sort_order: 1,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'mock-2',
+    title: 'Kinetic 3D Commerce Engine',
+    slug: 'kinetic-3d-commerce',
+    subtitle: 'Next-generation WebGL product customizer & shopping experience',
+    description: 'Designed and engineered an ultra-smooth 60 FPS 3D configurator utilizing Three.js and custom GLSL shaders with real-time materials switching.',
+    category: 'Full-Stack',
+    tags: ['React 19', 'Three.js', 'R3F', 'Framer Motion', 'Lenis'],
+    featured: true,
+    thumbnail_url: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?auto=format&fit=crop&w=1200&q=80',
+    preview_video_url: null,
+    live_url: 'https://example.com',
+    github_url: 'https://github.com/Shazzz135',
+    architecture_overview: 'Progressive asset streaming with LOD mesh degradation for smooth mobile 60 FPS rendering.',
+    metrics: { fps: '60 FPS', conversion_boost: '+42%' },
+    sort_order: 2,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'mock-3',
+    title: 'Cross-Platform Fintech Mobile Suite',
+    slug: 'fintech-mobile-suite',
+    subtitle: 'Real-time multi-currency banking & portfolio tracker',
+    description: 'End-to-end mobile application featuring biometric security, WebSocket real-time quotes, and custom fluid charting interactions.',
+    category: 'Mobile',
+    tags: ['React Native', 'TypeScript', 'Tailwind', 'Supabase', 'WebSockets'],
+    featured: false,
+    thumbnail_url: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=1200&q=80',
+    preview_video_url: null,
+    live_url: 'https://example.com',
+    github_url: 'https://github.com/Shazzz135',
+    architecture_overview: 'Offline-first SQLite sync with Supabase Realtime synchronization and biometric authentication.',
+    metrics: { app_rating: '4.9/5', downloads: '50K+' },
+    sort_order: 3,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
+export const mockExperiences: ExperienceRow[] = [
+  {
+    id: 'exp-1',
+    role: 'Lead Application Developer & Solutions Architect',
+    company: 'Independent / Digital Studio',
+    company_url: 'https://nickshahbaz.com',
+    location: 'Remote',
+    period: '2024 — Present',
+    is_current: true,
+    highlights: [
+      'Architecting and shipping high-performance full-stack web and mobile systems for clients worldwide.',
+      'Integrating 3D interactive user interfaces with Three.js, Motion, and modern edge cloud runtimes.',
+      'Deploying secure Supabase Postgres backends with Row Level Security and automated CI/CD pipelines.'
+    ],
+    tech_stack: ['React', 'TypeScript', 'Node.js', 'Supabase', 'Three.js', 'Docker', 'Tailwind CSS'],
+    sort_order: 1,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'exp-2',
+    role: 'Senior Full-Stack Engineer',
+    company: 'Software Consultancy',
+    company_url: 'https://example.com',
+    location: 'Canada',
+    period: '2022 — 2024',
+    is_current: false,
+    highlights: [
+      'Scaled cloud architectures and decoupled legacy monolithic backends into modular microservices.',
+      'Led frontend modernization initiatives improving Core Web Vitals and Lighthouse scores by 40%.'
+    ],
+    tech_stack: ['TypeScript', 'React', 'Docker', 'PostgreSQL', 'GraphQL', 'AWS'],
+    sort_order: 2,
+    created_at: new Date().toISOString(),
+  },
+];
