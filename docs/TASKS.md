@@ -54,12 +54,12 @@
   - [x] Subtask 8.2: Implement Google OAuth provider handler via Supabase Auth (signInWithOAuth).
   - [x] Subtask 8.3: Create `AuthContext` to manage Supabase user sessions.
   - [x] Subtask 8.4: Implement `ProtectedRoute` component to redirect unauthorized visitors.
-- [ ] **Issue #10**: [Admin CMS] CRUD Management Dashboard & Unit Test CI Gate
-  - [ ] Subtask 9.1: Build Admin Dashboard layout with sidebar navigation and metrics summary.
-  - [ ] Subtask 9.2: Implement Project CRUD interface with image upload to Supabase Storage.
-  - [ ] Subtask 9.3: Implement Experience Timeline editor.
-  - [ ] Subtask 9.4: Implement Inquiries Inbox viewer.
-  - [ ] Subtask 9.5: [CI Gate] Configure Vitest & React Testing Library in CI for automated auth guard & CRUD regression testing.
+- [x] **Issue #10**: [Admin CMS] CRUD Management Dashboard & Unit Test CI Gate
+  - [x] Subtask 9.1: Build Admin Dashboard layout with sidebar navigation and metrics summary.
+  - [x] Subtask 9.2: Implement Project CRUD interface with image upload to Supabase Storage.
+  - [x] Subtask 9.3: Implement Experience Timeline editor.
+  - [x] Subtask 9.4: Implement Inquiries Inbox viewer.
+  - [x] Subtask 9.5: [CI Gate] Configure Vitest & React Testing Library in CI for automated auth guard & CRUD regression testing.
 
 ---
 
