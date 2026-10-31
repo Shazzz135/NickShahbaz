@@ -5,10 +5,11 @@
 ---
 
 ## 🎯 Milestone 1: Project Scaffolding, DevOps & Foundations
-- [ ] **Issue #1**: [DevOps] Dockerize Development & Multi-Stage Production Builds
-  - [ ] Subtask 1.1: Create `docker/Dockerfile.dev` and root `docker-compose.yml`.
-  - [ ] Subtask 1.2: Validate Docker local run and hot-reload.
-  - [ ] Subtask 1.3: Create multi-stage `docker/Dockerfile.prod` with security headers.
+- [x] **Issue #1**: [DevOps] Dockerize Development & Multi-Stage Production Builds
+  - [x] Subtask 1.1: Create `docker/Dockerfile.dev` and root `docker-compose.yml`.
+  - [x] Subtask 1.2: Validate Docker local run and hot-reload.
+  - [x] Subtask 1.3: Create multi-stage `docker/Dockerfile.prod` with security headers.
+  - [x] Subtask 1.4: Verify Docker configurations and build readiness.
 - [ ] **Issue #2**: [CI/CD] Set up GitHub Actions CI Workflow
   - [ ] Subtask 2.1: Add `.github/workflows/ci.yml` for automated lint, typecheck, and build validation.
 
