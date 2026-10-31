@@ -49,10 +49,11 @@
 ---
 
 ## 🎯 Milestone 4: Authenticated Admin Portal & CMS (Real Data Creation)
-- [ ] **Issue #9**: [Auth] Admin Authentication Flow & Route Protection
-  - [ ] Subtask 8.1: Build `/admin/login` page with Supabase Auth session handling.
-  - [ ] Subtask 8.2: Create `AuthContext` to manage Supabase user sessions.
-  - [ ] Subtask 8.3: Implement `ProtectedRoute` component to redirect unauthorized visitors.
+- [x] **Issue #9**: [Auth] Admin Authentication Flow & Route Protection
+  - [x] Subtask 8.1: Build /admin/login page supporting both Email/Password and Google OAuth sign-in with dark/crimson aesthetic.
+  - [x] Subtask 8.2: Implement Google OAuth provider handler via Supabase Auth (signInWithOAuth).
+  - [x] Subtask 8.3: Create `AuthContext` to manage Supabase user sessions.
+  - [x] Subtask 8.4: Implement `ProtectedRoute` component to redirect unauthorized visitors.
 - [ ] **Issue #10**: [Admin CMS] CRUD Management Dashboard & Unit Test CI Gate
   - [ ] Subtask 9.1: Build Admin Dashboard layout with sidebar navigation and metrics summary.
   - [ ] Subtask 9.2: Implement Project CRUD interface with image upload to Supabase Storage.

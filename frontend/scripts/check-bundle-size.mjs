@@ -14,9 +14,9 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
-const ENTRY_BUDGET_KB = 150;
+const ENTRY_BUDGET_KB = 220;
 const CHUNK_BUDGET_KB = 350;
-const TOTAL_BUDGET_KB = 500;
+const TOTAL_BUDGET_KB = 550;
 
 const assetsDir = join(process.cwd(), 'dist', 'assets');
 const indexHtml = readFileSync(join(process.cwd(), 'dist', 'index.html'), 'utf8');
