@@ -9,15 +9,6 @@
 
 ---
 
-## 🔗 External Links & Services
-<!-- Add any relevant dashboard, deployment, or service links. -->
-- **Supabase Dashboard / Table:** 
-- **Vercel Preview / Deployment:** 
-- **Docker / Local Service:** 
-- **Other:** 
-
----
-
 ## 🧪 How It Was Tested
 <!-- Detail the exact steps and commands used to verify these changes. -->
 - [ ] Command / verification step 1
