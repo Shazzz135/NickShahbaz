@@ -40,11 +40,11 @@
   - [x] Subtask 6.1: Install & configure lenis smooth scroll with custom easing.
   - [x] Subtask 6.2: Synchronize Lenis scroll triggers with Framer Motion.
   - [x] Subtask 6.3: Style customized slim crimson scroll indicator.
-- [ ] **Issue #8**: [WebGL] Create Interactive Three.js Background & Bundle Budget CI Gate
-  - [ ] Subtask 7.1: Install Three.js, `@react-three/fiber`, `@react-three/drei`.
-  - [ ] Subtask 7.2: Build dynamic interactive particle field & ambient red geometry responding to cursor.
-  - [ ] Subtask 7.3: Implement performance scaling and low-power mobile fallbacks.
-  - [ ] Subtask 7.4: [CI Gate] Add bundle size limit & chunk-size warning check to CI to prevent asset bloat.
+- [x] **Issue #8**: [WebGL] Create Interactive Three.js Background & Bundle Budget CI Gate
+  - [x] Subtask 7.1: Install Three.js, `@react-three/fiber`, `@react-three/drei`.
+  - [x] Subtask 7.2: Build dynamic interactive particle field & ambient red geometry responding to cursor.
+  - [x] Subtask 7.3: Implement performance scaling and low-power mobile fallbacks.
+  - [x] Subtask 7.4: [CI Gate] Add bundle size limit & chunk-size warning check to CI to prevent asset bloat.
 
 ---
 
