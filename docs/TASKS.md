@@ -36,9 +36,10 @@
   - [x] Subtask 5.1: Configure Tailwind CSS v4 variables with crimson red (`#E50914`, `#FF1E27`) and deep darks (`#08080A`).
   - [x] Subtask 5.2: Set up typography & font imports.
   - [x] Subtask 5.3: Build reusable core components: Button, Card, Badge, Magnetic hover wrapper.
-- [ ] **Issue #7**: [Motion] Integrate Lenis Smooth Scrolling & Global Motion Wrapper
-  - [ ] Subtask 6.1: Install & configure `lenis` smooth scroll with custom easing.
-  - [ ] Subtask 6.2: Synchronize Lenis scroll triggers with Framer Motion.
+- [x] **Issue #7**: [Motion] Integrate Lenis Smooth Scrolling & Global Motion Wrapper
+  - [x] Subtask 6.1: Install & configure lenis smooth scroll with custom easing.
+  - [x] Subtask 6.2: Synchronize Lenis scroll triggers with Framer Motion.
+  - [x] Subtask 6.3: Style customized slim crimson scroll indicator.
 - [ ] **Issue #8**: [WebGL] Create Interactive Three.js Background & Bundle Budget CI Gate
   - [ ] Subtask 7.1: Install Three.js, `@react-three/fiber`, `@react-three/drei`.
   - [ ] Subtask 7.2: Build dynamic interactive particle field & ambient red geometry responding to cursor.
