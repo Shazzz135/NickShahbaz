@@ -8,7 +8,7 @@ on:
 
 jobs:
   validate:
-    name: Lint, Typecheck, Bundle Budget & Build
+    name: Lint, Test, Typecheck, Bundle Budget & Build
     runs-on: ubuntu-latest
 
     defaults:
@@ -37,6 +37,9 @@ jobs:
 
       - name: Run linter
         run: pnpm lint
+
+      - name: Run Unit Tests (Vitest CI Gate)
+        run: pnpm test
 
       - name: Strict Typecheck (Schema Drift Gate)
         run: pnpm tsc -b --noEmit

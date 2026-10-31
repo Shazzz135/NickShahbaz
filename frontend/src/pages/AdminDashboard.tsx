@@ -1,134 +1,127 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Badge } from '../components/common/Badge';
-import { Button } from '../components/common/Button';
-import { Card } from '../components/common/Card';
+import { ProjectsManager } from '../components/admin/ProjectsManager';
+import { ExperienceManager } from '../components/admin/ExperienceManager';
+import { InquiriesViewer } from '../components/admin/InquiriesViewer';
 import { 
   LogOut, 
   Terminal, 
   Layers, 
   Briefcase, 
   Mail, 
-  ShieldCheck, 
   Database,
-  ArrowUpRight 
+  ArrowUpRight,
+  ShieldCheck 
 } from 'lucide-react';
+
+type Tab = 'projects' | 'experiences' | 'inquiries';
 
 export const AdminDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
+  const [activeTab, setActiveTab] = useState<Tab>('projects');
 
   return (
-    <div className="min-h-screen bg-[#08080a] text-white bg-grid-pattern crimson-ambient p-6 md:p-12 relative">
-      <div className="max-w-6xl mx-auto space-y-10 relative z-10">
-        {/* Top Navbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-white/10 gap-4">
+    <div className="min-h-screen bg-[#09090b] text-white p-4 sm:p-6 lg:p-10">
+      <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
+        
+        {/* Top Navbar - Responsive for Mobile & Desktop */}
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-white/10 gap-4">
           <div className="flex items-center gap-3">
-            <span className="p-2.5 rounded-xl bg-[#e50914]/10 text-[#ff1e27] border border-[#e50914]/20">
+            <span className="p-2 sm:p-2.5 rounded-lg bg-[#e50914]/10 text-[#ff1e27] border border-[#e50914]/20 shrink-0">
               <Terminal className="w-5 h-5" />
             </span>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold tracking-tight">Admin CMS Portal</h1>
-                <Badge variant="emerald" dot>Live Connected</Badge>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg sm:text-xl font-bold tracking-tight">Admin CMS Portal</h1>
+                <Badge variant="emerald" dot>Live</Badge>
               </div>
-              <p className="text-xs text-[#94949e] font-mono mt-0.5">
-                Signed in as: <span className="text-white">{user?.email || 'Authenticated User'}</span>
+              <p className="text-xs text-[#94949e] font-mono mt-0.5 truncate max-w-[260px] sm:max-w-md">
+                Admin: <span className="text-white">{user?.email || 'Authorized'}</span>
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 self-start sm:self-auto w-full sm:w-auto">
             <a
               href="/"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#141419] hover:bg-[#1a1a22] border border-white/10 text-xs font-mono text-[#94949e] hover:text-white transition-colors"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#141419] hover:bg-[#1a1a22] border border-white/10 text-xs font-mono text-[#94949e] hover:text-white transition-colors"
             >
-              <span>View Live Site</span>
+              <span>View Portfolio</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </a>
 
-            <Button
-              variant="outline"
-              size="sm"
-              icon={<LogOut className="w-3.5 h-3.5" />}
+            <button
               onClick={() => signOut()}
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg border border-white/10 hover:border-red-500/40 bg-transparent hover:bg-red-950/20 text-xs font-mono text-[#94949e] hover:text-[#ff6b72] transition-colors cursor-pointer"
             >
-              Sign Out
-            </Button>
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sign Out</span>
+            </button>
           </div>
-        </div>
+        </header>
 
-        {/* Dashboard Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="p-2 rounded-lg bg-[#e50914]/10 text-[#ff1e27]">
-                <Layers className="w-5 h-5" />
-              </span>
-              <Badge variant="subtle">Database</Badge>
-            </div>
-            <div className="text-2xl font-extrabold text-white">Projects</div>
-            <p className="text-xs text-[#94949e] mt-1">
-              Manage portfolio projects, tech stacks, and live links.
-            </p>
-            <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-xs">
-              <span className="text-[#94949e]">Table: public.projects</span>
-              <span className="text-[#ff1e27] font-mono">Ready for CMS</span>
-            </div>
-          </Card>
+        {/* CMS Navigation Tabs - Mobile Scrollable & Windows Desktop Grid */}
+        <nav aria-label="CMS Navigation" className="overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex items-center gap-2 min-w-max border-b border-white/10 pb-3">
+            <button
+              onClick={() => setActiveTab('projects')}
+              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer ${
+                activeTab === 'projects'
+                  ? 'bg-[#e50914] text-white'
+                  : 'bg-[#141419] text-[#94949e] hover:text-white border border-white/5'
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              <span>Projects CRUD</span>
+            </button>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="p-2 rounded-lg bg-[#e50914]/10 text-[#ff1e27]">
-                <Briefcase className="w-5 h-5" />
-              </span>
-              <Badge variant="subtle">Timeline</Badge>
-            </div>
-            <div className="text-2xl font-extrabold text-white">Experience</div>
-            <p className="text-xs text-[#94949e] mt-1">
-              Update career milestones, roles, and company deliverables.
-            </p>
-            <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-xs">
-              <span className="text-[#94949e]">Table: public.experiences</span>
-              <span className="text-[#ff1e27] font-mono">Ready for CMS</span>
-            </div>
-          </Card>
+            <button
+              onClick={() => setActiveTab('experiences')}
+              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer ${
+                activeTab === 'experiences'
+                  ? 'bg-[#e50914] text-white'
+                  : 'bg-[#141419] text-[#94949e] hover:text-white border border-white/5'
+              }`}
+            >
+              <Briefcase className="w-4 h-4" />
+              <span>Timeline CRUD</span>
+            </button>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="p-2 rounded-lg bg-[#e50914]/10 text-[#ff1e27]">
-                <Mail className="w-5 h-5" />
-              </span>
-              <Badge variant="subtle">Inquiries</Badge>
-            </div>
-            <div className="text-2xl font-extrabold text-white">Inbox</div>
-            <p className="text-xs text-[#94949e] mt-1">
-              View incoming client messages, project scopes, and budgets.
-            </p>
-            <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-xs">
-              <span className="text-[#94949e]">Table: public.inquiries</span>
-              <span className="text-[#ff1e27] font-mono">Ready for CMS</span>
-            </div>
-          </Card>
-        </div>
-
-        {/* Security / Architecture Banner */}
-        <div className="p-6 rounded-2xl bg-[#0d0d10] border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <ShieldCheck className="w-6 h-6 text-emerald-400 shrink-0" />
-            <div>
-              <h4 className="text-sm font-bold text-white">Google OAuth & Session Guard Active</h4>
-              <p className="text-xs text-[#94949e] mt-0.5">
-                Session tokens are automatically refreshed and authenticated via Supabase Row Level Security.
-              </p>
-            </div>
+            <button
+              onClick={() => setActiveTab('inquiries')}
+              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer ${
+                activeTab === 'inquiries'
+                  ? 'bg-[#e50914] text-white'
+                  : 'bg-[#141419] text-[#94949e] hover:text-white border border-white/5'
+              }`}
+            >
+              <Mail className="w-4 h-4" />
+              <span>Inquiries Inbox</span>
+            </button>
           </div>
+        </nav>
+
+        {/* Tab Content Panel - Clean Static Styling */}
+        <main className="p-4 sm:p-6 lg:p-8 rounded-xl bg-[#0f0f13] border border-white/10">
+          {activeTab === 'projects' && <ProjectsManager />}
+          {activeTab === 'experiences' && <ExperienceManager />}
+          {activeTab === 'inquiries' && <InquiriesViewer />}
+        </main>
+
+        {/* Security & RLS Footer Badge */}
+        <footer className="p-3.5 sm:p-4 rounded-lg bg-[#0d0d10] border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-[#94949e]">
           <div className="flex items-center gap-2">
-            <Database className="w-4 h-4 text-[#ff1e27]" />
-            <span className="text-xs font-mono text-[#ff4d55]">PostgreSQL RLS Protected</span>
+            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>Row Level Security Enforcement Active</span>
           </div>
-        </div>
+          <div className="flex items-center gap-1.5 font-mono text-[#ff4d55]">
+            <Database className="w-3.5 h-3.5 shrink-0" />
+            <span>PostgreSQL 17 Linked</span>
+          </div>
+        </footer>
       </div>
     </div>
   );
