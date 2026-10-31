@@ -12,3 +12,4 @@ export const SmoothScrollContext = createContext<SmoothScrollContextType>({
 });
 
 export const useSmoothScroll = () => useContext(SmoothScrollContext);
+
