@@ -1,8 +1,8 @@
 import { createContext, useContext } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 
-// The designated administrator email address authorized to manage the CMS
-export const ADMIN_EMAIL = 'nickshahbaz135@gmail.com';
+// The designated administrator email address authorized to manage the CMS, loaded from env
+export const ADMIN_EMAIL = (import.meta.env.VITE_ADMIN_EMAIL || '').toLowerCase();
 
 export interface AuthContextType {
   user: User | null;

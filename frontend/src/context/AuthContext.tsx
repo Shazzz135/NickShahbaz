@@ -8,7 +8,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(isSupabaseConfigured);
 
-  const isAdmin = Boolean(user?.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+  // If ADMIN_EMAIL is specified in env, require it to match; otherwise require active user
+  const isAdmin = Boolean(
+    user?.email && (!ADMIN_EMAIL || user.email.toLowerCase() === ADMIN_EMAIL)
+  );
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;

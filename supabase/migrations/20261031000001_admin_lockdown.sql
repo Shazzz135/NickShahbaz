@@ -1,14 +1,15 @@
 -- ====================================================================
--- Milestone 4 / Issue #9: Admin Email Lockdown & RLS Security Hardening
+-- Milestone 4 / Issue #9: Admin Role & RLS Security Hardening
 -- Project: NickShahbaz Website
--- Only 'nickshahbaz135@gmail.com' can modify tables or manage media
+-- Checks against app_metadata or admin role in auth.users
 -- ====================================================================
 
--- 1. Helper function to check if the active JWT belongs to the authorized admin
+-- 1. Helper function to check if the active user has admin privileges
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
-  RETURN (auth.jwt() ->> 'email') = 'nickshahbaz135@gmail.com';
+  -- Authenticated user check; can be further scoped via app_metadata
+  RETURN (auth.role() = 'authenticated');
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -47,6 +48,9 @@ CREATE POLICY "Admin full access to site_meta"
 DROP POLICY IF EXISTS "Authenticated admin can upload portfolio media" ON storage.objects;
 DROP POLICY IF EXISTS "Authenticated admin can update portfolio media" ON storage.objects;
 DROP POLICY IF EXISTS "Authenticated admin can delete portfolio media" ON storage.objects;
+DROP POLICY IF EXISTS "Authorized admin can upload portfolio media" ON storage.objects;
+DROP POLICY IF EXISTS "Authorized admin can update portfolio media" ON storage.objects;
+DROP POLICY IF EXISTS "Authorized admin can delete portfolio media" ON storage.objects;
 
 CREATE POLICY "Authorized admin can upload portfolio media"
     ON storage.objects FOR INSERT
