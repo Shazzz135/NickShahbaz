@@ -32,10 +32,10 @@
 ---
 
 ## 🎯 Milestone 3: Design System, Tokens & Motion Core Primitives
-- [ ] **Issue #6**: [Design] Establish Dark Mode Design Tokens (Crimson Red & White Palette)
-  - [ ] Subtask 5.1: Configure Tailwind CSS v4 variables with crimson red (`#E50914`, `#FF1E27`) and deep darks (`#08080A`).
-  - [ ] Subtask 5.2: Set up typography & font imports.
-  - [ ] Subtask 5.3: Build reusable core components: Button, Card, Badge, Magnetic hover wrapper.
+- [x] **Issue #6**: [Design] Establish Dark Mode Design Tokens (Crimson Red & White Palette)
+  - [x] Subtask 5.1: Configure Tailwind CSS v4 variables with crimson red (`#E50914`, `#FF1E27`) and deep darks (`#08080A`).
+  - [x] Subtask 5.2: Set up typography & font imports.
+  - [x] Subtask 5.3: Build reusable core components: Button, Card, Badge, Magnetic hover wrapper.
 - [ ] **Issue #7**: [Motion] Integrate Lenis Smooth Scrolling & Global Motion Wrapper
   - [ ] Subtask 6.1: Install & configure `lenis` smooth scroll with custom easing.
   - [ ] Subtask 6.2: Synchronize Lenis scroll triggers with Framer Motion.

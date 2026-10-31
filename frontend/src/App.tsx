@@ -1,122 +1,49 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { Button } from './components/common/Button';
+import { Badge } from './components/common/Badge';
+import { Card } from './components/common/Card';
+import { Magnetic } from './components/common/Magnetic';
+import { ArrowRight, Terminal } from 'lucide-react';
 
-function App() {
-  const [count, setCount] = useState(0)
-
+export default function App() {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="min-h-screen bg-[#08080a] text-white bg-grid-pattern crimson-ambient flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
+      {/* Ambient Top Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-64 bg-[#e50914]/20 blur-[100px] pointer-events-none rounded-full" />
+
+      <div className="max-w-xl mx-auto space-y-6 relative z-10">
+        <div className="flex justify-center gap-2">
+          <Badge variant="crimson" dot>Nick Shahbaz</Badge>
+          <Badge variant="emerald" dot>Core Ready</Badge>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+          Application Developer
+        </h1>
+
+        <p className="text-[#94949e] text-base leading-relaxed">
+          High-end architecture, interactive 3D WebGL experiences, and robust cloud services.
+        </p>
+
+        <Card className="text-left mt-6">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="p-2 rounded-lg bg-[#e50914]/10 text-[#ff1e27] border border-[#e50914]/20">
+              <Terminal className="w-4 h-4" />
+            </span>
+            <span className="text-sm font-bold text-white">Foundations Online</span>
+          </div>
+          <p className="text-xs text-[#94949e]">
+            Tailwind CSS v4 design system, Crimson/Dark/White tokens, and motion primitives established.
           </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+        </Card>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+        <div className="pt-4 flex justify-center">
+          <Magnetic>
+            <Button variant="primary" icon={<ArrowRight className="w-4 h-4" />}>
+              Explore Platform
+            </Button>
+          </Magnetic>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      </div>
+    </div>
+  );
 }
-
-export default App
