@@ -1,0 +1,19 @@
+services:
+  frontend-dev:
+    container_name: nickshahbaz-frontend-dev
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      # Mount local frontend source directory for instant hot-reload
+      - ./frontend:/app
+      # Preserve container node_modules so host modules do not conflict with container Linux binaries
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_PORT=5173
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
