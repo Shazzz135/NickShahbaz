@@ -1,27 +1,29 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Badge } from '../components/common/Badge';
+import { SiteSettingsManager } from '../components/admin/SiteSettingsManager';
+import { AboutManager } from '../components/admin/AboutManager';
 import { ProjectsManager } from '../components/admin/ProjectsManager';
 import { ExperienceManager } from '../components/admin/ExperienceManager';
 import { InquiriesViewer } from '../components/admin/InquiriesViewer';
-import { SiteSettingsManager } from '../components/admin/SiteSettingsManager';
 import { 
   LogOut, 
   Terminal, 
+  Settings, 
+  User, 
   Layers, 
   Briefcase, 
   Mail, 
-  Database,
-  ArrowUpRight,
-  ShieldCheck,
-  Settings 
+  Database, 
+  ArrowUpRight, 
+  ShieldCheck 
 } from 'lucide-react';
 
-type Tab = 'projects' | 'experiences' | 'inquiries' | 'settings';
+type Tab = 'settings' | 'about' | 'projects' | 'experiences' | 'inquiries';
 
 export const AdminDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>('projects');
+  const [activeTab, setActiveTab] = useState<Tab>('settings');
 
   return (
     <div className="min-h-screen bg-[#09090b] text-white p-4 sm:p-6 lg:p-10">
@@ -65,45 +67,10 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </header>
 
-        {/* CMS Navigation Tabs - Mobile Scrollable & Windows Desktop Grid */}
+        {/* CMS Navigation Tabs - Ordered identically to the live site sections for maximum appeal */}
         <nav aria-label="CMS Navigation" className="overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
           <div className="flex items-center gap-2 min-w-max border-b border-white/10 pb-3">
-            <button
-              onClick={() => setActiveTab('projects')}
-              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer ${
-                activeTab === 'projects'
-                  ? 'bg-[#e50914] text-white'
-                  : 'bg-[#141419] text-[#94949e] hover:text-white border border-white/5'
-              }`}
-            >
-              <Layers className="w-4 h-4" />
-              <span>Projects CRUD</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('experiences')}
-              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer ${
-                activeTab === 'experiences'
-                  ? 'bg-[#e50914] text-white'
-                  : 'bg-[#141419] text-[#94949e] hover:text-white border border-white/5'
-              }`}
-            >
-              <Briefcase className="w-4 h-4" />
-              <span>Timeline CRUD</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('inquiries')}
-              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer ${
-                activeTab === 'inquiries'
-                  ? 'bg-[#e50914] text-white'
-                  : 'bg-[#141419] text-[#94949e] hover:text-white border border-white/5'
-              }`}
-            >
-              <Mail className="w-4 h-4" />
-              <span>Inquiries Inbox</span>
-            </button>
-
+            {/* 1. Hero & Global Site Settings */}
             <button
               onClick={() => setActiveTab('settings')}
               className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer ${
@@ -113,17 +80,70 @@ export const AdminDashboard: React.FC = () => {
               }`}
             >
               <Settings className="w-4 h-4" />
-              <span>Site Settings</span>
+              <span>1. Hero & Site</span>
+            </button>
+
+            {/* 2. About Me, Skills & Philosophy */}
+            <button
+              onClick={() => setActiveTab('about')}
+              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer ${
+                activeTab === 'about'
+                  ? 'bg-[#e50914] text-white'
+                  : 'bg-[#141419] text-[#94949e] hover:text-white border border-white/5'
+              }`}
+            >
+              <User className="w-4 h-4" />
+              <span>2. About & Skills</span>
+            </button>
+
+            {/* 3. Projects Gallery */}
+            <button
+              onClick={() => setActiveTab('projects')}
+              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer ${
+                activeTab === 'projects'
+                  ? 'bg-[#e50914] text-white'
+                  : 'bg-[#141419] text-[#94949e] hover:text-white border border-white/5'
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              <span>3. Projects CRUD</span>
+            </button>
+
+            {/* 4. Experiences Timeline */}
+            <button
+              onClick={() => setActiveTab('experiences')}
+              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer ${
+                activeTab === 'experiences'
+                  ? 'bg-[#e50914] text-white'
+                  : 'bg-[#141419] text-[#94949e] hover:text-white border border-white/5'
+              }`}
+            >
+              <Briefcase className="w-4 h-4" />
+              <span>4. Timeline CRUD</span>
+            </button>
+
+            {/* 5. Inquiries Inbox */}
+            <button
+              onClick={() => setActiveTab('inquiries')}
+              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer ${
+                activeTab === 'inquiries'
+                  ? 'bg-[#e50914] text-white'
+                  : 'bg-[#141419] text-[#94949e] hover:text-white border border-white/5'
+              }`}
+            >
+              <Mail className="w-4 h-4" />
+              <span>5. Inquiries Inbox</span>
             </button>
           </div>
         </nav>
 
         {/* Tab Content Panel - Clean Static Styling */}
         <main className="p-4 sm:p-6 lg:p-8 rounded-xl bg-[#0f0f13] border border-white/10">
+          {activeTab === 'settings' && <SiteSettingsManager />}
+          {activeTab === 'about' && <AboutManager />}
           {activeTab === 'projects' && <ProjectsManager />}
           {activeTab === 'experiences' && <ExperienceManager />}
           {activeTab === 'inquiries' && <InquiriesViewer />}
-          {activeTab === 'settings' && <SiteSettingsManager />}
         </main>
 
         {/* Security & RLS Footer Badge */}

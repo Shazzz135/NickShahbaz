@@ -37,7 +37,7 @@ export const ProjectGallery: React.FC = () => {
         <div className="space-y-3 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#e50914]/10 border border-[#e50914]/20 text-xs font-mono text-[#ff4d55]">
             <FolderKanban className="w-3.5 h-3.5" />
-            <span>SELECTED APPLICATION PORTFOLIO</span>
+            <span>02 / SELECTED APPLICATION PORTFOLIO</span>
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">

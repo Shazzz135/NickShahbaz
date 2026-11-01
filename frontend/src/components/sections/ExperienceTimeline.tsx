@@ -395,7 +395,7 @@ export const ExperienceTimeline: React.FC = () => {
           className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-[#94949e]"
         >
           <span className="w-2 h-2 rounded-full bg-[#ff1e27] animate-pulse" />
-          <span>02 / CAREER TRAJECTORY & MILESTONES</span>
+          <span>03 / CAREER TRAJECTORY & MILESTONES</span>
         </motion.div>
 
         <motion.h2
