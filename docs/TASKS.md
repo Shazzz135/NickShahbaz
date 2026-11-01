@@ -78,9 +78,10 @@
   - [x] Subtask 13.1: Build scroll-driven vertical timeline with glowing red nodes.
   - [x] Subtask 13.2: Create expandable role cards with metrics and technology chips.
   - [x] Subtask 13.3: Hydrate timeline entries from Supabase experiences table (unified Work & Education).
-- [ ] **Issue #15**: [Section] About Me, Skills Matrix & Philosophy
-  - [ ] Subtask 14.1: Build dense bio section with engineering philosophy.
-  - [ ] Subtask 14.2: Build interactive skill category radar / proficiency chips.
+- [x] **Issue #15**: [Section] About Me, Skills Matrix & Philosophy
+  - [x] Subtask 14.1: Build dense bio section with engineering philosophy.
+  - [x] Subtask 14.2: Build interactive skill category radar / proficiency chips.
+  - [x] Subtask 14.3: Add quick stats counter and full Admin CMS management in public.site_meta.
 - [ ] **Issue #16**: [Section] Contact Section, Resend Integration & Payload Validation CI Gate
   - [ ] Subtask 15.1: Build accessible contact form with client validation.
   - [ ] Subtask 15.2: Connect form to Resend API endpoint.

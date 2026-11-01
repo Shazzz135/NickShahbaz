@@ -5,6 +5,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { SmoothScroll } from './components/layout/SmoothScroll';
 import { Preloader } from './components/layout/Preloader';
 import { HeroSection } from './components/sections/HeroSection';
+import { AboutSection } from './components/sections/AboutSection';
 import { ProjectGallery } from './components/sections/ProjectGallery';
 import { ExperienceTimeline } from './components/sections/ExperienceTimeline';
 
@@ -32,13 +33,16 @@ function PublicPortfolio() {
           <CanvasBackground />
         </Suspense>
 
-        {/* Dynamic Hero Section with 3D Foreground Elements */}
+        {/* 1. Dynamic Hero Section with 3D Foreground Elements */}
         <HeroSection isSceneReady={isSceneReady} />
 
-        {/* Application Development Project Gallery & Detail Modals */}
+        {/* 2. About Me, Skills Matrix & Philosophy */}
+        <AboutSection />
+
+        {/* 3. Application Development Project Gallery & Detail Modals */}
         <ProjectGallery />
 
-        {/* Experience & Career Interactive Timeline (Work + Education) */}
+        {/* 4. Experience & Career Interactive Timeline */}
         <ExperienceTimeline />
       </SmoothScroll>
     </>
