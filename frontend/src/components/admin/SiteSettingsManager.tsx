@@ -106,17 +106,6 @@ export const SiteSettingsManager: React.FC = () => {
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-              <div className="space-y-1">
-                <label className="text-xs font-mono text-[#94949e]">Status Text</label>
-                <input
-                  type="text"
-                  required
-                  value={config.statusText}
-                  onChange={(e) => setConfig({ ...config, statusText: e.target.value })}
-                  placeholder="Open for Select Contracts"
-                  className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
-                />
-              </div>
 
               <div className="space-y-1">
                 <label className="text-xs font-mono text-[#94949e]">Location & Timezone</label>
@@ -130,6 +119,18 @@ export const SiteSettingsManager: React.FC = () => {
                 />
               </div>
 
+              <div className="space-y-1">
+                <label className="text-xs font-mono text-[#94949e]">Status Text</label>
+                <input
+                  type="text"
+                  required
+                  value={config.statusText}
+                  onChange={(e) => setConfig({ ...config, statusText: e.target.value })}
+                  placeholder="Open for Select Contracts"
+                  className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
+                />
+              </div>
+
               <div className="flex items-center gap-2 pt-6">
                 <label className="flex items-center gap-2 cursor-pointer text-xs text-[#94949e]">
                   <input
@@ -138,7 +139,7 @@ export const SiteSettingsManager: React.FC = () => {
                     onChange={(e) => setConfig({ ...config, isAvailable: e.target.checked })}
                     className="accent-[#e50914] rounded cursor-pointer w-4 h-4"
                   />
-                  <span>Show Green Live Pulse Indicator</span>
+                  <span>Activate Status Text</span>
                 </label>
               </div>
             </div>
