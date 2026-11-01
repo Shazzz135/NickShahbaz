@@ -16,7 +16,8 @@ import {
   Calendar, 
   MapPin, 
   X,
-  ExternalLink
+  ExternalLink,
+  Save
 } from 'lucide-react';
 
 type Experience = Database['public']['Tables']['experiences']['Row'];
@@ -609,9 +610,10 @@ export const ExperienceManager: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 sm:flex-initial px-4 py-2 rounded-lg bg-[#e50914] hover:bg-[#ff1e27] text-white text-xs font-mono font-medium transition-colors cursor-pointer"
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#e50914] hover:bg-[#ff1e27] text-white text-xs font-mono font-medium transition-colors cursor-pointer"
                 >
-                  {editingId ? 'Update Milestone' : 'Save Milestone'}
+                  <Save className="w-4 h-4" />
+                  <span>{editingId ? 'Update Milestone' : 'Save Milestone'}</span>
                 </button>
               </div>
             </div>
