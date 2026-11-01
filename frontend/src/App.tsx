@@ -26,11 +26,14 @@ const AdminDashboard = lazy(() =>
   import('./pages/AdminDashboard').then((m) => ({ default: m.AdminDashboard }))
 );
 
-function PublicPortfolio() {
+function GlobalBranding() {
   const { data: rawHeroData } = useSiteMeta('hero', DEFAULT_HERO_META);
   const hero = { ...DEFAULT_HERO_META, ...rawHeroData } as HeroMetaConfig;
   useDynamicFavicon(hero.browserIconUrl);
+  return null;
+}
 
+function PublicPortfolio() {
   return (
     <>
       {/* Interactive Cyber-Preloader with Shutter Exit */}
@@ -65,6 +68,7 @@ function PublicPortfolio() {
 export default function App() {
   return (
     <AuthProvider>
+      <GlobalBranding />
       <BrowserRouter>
         <Suspense fallback={<div className="min-h-screen bg-[#08080a]" />}>
           <Routes>

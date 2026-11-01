@@ -17,5 +17,10 @@ export function useDynamicFavicon(iconUrl?: string | null) {
     if (link.getAttribute('href') !== iconUrl) {
       link.href = iconUrl;
     }
+
+    const appleLink = document.querySelector<HTMLLinkElement>("link[rel='apple-touch-icon']");
+    if (appleLink && appleLink.getAttribute('href') !== iconUrl) {
+      appleLink.href = iconUrl;
+    }
   }, [iconUrl]);
 }
