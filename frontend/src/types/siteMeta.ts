@@ -10,6 +10,7 @@ export interface HeroMetaConfig {
   metricLatency: string;
   metricWebgl: string;
   browserIconUrl?: string;
+  isMailingServiceActive?: boolean;
 }
 
 export const DEFAULT_HERO_META: HeroMetaConfig = {
@@ -24,6 +25,7 @@ export const DEFAULT_HERO_META: HeroMetaConfig = {
   metricLatency: '< 50ms',
   metricWebgl: '60 FPS',
   browserIconUrl: '/favicon.svg',
+  isMailingServiceActive: true,
 };
 
 export type SkillCategory = 'Languages' | 'Frontend & 3D' | 'Backend & Cloud' | 'Systems & DevOps';

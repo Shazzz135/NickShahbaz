@@ -28,6 +28,7 @@ describe('ContactSection', () => {
     expect(screen.getByText(/GitHub/i)).toBeDefined();
     expect(screen.getByText(/X \(Twitter\)/i)).toBeDefined();
     expect(screen.getByText(/LinkedIn/i)).toBeDefined();
+    expect(screen.getByText(/Version 4.0/i)).toBeDefined();
   });
 
   it('validates required fields on empty submit attempt', async () => {

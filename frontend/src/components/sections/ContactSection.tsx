@@ -19,6 +19,8 @@ import {
 } from '../../types/contact';
 import { submitContactInquiry } from '../../lib/contactService';
 import { useSmoothScroll } from '../../hooks/useSmoothScroll';
+import { useSiteMeta } from '../../hooks/useSiteMeta';
+import { DEFAULT_HERO_META, type HeroMetaConfig } from '../../types/siteMeta';
 
 // Custom SVG Icons for Brands
 const GithubIcon: React.FC<{ className?: string }> = ({ className = 'w-4 h-4' }) => (
@@ -68,6 +70,11 @@ const SOCIAL_LINKS = [
 export const ContactSection: React.FC = () => {
   const { scrollTo } = useSmoothScroll();
   const formId = useId();
+
+  // Admin Site Meta (for Mailing Service active toggle)
+  const { data: rawHeroData } = useSiteMeta('hero', DEFAULT_HERO_META);
+  const hero = { ...DEFAULT_HERO_META, ...rawHeroData } as HeroMetaConfig;
+  const isMailingActive = hero.isMailingServiceActive !== false;
 
   // Form State
   const [name, setName] = useState('');
@@ -129,6 +136,12 @@ export const ContactSection: React.FC = () => {
     e.preventDefault();
     setSubmitStatus('idle');
     setStatusMessage('');
+
+    if (!isMailingActive) {
+      setSubmitStatus('error');
+      setStatusMessage('Mailing service is temporarily unavailable. Please reach out via direct email.');
+      return;
+    }
 
     const payload: ContactFormPayload = {
       name,
@@ -235,13 +248,61 @@ export const ContactSection: React.FC = () => {
                 Direct relay to personal inbox
               </p>
             </div>
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#10b981]/10 border border-[#10b981]/20 text-[#10b981] text-xs font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-ping" />
-              <span>Active Channel</span>
-            </div>
+            {isMailingActive ? (
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#10b981]/10 border border-[#10b981]/20 text-[#10b981] text-xs font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-ping" />
+                <span>Active Channel</span>
+              </div>
+            ) : (
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                <span>Temporarily Unavailable</span>
+              </div>
+            )}
           </div>
 
-          <form onSubmit={handleSubmit} noValidate className="space-y-6">
+          {!isMailingActive ? (
+            <div className="py-10 sm:py-14 px-4 text-center space-y-5">
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(245,158,11,0.15)]">
+                <Clock className="w-7 h-7" />
+              </div>
+              <div className="space-y-2 max-w-md mx-auto">
+                <h4 className="text-xl font-bold text-white tracking-tight">
+                  Mailing Service Temporarily Unavailable
+                </h4>
+                <p className="text-sm text-[#94949e] leading-relaxed">
+                  The automated inquiry submission system is temporarily offline for scheduled updates. Please reach out directly to Nick via verified email or connected channels.
+                </p>
+              </div>
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a
+                  href={`mailto:${DIRECT_EMAIL}`}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#ff1e27] hover:bg-[#d91921] text-white text-xs font-mono font-semibold transition-all shadow-[0_0_20px_rgba(255,30,39,0.3)]"
+                >
+                  <Mail className="w-4 h-4" />
+                  <span>Send Direct Email</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={handleCopyEmail}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 text-xs font-mono transition-all cursor-pointer"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span>Email Address Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Copy Email Address</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} noValidate className="space-y-6">
             {/* Invisible Honeypot Anti-Spam Trap */}
             <div className="hidden" aria-hidden="true">
               <label htmlFor={`${formId}-hp`}>Leave this field blank</label>
@@ -427,6 +488,7 @@ export const ContactSection: React.FC = () => {
               )}
             </button>
           </form>
+          )}
         </motion.div>
 
         {/* Peripheral Information & Social Column */}
@@ -577,6 +639,10 @@ export const ContactSection: React.FC = () => {
           <span className="inline-flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             All Systems Operational
+          </span>
+          <span className="text-white/20 hidden sm:inline">•</span>
+          <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white/80 font-mono text-[11px]">
+            Version 4.0
           </span>
           <button
             type="button"

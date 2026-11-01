@@ -12,6 +12,7 @@ import {
   Globe, 
   Upload, 
   RotateCcw,
+  Mail,
   Image as ImageIcon 
 } from 'lucide-react';
 
@@ -412,6 +413,43 @@ export const SiteSettingsManager: React.FC = () => {
                   className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Section 5: Built-In Mailing Service & Inquiry Relay */}
+          <div className="p-4 sm:p-6 rounded-xl bg-[#141419] border border-white/10 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs sm:text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
+                <Mail className="w-4 h-4 text-[#ff1e27]" />
+                <span>Built-In Mailing Service &amp; Inquiry Relay</span>
+              </h3>
+              <Badge variant={config.isMailingServiceActive !== false ? 'emerald' : 'subtle'}>
+                {config.isMailingServiceActive !== false ? 'Relay Active' : 'Relay Inactive'}
+              </Badge>
+            </div>
+
+            <p className="text-xs text-[#94949e]">
+              Controls whether the public contact form accepts project specifications. When toggled off, the public form displays a &quot;Temporarily Unavailable&quot; status and encourages visitors to reach out via direct email or social channels.
+            </p>
+
+            <div className="p-3.5 rounded-lg bg-[#0d0d10] border border-white/10 flex items-center justify-between gap-4">
+              <label className="flex items-center gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={config.isMailingServiceActive !== false}
+                  onChange={(e) => setConfig({ ...config, isMailingServiceActive: e.target.checked })}
+                  className="accent-[#e50914] rounded cursor-pointer w-4 h-4"
+                />
+                <span className="text-xs font-mono text-white">
+                  {config.isMailingServiceActive !== false
+                    ? 'Accept Inquiries (Form Active)'
+                    : 'Pause Inquiries (Display Temporarily Unavailable)'}
+                </span>
+              </label>
+
+              <span className={`text-[11px] font-mono ${config.isMailingServiceActive !== false ? 'text-emerald-400' : 'text-amber-400'}`}>
+                {config.isMailingServiceActive !== false ? '● Accepting Submissions' : '○ Form Offline'}
+              </span>
             </div>
           </div>
 
