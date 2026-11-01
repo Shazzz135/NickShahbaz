@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
-export function useSiteMeta(key: string, defaultValue: Record<string, unknown> = {}) {
-  const [data, setData] = useState<Record<string, unknown>>(defaultValue);
+export function useSiteMeta<T extends object = Record<string, unknown>>(
+  key: string, 
+  defaultValue: T = {} as T
+) {
+  const [data, setData] = useState<T>(defaultValue);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -18,11 +21,11 @@ export function useSiteMeta(key: string, defaultValue: Record<string, unknown> =
           .from('site_meta')
           .select('*')
           .eq('key', key)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
         if (row && row.value) {
-          setData(row.value as Record<string, unknown>);
+          setData(row.value as unknown as T);
         }
       } catch (err) {
         console.warn(`Failed to fetch site_meta for ${key}:`, err);

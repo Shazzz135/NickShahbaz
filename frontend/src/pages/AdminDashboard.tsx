@@ -4,6 +4,7 @@ import { Badge } from '../components/common/Badge';
 import { ProjectsManager } from '../components/admin/ProjectsManager';
 import { ExperienceManager } from '../components/admin/ExperienceManager';
 import { InquiriesViewer } from '../components/admin/InquiriesViewer';
+import { SiteSettingsManager } from '../components/admin/SiteSettingsManager';
 import { 
   LogOut, 
   Terminal, 
@@ -12,10 +13,11 @@ import {
   Mail, 
   Database,
   ArrowUpRight,
-  ShieldCheck 
+  ShieldCheck,
+  Settings 
 } from 'lucide-react';
 
-type Tab = 'projects' | 'experiences' | 'inquiries';
+type Tab = 'projects' | 'experiences' | 'inquiries' | 'settings';
 
 export const AdminDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -101,6 +103,18 @@ export const AdminDashboard: React.FC = () => {
               <Mail className="w-4 h-4" />
               <span>Inquiries Inbox</span>
             </button>
+
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer ${
+                activeTab === 'settings'
+                  ? 'bg-[#e50914] text-white'
+                  : 'bg-[#141419] text-[#94949e] hover:text-white border border-white/5'
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+              <span>Site Settings</span>
+            </button>
           </div>
         </nav>
 
@@ -109,6 +123,7 @@ export const AdminDashboard: React.FC = () => {
           {activeTab === 'projects' && <ProjectsManager />}
           {activeTab === 'experiences' && <ExperienceManager />}
           {activeTab === 'inquiries' && <InquiriesViewer />}
+          {activeTab === 'settings' && <SiteSettingsManager />}
         </main>
 
         {/* Security & RLS Footer Badge */}

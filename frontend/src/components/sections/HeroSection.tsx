@@ -5,6 +5,8 @@ import { Button } from '../common/Button';
 import { Magnetic } from '../common/Magnetic';
 import { FloatingTechChips } from './FloatingTechChips';
 import { useSmoothScroll } from '../../hooks/useSmoothScroll';
+import { useSiteMeta } from '../../hooks/useSiteMeta';
+import { DEFAULT_HERO_META, type HeroMetaConfig } from '../../types/siteMeta';
 import { 
   ArrowRight, 
   Sparkles, 
@@ -22,6 +24,8 @@ interface HeroSectionProps {
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true }) => {
   const { scrollTo } = useSmoothScroll();
+  const { data: rawHeroData } = useSiteMeta('hero', DEFAULT_HERO_META);
+  const hero = { ...DEFAULT_HERO_META, ...rawHeroData } as HeroMetaConfig;
 
   const handleScrollToProjects = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -55,15 +59,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true })
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <Badge variant="crimson" dot>Nick Shahbaz</Badge>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-[11px] font-mono text-emerald-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Open for Select Contracts</span>
+            {hero.isAvailable ? (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            ) : (
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            )}
+            <span>{hero.statusText}</span>
           </div>
         </div>
 
         <div className="flex items-center gap-3 text-xs font-mono text-[#94949e]">
           <span className="inline-flex items-center gap-1">
             <MapPin className="w-3.5 h-3.5 text-[#ff1e27]" />
-            <span>Toronto, CA &bull; UTC-5</span>
+            <span>{hero.location}</span>
           </span>
           <span className="hidden sm:inline-block text-white/20">&bull;</span>
           <span className="hidden sm:inline-flex items-center gap-1">
@@ -83,7 +91,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true })
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#141419] border border-white/10 text-xs font-mono text-[#ff4d55]"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>FULL-STACK ARCHITECTURE & DIGITAL CRAFT</span>
+            <span>{hero.eyebrow}</span>
           </motion.div>
 
           {/* High-Impact Typography with Crimson Gradient */}
@@ -93,9 +101,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true })
             transition={{ duration: 0.8, delay: 0.25 }}
             className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.08]"
           >
-            Architecting Next-Gen{' '}
+            {hero.headlinePrefix}{' '}
             <span className="bg-gradient-to-r from-white via-[#ff6b72] to-[#e50914] bg-clip-text text-transparent">
-              Applications & 3D Systems.
+              {hero.headlineGradient}
             </span>
           </motion.h1>
 
@@ -106,8 +114,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true })
             transition={{ duration: 0.7, delay: 0.35 }}
             className="text-[#94949e] text-base sm:text-xl leading-relaxed max-w-3xl"
           >
-            Engineering scalable web and mobile software with rigorous type-safety, 
-            GPU-accelerated WebGL visuals, and enterprise cloud resilience. Built for performance, speed, and aesthetics.
+            {hero.description}
           </motion.p>
         </div>
 
@@ -180,7 +187,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true })
             <Box className="w-4 h-4" />
           </span>
           <div>
-            <p className="text-xl sm:text-2xl font-black text-white font-mono">5+ Years</p>
+            <p className="text-xl sm:text-2xl font-black text-white font-mono">{hero.metricYears}</p>
             <p className="text-xs text-[#94949e]">Full-Stack Engineering</p>
           </div>
         </div>
@@ -190,7 +197,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true })
             <ShieldCheck className="w-4 h-4" />
           </span>
           <div>
-            <p className="text-xl sm:text-2xl font-black text-white font-mono">99.9%</p>
+            <p className="text-xl sm:text-2xl font-black text-white font-mono">{hero.metricUptime}</p>
             <p className="text-xs text-[#94949e]">Production Reliability</p>
           </div>
         </div>
@@ -200,7 +207,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true })
             <Zap className="w-4 h-4" />
           </span>
           <div>
-            <p className="text-xl sm:text-2xl font-black text-white font-mono">&lt; 50ms</p>
+            <p className="text-xl sm:text-2xl font-black text-white font-mono">{hero.metricLatency}</p>
             <p className="text-xs text-[#94949e]">Global Edge Routing</p>
           </div>
         </div>
@@ -210,7 +217,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true })
             <Activity className="w-4 h-4" />
           </span>
           <div>
-            <p className="text-xl sm:text-2xl font-black text-white font-mono">60 FPS</p>
+            <p className="text-xl sm:text-2xl font-black text-white font-mono">{hero.metricWebgl}</p>
             <p className="text-xs text-[#94949e]">WebGL Acceleration</p>
           </div>
         </div>
