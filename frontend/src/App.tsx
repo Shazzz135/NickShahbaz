@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -24,12 +24,10 @@ const AdminDashboard = lazy(() =>
 );
 
 function PublicPortfolio() {
-  const [isSceneReady, setIsSceneReady] = useState(false);
-
   return (
     <>
       {/* Interactive Cyber-Preloader with Shutter Exit */}
-      <Preloader onComplete={() => setIsSceneReady(true)} />
+      <Preloader />
 
       <SmoothScroll>
         <Suspense fallback={null}>
@@ -37,7 +35,7 @@ function PublicPortfolio() {
         </Suspense>
 
         {/* 1. Dynamic Hero Section with 3D Foreground Elements */}
-        <HeroSection isSceneReady={isSceneReady} />
+        <HeroSection />
 
         {/* 2. About Me, Skills Matrix & Philosophy */}
         <AboutSection />
