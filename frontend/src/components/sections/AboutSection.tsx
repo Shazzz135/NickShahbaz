@@ -39,16 +39,6 @@ export const AboutSection: React.FC = () => {
 
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20 space-y-4">
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-[#94949e]"
-        >
-          <span className="w-2 h-2 rounded-full bg-[#ff1e27] animate-pulse" />
-          <span>{aboutMeta.eyebrow}</span>
-        </motion.div>
-
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

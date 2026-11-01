@@ -15,10 +15,9 @@ describe('ContactSection', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders section header, eyebrow, and peripheral widgets', () => {
+  it('renders section header and peripheral widgets', () => {
     render(<ContactSection />);
 
-    expect(screen.getByText(/04 \/ GET IN TOUCH & COLLABORATE/i)).toBeDefined();
     expect(screen.getByText(/Architectural Partnership/i)).toBeDefined();
     expect(screen.getByRole('heading', { name: /Project Specification/i })).toBeDefined();
     expect(screen.getByText(/Direct Line/i)).toBeDefined();
@@ -29,6 +28,7 @@ describe('ContactSection', () => {
     expect(screen.getByText(/GitHub/i)).toBeDefined();
     expect(screen.getByText(/X \(Twitter\)/i)).toBeDefined();
     expect(screen.getByText(/LinkedIn/i)).toBeDefined();
+    expect(screen.getByText(/Version 4.0/i)).toBeDefined();
   });
 
   it('validates required fields on empty submit attempt', async () => {

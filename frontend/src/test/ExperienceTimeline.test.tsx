@@ -8,7 +8,6 @@ describe('ExperienceTimeline', () => {
 
     expect(screen.getByText(/Engineering Journey &/i)).toBeDefined();
     expect(screen.getByText(/Interactive Milestones/i)).toBeDefined();
-    expect(screen.getByText(/03 \/ CAREER TRAJECTORY & MILESTONES/i)).toBeDefined();
 
     // Category filter pills
     expect(await screen.findByRole('button', { name: /Filter by all milestones/i })).toBeDefined();
