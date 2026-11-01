@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -27,6 +27,7 @@ export type Database = {
           role: string
           sort_order: number
           tech_stack: string[]
+          milestone_type: 'experience' | 'education' | 'certification' | 'event'
         }
         Insert: {
           company: string
@@ -40,6 +41,7 @@ export type Database = {
           role: string
           sort_order?: number
           tech_stack?: string[]
+          milestone_type?: 'experience' | 'education' | 'certification' | 'event'
         }
         Update: {
           company?: string
@@ -53,6 +55,7 @@ export type Database = {
           role?: string
           sort_order?: number
           tech_stack?: string[]
+          milestone_type?: 'experience' | 'education' | 'certification' | 'event'
         }
         Relationships: []
       }

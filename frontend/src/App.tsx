@@ -6,6 +6,7 @@ import { SmoothScroll } from './components/layout/SmoothScroll';
 import { Preloader } from './components/layout/Preloader';
 import { HeroSection } from './components/sections/HeroSection';
 import { ProjectGallery } from './components/sections/ProjectGallery';
+import { ExperienceTimeline } from './components/sections/ExperienceTimeline';
 
 // Code-split 3D canvas and admin routes so entry bundle stays lightweight and fast
 const CanvasBackground = lazy(() =>
@@ -36,6 +37,9 @@ function PublicPortfolio() {
 
         {/* Application Development Project Gallery & Detail Modals */}
         <ProjectGallery />
+
+        {/* Experience & Career Interactive Timeline (Work + Education) */}
+        <ExperienceTimeline />
       </SmoothScroll>
     </>
   );

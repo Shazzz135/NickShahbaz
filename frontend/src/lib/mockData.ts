@@ -81,6 +81,24 @@ export const mockExperiences: ExperienceRow[] = [
     ],
     tech_stack: ['React', 'TypeScript', 'Node.js', 'Supabase', 'Three.js', 'Docker', 'Tailwind CSS'],
     sort_order: 1,
+    milestone_type: 'experience',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'exp-cert-1',
+    role: 'AWS Certified Solutions Architect & Cloud Practitioner',
+    company: 'Amazon Web Services (AWS)',
+    company_url: 'https://aws.amazon.com',
+    location: 'Global Accreditation',
+    period: '2023 — Present',
+    is_current: true,
+    highlights: [
+      'Validated expertise in distributed cloud architectures, high availability, fault tolerance, and security.',
+      'Comprehensive mastery over serverless orchestration, VPC networking, RDS optimization, and IAM isolation.'
+    ],
+    tech_stack: ['AWS', 'Cloud Architecture', 'Serverless', 'Security', 'Docker', 'DevOps'],
+    sort_order: 2,
+    milestone_type: 'certification',
     created_at: new Date().toISOString(),
   },
   {
@@ -96,7 +114,42 @@ export const mockExperiences: ExperienceRow[] = [
       'Led frontend modernization initiatives improving Core Web Vitals and Lighthouse scores by 40%.'
     ],
     tech_stack: ['TypeScript', 'React', 'Docker', 'PostgreSQL', 'GraphQL', 'AWS'],
-    sort_order: 2,
+    sort_order: 3,
+    milestone_type: 'experience',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'exp-event-1',
+    role: 'Grand Prize Winner & Lead System Architect',
+    company: 'Global AI & Web3 Hackathon',
+    company_url: 'https://example.com',
+    location: 'San Francisco, CA (Hybrid)',
+    period: '2023',
+    is_current: false,
+    highlights: [
+      'Architected an autonomous multi-agent task resolution engine in a 48-hour continuous hackathon sprint.',
+      'Awarded 1st place among 120+ international engineering teams for technical complexity and real-time execution.'
+    ],
+    tech_stack: ['AI Agents', 'Python', 'WebSockets', 'Vector DB', 'TypeScript', 'Next.js'],
+    sort_order: 4,
+    milestone_type: 'event',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'exp-edu-1',
+    role: 'B.S. in Computer Science & Software Engineering',
+    company: 'Academic Foundations',
+    company_url: null,
+    location: 'Toronto, Canada',
+    period: '2018 — 2022',
+    is_current: false,
+    highlights: [
+      'Specialized in Software Architecture, Distributed Computing, and Algorithm Complexity.',
+      'Graduated with honors, focusing on high-performance systems and real-time graphics computing.'
+    ],
+    tech_stack: ['Computer Science', 'Algorithms', 'Data Structures', 'C++', 'Java', 'Distributed Systems'],
+    sort_order: 5,
+    milestone_type: 'education',
     created_at: new Date().toISOString(),
   },
 ];
