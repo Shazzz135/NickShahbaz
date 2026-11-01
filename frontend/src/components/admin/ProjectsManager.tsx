@@ -322,6 +322,7 @@ export const ProjectsManager: React.FC = () => {
     if (error) {
       setStatusMsg({ type: 'error', text: `Delete failed: ${error.message}` });
     } else {
+      setProjects((prev) => prev.filter((p) => p.id !== id));
       setStatusMsg({ type: 'success', text: `Project "${projectTitle}" removed.` });
       fetchProjects();
     }

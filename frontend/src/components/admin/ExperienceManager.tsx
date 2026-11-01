@@ -206,6 +206,7 @@ export const ExperienceManager: React.FC = () => {
     if (error) {
       setStatusMsg({ type: 'error', text: `Delete failed: ${error.message}` });
     } else {
+      setExperiences((prev) => prev.filter((e) => e.id !== id));
       setStatusMsg({ type: 'success', text: `Removed "${roleName}".` });
       fetchExperiences();
     }
