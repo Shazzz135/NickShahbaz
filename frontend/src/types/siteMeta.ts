@@ -31,6 +31,7 @@ export const DEFAULT_HERO_META: HeroMetaConfig = {
 export type SkillCategory = 'Languages' | 'Frontend & 3D' | 'Backend & Cloud' | 'Systems & DevOps';
 
 export interface SkillItem {
+  id?: string;
   name: string;
   category: SkillCategory;
   level: number; // 0 - 100 percentage

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../types/database.types';
 import { Badge } from '../common/Badge';
-import { Mail, Check, Archive, Clock, AlertCircle } from 'lucide-react';
+import { Mail, Check, Archive, Clock, AlertCircle, Trash2, RefreshCw } from 'lucide-react';
 
 type Inquiry = Database['public']['Tables']['inquiries']['Row'];
 
@@ -29,7 +29,6 @@ export const InquiriesViewer: React.FC = () => {
   useEffect(() => {
     let ignore = false;
     async function load() {
-      setLoading(true);
       const { data, error } = await supabase
         .from('inquiries')
         .select('*')
@@ -55,7 +54,18 @@ export const InquiriesViewer: React.FC = () => {
     if (error) {
       setStatusMsg(`Status update failed: ${error.message}`);
     } else {
-      fetchInquiries();
+      setInquiries((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)));
+    }
+  };
+
+  const handleDeleteInquiry = async (id: string, name: string) => {
+    if (!confirm(`Permanently delete inquiry from "${name}"?`)) return;
+    const { error } = await supabase.from('inquiries').delete().eq('id', id);
+    if (error) {
+      setStatusMsg(`Delete failed: ${error.message}`);
+    } else {
+      setInquiries((prev) => prev.filter((i) => i.id !== id));
+      setStatusMsg(`Inquiry from "${name}" deleted.`);
     }
   };
 
@@ -71,6 +81,16 @@ export const InquiriesViewer: React.FC = () => {
           <p className="text-xs text-[#94949e] mt-0.5">
             Visitor submissions routed to <code className="text-[#ff1e27]">public.inquiries</code>.
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fetchInquiries()}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141419] hover:bg-[#1f1f28] text-xs font-mono text-[#94949e] hover:text-white border border-white/10 transition-colors cursor-pointer"
+            title="Refresh Inquiries"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
         </div>
       </div>
 
@@ -154,6 +174,14 @@ export const InquiriesViewer: React.FC = () => {
                     <span>Archive</span>
                   </button>
                 )}
+                <button
+                  onClick={() => handleDeleteInquiry(inq.id, inq.name)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#ff1e27]/10 hover:bg-[#ff1e27]/20 text-xs font-mono text-[#ff6b72] hover:text-[#ff1e27] border border-[#ff1e27]/20 transition-colors cursor-pointer"
+                  title="Delete inquiry permanently"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete</span>
+                </button>
               </div>
             </div>
           ))}

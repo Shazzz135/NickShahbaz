@@ -15,7 +15,8 @@ import {
   Sparkles,
   X,
   Monitor,
-  Smartphone
+  Smartphone,
+  Save
 } from 'lucide-react';
 
 type Project = Database['public']['Tables']['projects']['Row'];
@@ -322,6 +323,7 @@ export const ProjectsManager: React.FC = () => {
     if (error) {
       setStatusMsg({ type: 'error', text: `Delete failed: ${error.message}` });
     } else {
+      setProjects((prev) => prev.filter((p) => p.id !== id));
       setStatusMsg({ type: 'success', text: `Project "${projectTitle}" removed.` });
       fetchProjects();
     }
@@ -640,9 +642,10 @@ export const ProjectsManager: React.FC = () => {
                 )}
                 <button
                   type="submit"
-                  className="flex-1 sm:flex-initial px-4 py-2 rounded-lg bg-[#e50914] hover:bg-[#ff1e27] text-white text-xs font-mono font-medium transition-colors cursor-pointer"
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#e50914] hover:bg-[#ff1e27] text-white text-xs font-mono font-medium transition-colors cursor-pointer"
                 >
-                  {editingId ? 'Update Project' : 'Save Project'}
+                  <Save className="w-4 h-4" />
+                  <span>{editingId ? 'Update Project' : 'Save Project'}</span>
                 </button>
               </div>
             </div>

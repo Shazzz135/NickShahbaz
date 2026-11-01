@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import type { Json } from '../../types/database.types';
 import { Badge } from '../common/Badge';
 import { DEFAULT_HERO_META, type HeroMetaConfig } from '../../types/siteMeta';
+import { useDynamicFavicon } from '../../hooks/useDynamicFavicon';
 import { 
   Settings, 
   Save, 
@@ -23,6 +24,9 @@ export const SiteSettingsManager: React.FC = () => {
   const [uploadingIcon, setUploadingIcon] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Keep browser tab icon synced in real time as the admin edits or loads site settings
+  useDynamicFavicon(config.browserIconUrl);
 
   useEffect(() => {
     let ignore = false;

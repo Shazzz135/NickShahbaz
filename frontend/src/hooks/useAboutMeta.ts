@@ -29,10 +29,10 @@ export function useAboutMeta() {
           setAboutMeta({
             ...DEFAULT_ABOUT_META,
             ...val,
-            stats: Array.isArray(val.stats) && val.stats.length > 0 ? val.stats : DEFAULT_ABOUT_META.stats,
-            principles: Array.isArray(val.principles) && val.principles.length > 0 ? val.principles : DEFAULT_ABOUT_META.principles,
-            skills: Array.isArray(val.skills) && val.skills.length > 0 ? val.skills : DEFAULT_ABOUT_META.skills,
-            bioParagraphs: Array.isArray(val.bioParagraphs) && val.bioParagraphs.length > 0 ? val.bioParagraphs : DEFAULT_ABOUT_META.bioParagraphs,
+            stats: Array.isArray(val.stats) ? val.stats : DEFAULT_ABOUT_META.stats,
+            principles: Array.isArray(val.principles) ? val.principles : DEFAULT_ABOUT_META.principles,
+            skills: Array.isArray(val.skills) ? val.skills : DEFAULT_ABOUT_META.skills,
+            bioParagraphs: Array.isArray(val.bioParagraphs) ? val.bioParagraphs : DEFAULT_ABOUT_META.bioParagraphs,
           });
         } else {
           setAboutMeta(DEFAULT_ABOUT_META);
