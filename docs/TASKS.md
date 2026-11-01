@@ -91,10 +91,10 @@
 ---
 
 ## 🎯 Milestone 6: Performance Optimization, Vercel Deployment & NameSilo DNS
-- [ ] **Issue #17**: [Performance] Web Vitals, 60 FPS Audit & Lighthouse CI Gate
-  - [ ] Subtask 16.1: Lazy-load 3D canvas and dynamic imports for admin routes.
-  - [ ] Subtask 16.2: Asset compression and WebP/AVIF generation.
-  - [ ] Subtask 16.3: [CI Gate] Integrate Lighthouse CI action on pull requests for Core Web Vitals, accessibility, and SEO scoring.
+- [x] **Issue #17**: [Performance] Web Vitals, 60 FPS Audit & Lighthouse CI Gate
+  - [x] Subtask 16.1: Lazy-load 3D canvas and dynamic imports for admin routes.
+  - [x] Subtask 16.2: Asset compression and WebP/AVIF generation.
+  - [x] Subtask 16.3: [CI Gate] Integrate Lighthouse CI action on pull requests for Core Web Vitals, accessibility, and SEO scoring.
 - [ ] **Issue #18**: [Deployment] Vercel Production Deployment & NameSilo DNS
   - [ ] Subtask 17.1: Link repository to Vercel and configure production environment variables.
   - [ ] Subtask 17.2: Configure NameSilo DNS A/CNAME records.

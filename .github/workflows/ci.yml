@@ -49,3 +49,10 @@ jobs:
 
       - name: Bundle Budget CI Gate
         run: pnpm size
+
+      - name: Lighthouse CI Audit (Web Vitals & SEO Gate)
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          configPath: ./.lighthouserc.json
+          uploadHandler: filesystem
+          outputDir: ./lighthouse-reports
