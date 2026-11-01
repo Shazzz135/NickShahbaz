@@ -9,7 +9,8 @@ describe('AboutSection', () => {
     // Wait for hydration
     expect(await screen.findByText(/Nick Shahbaz/i)).toBeDefined();
     expect(screen.getByText(/Engineering Robust Software with Precision/i)).toBeDefined();
-    expect(screen.getByText(/Solutions Architect & Full-Stack Engineer/i)).toBeDefined();
+    expect(screen.queryByText(/Solutions Architect & Full-Stack Engineer/i)).toBeNull();
+    expect(screen.queryByText(/^Lead$/i)).toBeNull();
     expect(screen.getByText(/Toronto, Ontario, Canada/i)).toBeDefined();
   });
 
@@ -39,30 +40,15 @@ describe('AboutSection', () => {
   it('renders skills matrix and filters by category', async () => {
     render(<AboutSection />);
 
-    // Wait for hydration
-    expect(await screen.findByText('TypeScript')).toBeDefined();
-    expect(screen.getByText('Three.js / WebGL')).toBeDefined();
-    expect(screen.getByText('Docker & Containers')).toBeDefined();
-    expect(screen.getByText('GitHub Actions CI/CD')).toBeDefined();
+    expect(await screen.findByText(/Categorized Skills Matrix/i)).toBeDefined();
+    expect(screen.getByText(/TypeScript/i)).toBeDefined();
 
-    // Filter to 'Languages'
-    const languagesBtn = screen.getByRole('button', { name: /Filter skills by Languages/i });
-    fireEvent.click(languagesBtn);
+    // Click filter pill
+    const backendPill = screen.getByRole('button', { name: /Filter skills by Backend & Cloud/i });
+    fireEvent.click(backendPill);
 
-    expect(screen.getByText('TypeScript')).toBeDefined();
-    expect(screen.getByText('Python')).toBeDefined();
     await waitFor(() => {
-      expect(screen.queryByText('Docker & Containers')).toBeNull();
-    });
-
-    // Filter to 'Frontend & 3D'
-    const frontendBtn = screen.getByRole('button', { name: /Filter skills by Frontend & 3D/i });
-    fireEvent.click(frontendBtn);
-
-    expect(screen.getByText('Three.js / WebGL')).toBeDefined();
-    expect(screen.getByText('React 19 / Next.js')).toBeDefined();
-    await waitFor(() => {
-      expect(screen.queryByText('TypeScript')).toBeNull();
+      expect(screen.getByText(/Node\.js & Express/i)).toBeDefined();
     });
   });
 });

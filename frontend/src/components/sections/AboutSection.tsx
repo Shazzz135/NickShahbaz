@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { useAboutMeta } from '../../hooks/useAboutMeta';
 import type { SkillCategory, SkillItem } from '../../types/siteMeta';
-import { Badge } from '../common/Badge';
 
 const SKILL_CATEGORIES: (SkillCategory | 'All')[] = [
   'All',
@@ -144,11 +143,7 @@ export const AboutSection: React.FC = () => {
                       <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight truncate">
                         Nick Shahbaz
                       </h3>
-                      <Badge variant="crimson">Lead</Badge>
                     </div>
-                    <p className="text-xs font-mono text-[#ff1e27]">
-                      Solutions Architect & Full-Stack Engineer
-                    </p>
                     <div className="flex items-center gap-1.5 text-xs text-[#94949e]">
                       <MapPin className="w-3.5 h-3.5 text-[#ff1e27] shrink-0" />
                       <span className="truncate">{aboutMeta.location}</span>

@@ -39,7 +39,8 @@ export const ExperienceManager: React.FC = () => {
   const [location, setLocation] = useState('');
   const [period, setPeriod] = useState('');
   const [isCurrent, setIsCurrent] = useState(false);
-  const [highlightsInput, setHighlightsInput] = useState('');
+  const [highlights, setHighlights] = useState<string[]>([]);
+  const [deliverableInput, setDeliverableInput] = useState('');
   const [techStack, setTechStack] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
 
@@ -90,7 +91,8 @@ export const ExperienceManager: React.FC = () => {
     setLocation('');
     setPeriod('');
     setIsCurrent(false);
-    setHighlightsInput('');
+    setHighlights([]);
+    setDeliverableInput('');
     setTechStack([]);
     setTagInput('');
     setIsFormOpen(true);
@@ -106,11 +108,30 @@ export const ExperienceManager: React.FC = () => {
     setLocation(exp.location || '');
     setPeriod(exp.period);
     setIsCurrent(exp.is_current);
-    setHighlightsInput(exp.highlights.join('\n'));
+    setHighlights(Array.isArray(exp.highlights) ? exp.highlights : []);
+    setDeliverableInput('');
     setTechStack(exp.tech_stack || []);
     setTagInput('');
     setIsFormOpen(true);
     window.scrollTo({ top: 0, behavior: 'auto' });
+  };
+
+  const handleAddDeliverable = () => {
+    const val = deliverableInput.trim();
+    if (!val) return;
+    setHighlights((prev) => [...prev, val]);
+    setDeliverableInput('');
+  };
+
+  const handleAddDeliverableKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddDeliverable();
+    }
+  };
+
+  const handleRemoveDeliverable = (idxToRemove: number) => {
+    setHighlights((prev) => prev.filter((_, idx) => idx !== idxToRemove));
   };
 
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -135,10 +156,11 @@ export const ExperienceManager: React.FC = () => {
       return;
     }
 
-    const highlights = highlightsInput
-      .split('\n')
-      .map((h) => h.trim())
-      .filter(Boolean);
+    // Merge any pending sentence left in deliverableInput
+    const finalHighlights = [...highlights];
+    if (deliverableInput.trim()) {
+      finalHighlights.push(deliverableInput.trim());
+    }
 
     // Merge any pending tag left in tagInput
     const finalTech = [...techStack];
@@ -158,7 +180,7 @@ export const ExperienceManager: React.FC = () => {
           location: location || null,
           period,
           is_current: isCurrent,
-          highlights,
+          highlights: finalHighlights,
           tech_stack: finalTech,
         })
         .eq('id', editingId);
@@ -182,7 +204,7 @@ export const ExperienceManager: React.FC = () => {
           location: location || null,
           period,
           is_current: isCurrent,
-          highlights,
+          highlights: finalHighlights,
           tech_stack: finalTech,
           sort_order: experiences.length + 1,
         },
@@ -238,7 +260,7 @@ export const ExperienceManager: React.FC = () => {
           titleLabel: 'Degree / Program / Certification *',
           orgLabel: 'University / Institution *',
           periodLabel: 'Graduation / Period *',
-          highlightsLabel: 'Academic Focus & Honors (one per line)',
+          highlightsLabel: 'Academic Focus & Honors (press Enter to add)',
           techLabel: 'Core Topics & Coursework (press Enter to add)',
           placeholderTitle: 'B.S. in Computer Science & Software Engineering',
           placeholderOrg: 'Academic Foundations',
@@ -252,7 +274,7 @@ export const ExperienceManager: React.FC = () => {
           titleLabel: 'Credential / Certification Title *',
           orgLabel: 'Issuing Organization *',
           periodLabel: 'Issue Date / Validity Period *',
-          highlightsLabel: 'Skills Validated & Credentials (one per line)',
+          highlightsLabel: 'Skills Validated & Credentials (press Enter to add)',
           techLabel: 'Covered Domains & Tools (press Enter to add)',
           placeholderTitle: 'AWS Certified Solutions Architect',
           placeholderOrg: 'Amazon Web Services (AWS)',
@@ -266,7 +288,7 @@ export const ExperienceManager: React.FC = () => {
           titleLabel: 'Role / Award / Project Name *',
           orgLabel: 'Event / Hackathon / Conference *',
           periodLabel: 'Event Date / Duration *',
-          highlightsLabel: 'Accolades, Deliverables & Outcomes (one per line)',
+          highlightsLabel: 'Accolades, Deliverables & Outcomes (press Enter to add)',
           techLabel: 'Technologies & Tools Built With (press Enter to add)',
           placeholderTitle: 'Grand Prize Winner & Lead Architect',
           placeholderOrg: 'Global AI & Web3 Hackathon',
@@ -280,7 +302,7 @@ export const ExperienceManager: React.FC = () => {
           titleLabel: 'Job Title / Role *',
           orgLabel: 'Company / Studio *',
           periodLabel: 'Period / Dates *',
-          highlightsLabel: 'Key Deliverables & Architecture (one per line)',
+          highlightsLabel: 'Key Deliverables & Architecture (press Enter to add)',
           techLabel: 'Technologies & Tools Used (press Enter to add)',
           placeholderTitle: 'Lead Application Developer & Solutions Architect',
           placeholderOrg: 'Independent / Digital Studio',
@@ -536,15 +558,50 @@ export const ExperienceManager: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-1">
+            {/* Key Deliverables / Highlights list & sentence input */}
+            <div className="space-y-2">
               <label className="text-xs font-mono text-[#94949e]">{currentMeta.highlightsLabel}</label>
-              <textarea
-                rows={3}
-                value={highlightsInput}
-                onChange={(e) => setHighlightsInput(e.target.value)}
-                placeholder="Key achievement or responsibility 1&#10;Key achievement or responsibility 2"
-                className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
-              />
+
+              {highlights.length > 0 && (
+                <div className="space-y-1.5">
+                  {highlights.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-start justify-between gap-2.5 p-2.5 rounded-lg bg-[#0d0d10] border border-white/10 text-xs text-white"
+                    >
+                      <span className="flex-1 leading-relaxed break-words text-[#e4e4e7]">{item}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveDeliverable(idx)}
+                        className="text-[#94949e] hover:text-[#ff1e27] cursor-pointer p-0.5 transition-colors shrink-0"
+                        title="Remove deliverable"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={deliverableInput}
+                  onChange={(e) => setDeliverableInput(e.target.value)}
+                  onKeyDown={handleAddDeliverableKeyDown}
+                  placeholder={highlights.length === 0 ? "Type deliverable sentence & press Enter..." : "Add another deliverable sentence..."}
+                  className="flex-1 bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddDeliverable}
+                  disabled={!deliverableInput.trim()}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#1a1a24] hover:bg-[#252533] text-xs font-mono text-white border border-white/10 transition-colors cursor-pointer disabled:opacity-40 shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5 text-[#ff1e27]" />
+                  <span>Add</span>
+                </button>
+              </div>
             </div>
 
             {/* Tech Stack / Focus Areas Tags */}
