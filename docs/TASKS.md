@@ -74,9 +74,10 @@
   - [x] Subtask 12.1: Build bento/grid layout with 3D card tilt and glowing crimson borders.
   - [x] Subtask 12.2: Build rich project detail modal with video/image previews and tech tags.
   - [x] Subtask 12.3: Add category filter pills (Mobile, Full-Stack, Tools, AI).
-- [ ] **Issue #14**: [Section] Experience & Career Interactive Timeline
-  - [ ] Subtask 13.1: Build scroll-driven vertical timeline with glowing red nodes.
-  - [ ] Subtask 13.2: Create expandable role cards with metrics and technology chips.
+- [x] **Issue #14**: [Section] Experience & Career Interactive Timeline
+  - [x] Subtask 13.1: Build scroll-driven vertical timeline with glowing red nodes.
+  - [x] Subtask 13.2: Create expandable role cards with metrics and technology chips.
+  - [x] Subtask 13.3: Hydrate timeline entries from Supabase experiences table (unified Work & Education).
 - [ ] **Issue #15**: [Section] About Me, Skills Matrix & Philosophy
   - [ ] Subtask 14.1: Build dense bio section with engineering philosophy.
   - [ ] Subtask 14.2: Build interactive skill category radar / proficiency chips.
