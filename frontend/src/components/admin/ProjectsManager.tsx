@@ -32,10 +32,13 @@ const CATEGORIES = [
 type Category = (typeof CATEGORIES)[number];
 
 const POPULAR_TAG_PRESETS = [
-  'React 19',
+  'Vite',
+  'React',
   'TypeScript',
   'Next.js',
   'Node.js',
+  'Express.js',
+  'CORS',
   'Python',
   'Tailwind CSS',
   'Three.js',
@@ -47,10 +50,11 @@ const POPULAR_TAG_PRESETS = [
   'GraphQL',
   'Redis',
   'WebSockets',
-  'Rust',
-  'Go',
   'AWS',
-  'Vercel'
+  'Vercel',
+  'Firebase',
+  'MongoDB',
+  'Prisma',
 ];
 
 export const ProjectsManager: React.FC = () => {
