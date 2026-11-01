@@ -5,6 +5,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { SmoothScroll } from './components/layout/SmoothScroll';
 import { Preloader } from './components/layout/Preloader';
 import { HeroSection } from './components/sections/HeroSection';
+import { ProjectGallery } from './components/sections/ProjectGallery';
 
 // Code-split 3D canvas and admin routes so entry bundle stays lightweight and fast
 const CanvasBackground = lazy(() =>
@@ -32,6 +33,9 @@ function PublicPortfolio() {
 
         {/* Dynamic Hero Section with 3D Foreground Elements */}
         <HeroSection isSceneReady={isSceneReady} />
+
+        {/* Application Development Project Gallery & Detail Modals */}
+        <ProjectGallery />
       </SmoothScroll>
     </>
   );

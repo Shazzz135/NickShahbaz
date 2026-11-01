@@ -70,10 +70,10 @@
 - [x] **Issue #12**: [Section] Dynamic Hero Section with 3D Foreground Elements
   - [x] Subtask 11.1: Build high-impact hero headline, availability status badge, and magnetic CTAs.
   - [x] Subtask 11.2: Build interactive 3D foreground element.
-- [ ] **Issue #13**: [Section] Application Development Project Gallery & Detail Modals
-  - [ ] Subtask 12.1: Build bento/grid layout with 3D card tilt and glowing crimson borders.
-  - [ ] Subtask 12.2: Build rich project detail modal with video/image previews and tech tags.
-  - [ ] Subtask 12.3: Add category filter pills (Mobile, Full-Stack, Tools, AI).
+- [x] **Issue #13**: [Section] Application Development Project Gallery & Detail Modals
+  - [x] Subtask 12.1: Build bento/grid layout with 3D card tilt and glowing crimson borders.
+  - [x] Subtask 12.2: Build rich project detail modal with video/image previews and tech tags.
+  - [x] Subtask 12.3: Add category filter pills (Mobile, Full-Stack, Tools, AI).
 - [ ] **Issue #14**: [Section] Experience & Career Interactive Timeline
   - [ ] Subtask 13.1: Build scroll-driven vertical timeline with glowing red nodes.
   - [ ] Subtask 13.2: Create expandable role cards with metrics and technology chips.
