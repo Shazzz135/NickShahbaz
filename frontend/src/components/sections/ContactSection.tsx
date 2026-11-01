@@ -8,7 +8,6 @@ import {
   Clock,
   MapPin,
   ExternalLink,
-  ShieldCheck,
   AlertCircle,
   CheckCircle2,
   ArrowUp,
@@ -188,16 +187,6 @@ export const ContactSection: React.FC = () => {
 
       {/* Section Header */}
       <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20 space-y-4">
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-[#94949e]"
-        >
-          <span className="w-2 h-2 rounded-full bg-[#ff1e27] animate-pulse" />
-          <span>04 / GET IN TOUCH & COLLABORATE</span>
-        </motion.div>
-
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -243,7 +232,7 @@ export const ContactSection: React.FC = () => {
                 Project Specification
               </h3>
               <p className="text-xs font-mono text-[#94949e] mt-1">
-                Direct relay to engineering inbox • RLS & Honeypot shielded
+                Direct relay to personal inbox
               </p>
             </div>
             <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#10b981]/10 border border-[#10b981]/20 text-[#10b981] text-xs font-mono">
@@ -576,20 +565,13 @@ export const ContactSection: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Security & Pipeline Badge */}
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-3 text-xs text-[#94949e] font-mono">
-            <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
-            <span>
-              Dual-relay: Supabase PostgreSQL RLS & encrypted Nodemailer / Resend notification stream.
-            </span>
-          </div>
         </div>
       </div>
 
       {/* Minimalist Site Footer */}
       <footer className="mt-24 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-[#94949e]">
         <div>
-          © {new Date().getFullYear()} Nick Shahbaz. Architected with React 19, WebGL, Tailwind & Supabase.
+          © {new Date().getFullYear()} Nick Shahbaz. Architected with React, WebGL, Tailwind & Supabase.
         </div>
         <div className="flex items-center gap-4">
           <span className="inline-flex items-center gap-1.5">

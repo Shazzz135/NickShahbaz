@@ -3,12 +3,11 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AboutSection } from '../components/sections/AboutSection';
 
 describe('AboutSection', () => {
-  it('renders section eyebrow, headline, and bio narrative', async () => {
+  it('renders section headline and bio narrative', async () => {
     render(<AboutSection />);
 
     // Wait for hydration
     expect(await screen.findByText(/Nick Shahbaz/i)).toBeDefined();
-    expect(screen.getByText(/01 \/ SYSTEM ARCHITECT & CRAFTSMAN/i)).toBeDefined();
     expect(screen.getByText(/Engineering Robust Software with Precision/i)).toBeDefined();
     expect(screen.getByText(/Solutions Architect & Full-Stack Engineer/i)).toBeDefined();
     expect(screen.getByText(/Toronto, Ontario, Canada/i)).toBeDefined();

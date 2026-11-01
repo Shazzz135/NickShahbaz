@@ -84,21 +84,11 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
       {/* Main Hero Content */}
       <div className="py-8 sm:py-12 space-y-6 sm:space-y-8">
         <div className="space-y-4 max-w-4xl">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#141419] border border-white/10 text-xs font-mono text-[#ff4d55]"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{hero.eyebrow}</span>
-          </motion.div>
-
           {/* High-Impact Typography with Crimson Gradient */}
           <motion.h1
             initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.25 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
             className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.08]"
           >
             {hero.headlinePrefix}{' '}
@@ -111,7 +101,7 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.35 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
             className="text-[#94949e] text-base sm:text-xl leading-relaxed max-w-3xl"
           >
             {hero.description}
@@ -122,7 +112,7 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.45 }}
+          transition={{ duration: 0.7, delay: 0.4 }}
           className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:gap-4 pt-2 w-full sm:w-auto"
         >
           <Magnetic strength={0.25}>
@@ -164,7 +154,7 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.55 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
           className="pt-2 sm:pt-4"
         >
           <div className="flex items-center justify-between pb-2 text-xs font-mono text-[#94949e]">
@@ -179,7 +169,7 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.65 }}
+        transition={{ duration: 0.7, delay: 0.6 }}
         className="mt-6 pt-6 border-t border-white/10 grid grid-cols-2 md:grid-cols-4 gap-4"
       >
         <div className="p-3.5 rounded-xl bg-[#0d0d10]/80 border border-white/5 flex items-start gap-3">

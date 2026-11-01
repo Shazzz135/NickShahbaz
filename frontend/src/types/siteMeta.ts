@@ -1,5 +1,4 @@
 export interface HeroMetaConfig {
-  eyebrow: string;
   headlinePrefix: string;
   headlineGradient: string;
   description: string;
@@ -10,10 +9,10 @@ export interface HeroMetaConfig {
   metricUptime: string;
   metricLatency: string;
   metricWebgl: string;
+  browserIconUrl?: string;
 }
 
 export const DEFAULT_HERO_META: HeroMetaConfig = {
-  eyebrow: 'FULL-STACK ARCHITECTURE & DIGITAL CRAFT',
   headlinePrefix: 'Architecting Next-Gen',
   headlineGradient: 'Applications & 3D Systems.',
   description: 'Engineering scalable web and mobile software with rigorous type-safety, GPU-accelerated WebGL visuals, and enterprise cloud resilience.',
@@ -24,6 +23,7 @@ export const DEFAULT_HERO_META: HeroMetaConfig = {
   metricUptime: '99.9%',
   metricLatency: '< 50ms',
   metricWebgl: '60 FPS',
+  browserIconUrl: '/favicon.svg',
 };
 
 export type SkillCategory = 'Languages' | 'Frontend & 3D' | 'Backend & Cloud' | 'Systems & DevOps';
@@ -50,7 +50,6 @@ export interface AboutStatItem {
 }
 
 export interface AboutMetaConfig {
-  eyebrow: string;
   headline: string;
   bioParagraphs: string[];
   avatarUrl?: string | null;
@@ -62,7 +61,6 @@ export interface AboutMetaConfig {
 }
 
 export const DEFAULT_ABOUT_META: AboutMetaConfig = {
-  eyebrow: '01 / SYSTEM ARCHITECT & CRAFTSMAN',
   headline: 'Engineering Robust Software with Precision, Rigor & Aesthetic Depth.',
   bioParagraphs: [
     'I am a Solutions Architect and Lead Application Developer specializing in distributed full-stack systems, modern cloud infrastructure, and immersive 3D web applications.',

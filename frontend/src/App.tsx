@@ -8,6 +8,9 @@ import { HeroSection } from './components/sections/HeroSection';
 import { AboutSection } from './components/sections/AboutSection';
 import { ProjectGallery } from './components/sections/ProjectGallery';
 import { ExperienceTimeline } from './components/sections/ExperienceTimeline';
+import { useSiteMeta } from './hooks/useSiteMeta';
+import { useDynamicFavicon } from './hooks/useDynamicFavicon';
+import { DEFAULT_HERO_META, type HeroMetaConfig } from './types/siteMeta';
 
 // Code-split 3D canvas, contact section, and admin routes so entry bundle stays lightweight and fast
 const CanvasBackground = lazy(() =>
@@ -24,6 +27,10 @@ const AdminDashboard = lazy(() =>
 );
 
 function PublicPortfolio() {
+  const { data: rawHeroData } = useSiteMeta('hero', DEFAULT_HERO_META);
+  const hero = { ...DEFAULT_HERO_META, ...rawHeroData } as HeroMetaConfig;
+  useDynamicFavicon(hero.browserIconUrl);
+
   return (
     <>
       {/* Interactive Cyber-Preloader with Shutter Exit */}

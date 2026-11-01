@@ -12,7 +12,6 @@ import {
   Code, 
   Sparkles, 
   ArrowUpRight, 
-  FolderKanban,
   Maximize2 
 } from 'lucide-react';
 
@@ -35,11 +34,6 @@ export const ProjectGallery: React.FC = () => {
       {/* Section Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-12 border-b border-white/10">
         <div className="space-y-3 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#e50914]/10 border border-[#e50914]/20 text-xs font-mono text-[#ff4d55]">
-            <FolderKanban className="w-3.5 h-3.5" />
-            <span>02 / SELECTED APPLICATION PORTFOLIO</span>
-          </div>
-
           <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
             Engineering High-Performance{' '}
             <span className="bg-gradient-to-r from-white via-[#ff6b72] to-[#e50914] bg-clip-text text-transparent">
