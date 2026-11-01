@@ -168,22 +168,44 @@ export const ExperienceManager: React.FC = () => {
       finalTech.push(tagInput.trim());
     }
 
+    const payloadWithMilestone = {
+      milestone_type: milestoneType,
+      role,
+      company,
+      company_url: companyUrl || null,
+      location: location || null,
+      period,
+      is_current: isCurrent,
+      highlights: finalHighlights,
+      tech_stack: finalTech,
+    };
+
+    const payloadWithoutMilestone = {
+      role,
+      company,
+      company_url: companyUrl || null,
+      location: location || null,
+      period,
+      is_current: isCurrent,
+      highlights: finalHighlights,
+      tech_stack: finalTech,
+    };
+
     if (editingId) {
       // UPDATE Operation
-      const { error } = await supabase
+      let { error } = await supabase
         .from('experiences')
-        .update({
-          milestone_type: milestoneType,
-          role,
-          company,
-          company_url: companyUrl || null,
-          location: location || null,
-          period,
-          is_current: isCurrent,
-          highlights: finalHighlights,
-          tech_stack: finalTech,
-        })
+        .update(payloadWithMilestone)
         .eq('id', editingId);
+
+      // If remote Supabase schema cache does not have milestone_type column yet, gracefully retry without it
+      if (error && error.message.includes('milestone_type')) {
+        const retry = await supabase
+          .from('experiences')
+          .update(payloadWithoutMilestone)
+          .eq('id', editingId);
+        error = retry.error;
+      }
 
       if (error) {
         setStatusMsg({ type: 'error', text: `Update failed: ${error.message}` });
@@ -195,20 +217,23 @@ export const ExperienceManager: React.FC = () => {
       }
     } else {
       // CREATE Operation
-      const { error } = await supabase.from('experiences').insert([
+      let { error } = await supabase.from('experiences').insert([
         {
-          milestone_type: milestoneType,
-          role,
-          company,
-          company_url: companyUrl || null,
-          location: location || null,
-          period,
-          is_current: isCurrent,
-          highlights: finalHighlights,
-          tech_stack: finalTech,
+          ...payloadWithMilestone,
           sort_order: experiences.length + 1,
         },
       ]);
+
+      // If remote Supabase schema cache does not have milestone_type column yet, gracefully retry without it
+      if (error && error.message.includes('milestone_type')) {
+        const retry = await supabase.from('experiences').insert([
+          {
+            ...payloadWithoutMilestone,
+            sort_order: experiences.length + 1,
+          },
+        ]);
+        error = retry.error;
+      }
 
       if (error) {
         setStatusMsg({ type: 'error', text: `Failed to create: ${error.message}` });
