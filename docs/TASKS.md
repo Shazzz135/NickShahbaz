@@ -82,11 +82,11 @@
   - [x] Subtask 14.1: Build dense bio section with engineering philosophy.
   - [x] Subtask 14.2: Build interactive skill category radar / proficiency chips.
   - [x] Subtask 14.3: Add quick stats counter and full Admin CMS management in public.site_meta.
-- [ ] **Issue #16**: [Section] Contact Section, Resend Integration & Payload Validation CI Gate
-  - [ ] Subtask 15.1: Build accessible contact form with client validation.
-  - [ ] Subtask 15.2: Connect form to Resend API endpoint.
-  - [ ] Subtask 15.3: Persist submission to Supabase `inquiries` table.
-  - [ ] Subtask 15.4: [CI Gate] Add payload contract tests in CI validating email & inquiry schema integrity.
+- [x] **Issue #16**: [Section] Contact Section, Resend Integration & Payload Validation CI Gate
+  - [x] Subtask 15.1: Build accessible contact form with client validation.
+  - [x] Subtask 15.2: Connect form to Resend API endpoint.
+  - [x] Subtask 15.3: Persist submission to Supabase `inquiries` table.
+  - [x] Subtask 15.4: [CI Gate] Add payload contract tests in CI validating email & inquiry schema integrity.
 
 ---
 

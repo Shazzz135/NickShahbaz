@@ -9,9 +9,12 @@ import { AboutSection } from './components/sections/AboutSection';
 import { ProjectGallery } from './components/sections/ProjectGallery';
 import { ExperienceTimeline } from './components/sections/ExperienceTimeline';
 
-// Code-split 3D canvas and admin routes so entry bundle stays lightweight and fast
+// Code-split 3D canvas, contact section, and admin routes so entry bundle stays lightweight and fast
 const CanvasBackground = lazy(() =>
   import('./components/3d/CanvasBackground').then((m) => ({ default: m.CanvasBackground }))
+);
+const ContactSection = lazy(() =>
+  import('./components/sections/ContactSection').then((m) => ({ default: m.ContactSection }))
 );
 const AdminLogin = lazy(() =>
   import('./pages/AdminLogin').then((m) => ({ default: m.AdminLogin }))
@@ -44,6 +47,11 @@ function PublicPortfolio() {
 
         {/* 4. Experience & Career Interactive Timeline */}
         <ExperienceTimeline />
+
+        {/* 5. Contact & Collaboration Section */}
+        <Suspense fallback={<div className="w-full min-h-[400px]" />}>
+          <ContactSection />
+        </Suspense>
       </SmoothScroll>
     </>
   );
