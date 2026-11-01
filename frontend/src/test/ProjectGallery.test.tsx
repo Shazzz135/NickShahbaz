@@ -1,0 +1,73 @@
+import { describe, it, expect } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { ProjectGallery } from '../components/sections/ProjectGallery';
+
+describe('ProjectGallery', () => {
+  it('renders section title, subtitle, and all category filter tabs', () => {
+    render(<ProjectGallery />);
+
+    expect(screen.getByText(/Engineering High-Performance/i)).toBeDefined();
+    expect(screen.getByText(/Digital Products/i)).toBeDefined();
+    expect(screen.getByRole('button', { name: /All/i })).toBeDefined();
+    expect(screen.getByRole('button', { name: /Full-Stack/i })).toBeDefined();
+    expect(screen.getByRole('button', { name: /Mobile/i })).toBeDefined();
+    expect(screen.getByRole('button', { name: /AI\/Cloud/i })).toBeDefined();
+    expect(screen.getByRole('button', { name: /Tools\/Web3/i })).toBeDefined();
+  });
+
+  it('filters project cards when clicking category filter tabs', async () => {
+    render(<ProjectGallery />);
+
+    // Wait for projects to hydrate from hook
+    const project = await screen.findByText(/Enterprise AI Workflow Platform/i);
+    expect(project).toBeDefined();
+    expect(screen.getByText(/Cross-Platform Fintech Mobile Suite/i)).toBeDefined();
+
+    // Click 'Mobile' tab
+    const mobileBtn = screen.getByRole('button', { name: /Mobile/i });
+    fireEvent.click(mobileBtn);
+
+    // Only mobile item should remain visible (waiting for AnimatePresence exit)
+    expect(screen.getByText(/Cross-Platform Fintech Mobile Suite/i)).toBeDefined();
+    await waitFor(() => {
+      expect(screen.queryByText(/Kinetic 3D Commerce Engine/i)).toBeNull();
+    });
+  });
+
+  it('opens and closes project detail modal', async () => {
+    render(<ProjectGallery />);
+
+    // Wait for projects to hydrate
+    const projectTitle = await screen.findByText(/Enterprise AI Workflow Platform/i);
+    fireEvent.click(projectTitle);
+
+    // Modal opens displaying executive overview & architecture
+    expect(screen.getByRole('dialog')).toBeDefined();
+    expect(screen.getByText(/Executive Overview/i)).toBeDefined();
+    expect(screen.getByText(/System Architecture Overview/i)).toBeDefined();
+    expect(screen.getByRole('button', { name: /Close modal/i })).toBeDefined();
+
+    // Close modal
+    const closeBtn = screen.getByRole('button', { name: /Close modal/i });
+    fireEvent.click(closeBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+
+  it('closes modal on Escape key press', async () => {
+    render(<ProjectGallery />);
+
+    const projectTitle = await screen.findByText(/Enterprise AI Workflow Platform/i);
+    fireEvent.click(projectTitle);
+
+    expect(screen.getByRole('dialog')).toBeDefined();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+  });
+});
