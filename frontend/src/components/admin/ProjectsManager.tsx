@@ -13,11 +13,45 @@ import {
   AlertCircle,
   Image as ImageIcon,
   Sparkles,
-  X
+  X,
+  Monitor,
+  Smartphone
 } from 'lucide-react';
 
 type Project = Database['public']['Tables']['projects']['Row'];
-type Category = 'Full-Stack' | 'Mobile' | 'Tools/Web3' | 'AI/Cloud';
+
+const CATEGORIES = [
+  'Full-Stack',
+  'Mobile',
+  'AI/Cloud',
+  'Tools/Web3',
+  'DevOps & Systems',
+  '3D Graphics & Games',
+  'API & Microservices',
+] as const;
+type Category = (typeof CATEGORIES)[number];
+
+const POPULAR_TAG_PRESETS = [
+  'React 19',
+  'TypeScript',
+  'Next.js',
+  'Node.js',
+  'Python',
+  'Tailwind CSS',
+  'Three.js',
+  'WebGL',
+  'Docker',
+  'PostgreSQL',
+  'Supabase',
+  'React Native',
+  'GraphQL',
+  'Redis',
+  'WebSockets',
+  'Rust',
+  'Go',
+  'AWS',
+  'Vercel'
+];
 
 export const ProjectsManager: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -33,11 +67,19 @@ export const ProjectsManager: React.FC = () => {
   const [subtitle, setSubtitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<Category>('Full-Stack');
-  const [tagsInput, setTagsInput] = useState('');
+  
+  // Tech Tags List State
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+
   const [liveUrl, setLiveUrl] = useState('');
   const [githubUrl, setGithubUrl] = useState('');
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [featured, setFeatured] = useState(false);
+
+  // Media validation state
+  const [detectedScale, setDetectedScale] = useState<'desktop' | 'mobile' | null>(null);
+  const [imageMeta, setImageMeta] = useState<{ width: number; height: number; ratio: number } | null>(null);
 
   const fetchProjects = async () => {
     setLoading(true);
@@ -91,11 +133,14 @@ export const ProjectsManager: React.FC = () => {
     setSubtitle('');
     setDescription('');
     setCategory('Full-Stack');
-    setTagsInput('');
+    setTags([]);
+    setTagInput('');
     setLiveUrl('');
     setGithubUrl('');
     setThumbnailUrl('');
     setFeatured(false);
+    setDetectedScale(null);
+    setImageMeta(null);
     setIsFormOpen(true);
   };
 
@@ -105,44 +150,102 @@ export const ProjectsManager: React.FC = () => {
     setSlug(project.slug);
     setSubtitle(project.subtitle || '');
     setDescription(project.description);
-    setCategory(project.category as Category);
-    setTagsInput(project.tags.join(', '));
+    setCategory((CATEGORIES.includes(project.category as Category) ? project.category : 'Full-Stack') as Category);
+    setTags(project.tags || []);
+    setTagInput('');
     setLiveUrl(project.live_url || '');
     setGithubUrl(project.github_url || '');
     setThumbnailUrl(project.thumbnail_url || '');
     setFeatured(project.featured);
+    setDetectedScale(null);
+    setImageMeta(null);
     setIsFormOpen(true);
     window.scrollTo({ top: 0, behavior: 'auto' });
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Tag Management
+  const handleAddTag = (tagToAdd?: string) => {
+    const val = (tagToAdd ?? tagInput).trim();
+    if (!val) return;
+    if (!tags.includes(val)) {
+      setTags([...tags, val]);
+    }
+    setTagInput('');
+  };
+
+  const handleRemoveTag = (indexToRemove: number) => {
+    setTags(tags.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  // Aspect-ratio validated image upload (Windows 16:9 or Mobile 9:16 with wiggle room)
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploading(true);
     setStatusMsg(null);
+    setUploading(true);
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-    const filePath = `projects/${fileName}`;
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
 
-    const { error: uploadError } = await supabase.storage
-      .from('portfolio-media')
-      .upload(filePath, file, { cacheControl: '3600', upsert: false });
+    img.onload = async () => {
+      URL.revokeObjectURL(objectUrl);
+      const width = img.naturalWidth || img.width;
+      const height = img.naturalHeight || img.height;
+      const ratio = width / height;
 
-    if (uploadError) {
-      setStatusMsg({ type: 'error', text: `Image upload failed: ${uploadError.message}` });
+      // Desktop Widescreen Scale (~16:9 = 1.78, 16:10 = 1.6, 3:2 = 1.5): accepted range 1.35 to 2.15
+      const isDesktop = ratio >= 1.35 && ratio <= 2.15;
+      // Mobile Portrait Scale (~9:16 = 0.56, 9:19.5 = 0.46, 3:4 = 0.75): accepted range 0.45 to 0.78
+      const isMobile = ratio >= 0.45 && ratio <= 0.78;
+
+      if (!isDesktop && !isMobile) {
+        setStatusMsg({
+          type: 'error',
+          text: `Aspect ratio rejected (${ratio.toFixed(2)}:1, ${width}x${height}px). For visual consistency in the gallery, please upload either a Desktop scale image (approx 16:9 landscape, ratio 1.35 - 2.15) or a Mobile scale image (approx 9:16 portrait, ratio 0.45 - 0.78).`,
+        });
+        setUploading(false);
+        return;
+      }
+
+      const scaleType = isDesktop ? 'desktop' : 'mobile';
+      setDetectedScale(scaleType);
+      setImageMeta({ width, height, ratio });
+
+      // Proceed to Supabase upload
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+      const filePath = `projects/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('portfolio-media')
+        .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+      if (uploadError) {
+        setStatusMsg({ type: 'error', text: `Image upload failed: ${uploadError.message}` });
+        setUploading(false);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('portfolio-media')
+        .getPublicUrl(filePath);
+
+      setThumbnailUrl(publicUrl);
       setUploading(false);
-      return;
-    }
+      setStatusMsg({ 
+        type: 'success', 
+        text: `Image uploaded successfully as ${scaleType === 'desktop' ? 'Desktop Landscape (16:9)' : 'Mobile Portrait (9:16)'}!` 
+      });
+    };
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('portfolio-media')
-      .getPublicUrl(filePath);
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      setStatusMsg({ type: 'error', text: 'Failed to read image file. Please choose a valid PNG, JPG, or WebP.' });
+      setUploading(false);
+    };
 
-    setThumbnailUrl(publicUrl);
-    setUploading(false);
-    setStatusMsg({ type: 'success', text: 'Image uploaded to Supabase Storage!' });
+    img.src = objectUrl;
   };
 
   const handleSaveProject = async (e: React.FormEvent) => {
@@ -151,8 +254,6 @@ export const ProjectsManager: React.FC = () => {
       setStatusMsg({ type: 'error', text: 'Please fill in Title, Slug, and Description.' });
       return;
     }
-
-    const tags = tagsInput.split(',').map((t) => t.trim()).filter(Boolean);
 
     if (editingId) {
       // UPDATE Operation
@@ -313,16 +414,17 @@ export const ProjectsManager: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-mono text-[#94949e]">Category</label>
+                <label className="text-xs font-mono text-[#94949e]">Tech Discipline / Category</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as Category)}
                   className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#ff1e27]"
                 >
-                  <option value="Full-Stack">Full-Stack</option>
-                  <option value="Mobile">Mobile</option>
-                  <option value="Tools/Web3">Tools / Web3</option>
-                  <option value="AI/Cloud">AI / Cloud</option>
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -350,18 +452,87 @@ export const ProjectsManager: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-              <div className="space-y-1">
-                <label className="text-xs font-mono text-[#94949e]">Tech Tags (comma separated)</label>
+            {/* Individual Tech Tags Adder */}
+            <div className="space-y-2 p-3.5 rounded-lg bg-[#0d0d10] border border-white/10">
+              <label className="text-xs font-mono text-[#94949e] flex items-center justify-between">
+                <span>Technologies & Stack (Add one at a time)</span>
+                <span className="text-[10px] text-[#ff4d55]">{tags.length} tags added</span>
+              </label>
+
+              {/* Tag Input & Add Button */}
+              <div className="flex gap-2">
                 <input
                   type="text"
-                  value={tagsInput}
-                  onChange={(e) => setTagsInput(e.target.value)}
-                  placeholder="React 19, TypeScript, Supabase"
-                  className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddTag();
+                    }
+                  }}
+                  placeholder="e.g. React 19 (Press Enter to add)"
+                  className="flex-1 bg-[#141419] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
                 />
+                <button
+                  type="button"
+                  onClick={() => handleAddTag()}
+                  className="px-4 py-2 rounded-lg bg-[#1f1f28] hover:bg-[#282836] border border-white/10 text-white text-xs font-mono transition-colors cursor-pointer"
+                >
+                  Add Tag
+                </button>
               </div>
 
+              {/* Tag Chips List */}
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1.5">
+                  {tags.map((t, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#181822] border border-white/15 text-xs font-mono text-white"
+                    >
+                      <span>{t}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(idx)}
+                        className="text-[#94949e] hover:text-[#ff4d55] cursor-pointer"
+                        title="Remove tag"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Quick-Add Popular Presets */}
+              <div className="pt-2 border-t border-white/5 space-y-1">
+                <p className="text-[10px] font-mono text-[#5a5a66] uppercase">Quick Add Common Stacks:</p>
+                <div className="flex flex-wrap gap-1">
+                  {POPULAR_TAG_PRESETS.map((preset) => {
+                    const isAdded = tags.includes(preset);
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => handleAddTag(preset)}
+                        disabled={isAdded}
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+                          isAdded
+                            ? 'bg-white/5 text-[#5a5a66] border border-transparent opacity-40 cursor-not-allowed'
+                            : 'bg-[#141419] border border-white/10 text-[#a1a1aa] hover:text-white hover:border-[#ff1e27]/40'
+                        }`}
+                      >
+                        + {preset}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* External Links */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div className="space-y-1">
                 <label className="text-xs font-mono text-[#94949e]">Live Demo URL</label>
                 <input
@@ -385,30 +556,58 @@ export const ProjectsManager: React.FC = () => {
               </div>
             </div>
 
-            {/* Supabase Storage Media Uploader */}
+            {/* Supabase Storage Media Uploader with Aspect Ratio Enforcement */}
             <div className="p-3.5 rounded-lg bg-[#0d0d10] border border-white/10 space-y-3">
-              <label className="text-xs font-mono text-[#94949e] flex items-center gap-1.5">
-                <Upload className="w-3.5 h-3.5 text-[#ff1e27]" />
-                <span>Upload Screenshot to Supabase Storage (portfolio-media)</span>
-              </label>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <label className="text-xs font-mono text-white flex items-center gap-1.5">
+                  <Upload className="w-3.5 h-3.5 text-[#ff1e27]" />
+                  <span>Upload Media (Windows 16:9 or Mobile 9:16 Scale)</span>
+                </label>
+                <span className="text-[10px] font-mono text-[#94949e]">
+                  Enforces consistent gallery layout
+                </span>
+              </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/png,image/jpeg,image/webp"
                   onChange={handleImageUpload}
                   disabled={uploading}
                   className="text-xs text-[#94949e] file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-mono file:bg-[#1f1f28] file:text-white hover:file:bg-[#282836] cursor-pointer"
                 />
-                {uploading && <span className="text-xs text-[#ff1e27] font-mono">Uploading to bucket...</span>}
+                {uploading && <span className="text-xs text-[#ff1e27] font-mono">Analyzing aspect ratio & uploading...</span>}
               </div>
 
+              {/* Aspect Ratio Validation Status Badge */}
+              {detectedScale && imageMeta && (
+                <div className="flex items-center gap-2 pt-1 text-xs">
+                  {detectedScale === 'desktop' ? (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 font-mono text-[11px]">
+                      <Monitor className="w-3.5 h-3.5" />
+                      <span>Windows / Desktop Scale Verified ({imageMeta.width}x{imageMeta.height}px &bull; {imageMeta.ratio.toFixed(2)}:1)</span>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-950/40 border border-blue-500/30 text-blue-400 font-mono text-[11px]">
+                      <Smartphone className="w-3.5 h-3.5" />
+                      <span>Mobile Portrait Scale Verified ({imageMeta.width}x{imageMeta.height}px &bull; {imageMeta.ratio.toFixed(2)}:1)</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Thumbnail Preview */}
               {thumbnailUrl && (
-                <div className="flex items-center gap-3 pt-1 flex-wrap">
-                  <img src={thumbnailUrl} alt="Thumbnail preview" className="w-16 h-10 object-cover rounded border border-white/20" />
+                <div className="flex items-center gap-3 pt-2 flex-wrap">
+                  <img src={thumbnailUrl} alt="Thumbnail preview" className="w-20 h-14 object-cover rounded border border-white/20" />
                   <span className="text-xs font-mono text-emerald-400 break-all">{thumbnailUrl}</span>
                 </div>
               )}
+
+              <p className="text-[10px] font-mono text-[#5a5a66] leading-relaxed">
+                &bull; Desktop Widescreen: ~16:9 ratio (allowed: 1.35 &ndash; 2.15, e.g. 1920&times;1080)<br />
+                &bull; Mobile Portrait: ~9:16 ratio (allowed: 0.45 &ndash; 0.78, e.g. 1080&times;1920)
+              </p>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
