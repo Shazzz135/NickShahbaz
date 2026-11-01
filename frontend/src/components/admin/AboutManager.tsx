@@ -841,27 +841,20 @@ export const AboutManager: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Fresh bar that just contains the proficiency value */}
-                <div className="pt-1">
-                  <div className="relative w-full h-6 bg-[#16161e] border border-white/10 rounded overflow-hidden flex items-center justify-center select-none group/bar">
-                    <div
-                      className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#e50914] to-[#ff2e38] pointer-events-none transition-all"
-                      style={{ width: `${quickSkillLevel}%` }}
-                    />
-                    <span className="relative z-10 text-[11px] font-mono font-bold text-white tracking-wider pointer-events-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                      {quickSkillLevel}%
-                    </span>
-                    <input
-                      type="range"
-                      min="10"
-                      max="100"
-                      step="1"
-                      value={quickSkillLevel}
-                      onChange={(e) => setQuickSkillLevel(Number(e.target.value))}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20"
-                      title={`Drag to adjust proficiency (${quickSkillLevel}%)`}
-                    />
-                  </div>
+                {/* Live Proficiency Drag on Quick-Add */}
+                <div className="flex items-center gap-3 pt-1">
+                  <label className="text-[11px] font-mono text-[#94949e] shrink-0">
+                    Proficiency: <span className="text-[#ff1e27] font-bold">{quickSkillLevel}%</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="20"
+                    max="100"
+                    value={quickSkillLevel}
+                    onChange={(e) => setQuickSkillLevel(Number(e.target.value))}
+                    className="w-40 sm:w-64 accent-[#e50914] cursor-pointer"
+                    title={`Drag to adjust proficiency (${quickSkillLevel}%)`}
+                  />
                 </div>
               </form>
 
@@ -912,31 +905,21 @@ export const AboutManager: React.FC = () => {
                   </div>
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="space-y-0.5 flex-1 min-w-[160px]">
-                        <label className="text-[10px] font-mono text-[#94949e]">Proficiency</label>
-                        <div className="relative w-full h-6 bg-[#16161e] border border-white/10 rounded overflow-hidden flex items-center justify-center select-none group/bar">
-                          <div
-                            className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#e50914] to-[#ff2e38] pointer-events-none transition-all"
-                            style={{ width: `${newSkillLevel}%` }}
-                          />
-                          <span className="relative z-10 text-[11px] font-mono font-bold text-white tracking-wider pointer-events-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                            {newSkillLevel}%
-                          </span>
-                          <input
-                            type="range"
-                            min="10"
-                            max="100"
-                            step="1"
-                            value={newSkillLevel}
-                            onChange={(e) => setNewSkillLevel(Number(e.target.value))}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20"
-                            title={`Drag to adjust proficiency (${newSkillLevel}%)`}
-                          />
-                        </div>
+                    <div className="flex items-center gap-3">
+                      <div className="space-y-0.5">
+                        <label className="text-[10px] font-mono text-[#94949e]">Proficiency ({newSkillLevel}%)</label>
+                        <input
+                          type="range"
+                          min="20"
+                          max="100"
+                          value={newSkillLevel}
+                          onChange={(e) => setNewSkillLevel(Number(e.target.value))}
+                          className="accent-[#e50914] cursor-pointer w-48"
+                          title={`Drag to adjust proficiency (${newSkillLevel}%)`}
+                        />
                       </div>
 
-                      <label className="flex items-center gap-1.5 text-xs text-[#94949e] cursor-pointer pt-3 shrink-0">
+                      <label className="flex items-center gap-1.5 text-xs text-[#94949e] cursor-pointer pt-3">
                         <input
                           type="checkbox"
                           checked={newSkillFeatured}
@@ -1054,23 +1037,21 @@ export const AboutManager: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Fresh bar that just contains the proficiency value */}
-                      <div className="relative w-full h-6 bg-[#16161e] border border-white/10 rounded overflow-hidden flex items-center justify-center select-none group/bar my-1">
-                        <div
-                          className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-[#e50914] to-[#ff2e38] pointer-events-none transition-all"
-                          style={{ width: `${sk.level}%` }}
-                        />
-                        <span className="relative z-10 text-[11px] font-mono font-bold text-white tracking-wider pointer-events-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                          {sk.level}%
-                        </span>
+                      {/* Proficiency & Range Scroll Bar */}
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex items-center justify-between text-[10px] font-mono">
+                          <span className="text-[#94949e]">Proficiency</span>
+                          <span className="text-[#ff1e27] font-bold">{sk.level}%</span>
+                        </div>
+
                         <input
                           type="range"
-                          min="10"
+                          min="20"
                           max="100"
                           step="1"
                           value={sk.level}
                           onChange={(e) => handleUpdateSkill(sId, { level: Number(e.target.value) })}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20"
+                          className="w-full accent-[#e50914] cursor-pointer"
                           title={`Drag to adjust ${sk.name} proficiency (${sk.level}%)`}
                         />
                       </div>
