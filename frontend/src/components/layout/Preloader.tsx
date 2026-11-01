@@ -8,6 +8,22 @@ interface PreloaderProps {
   bypass?: boolean;
 }
 
+const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+const STORAGE_KEY = 'last_visited_ns_portfolio';
+
+function hasVisitedWithin24Hours(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const lastVisitStr = localStorage.getItem(STORAGE_KEY);
+    if (!lastVisitStr) return false;
+    const lastVisit = parseInt(lastVisitStr, 10);
+    if (isNaN(lastVisit)) return false;
+    return Date.now() - lastVisit < TWENTY_FOUR_HOURS_MS;
+  } catch {
+    return false;
+  }
+}
+
 const TELEMETRY_STAGES = [
   'INITIALIZING SYSTEM CORE...',
   'COMPILING SHADER PIPELINES...',
@@ -18,30 +34,31 @@ const TELEMETRY_STAGES = [
 ];
 
 export const Preloader: React.FC<PreloaderProps> = ({ onComplete, bypass = false }) => {
-  const [progress, setProgress] = useState(bypass ? 100 : 0);
+  const isBypassed = bypass || hasVisitedWithin24Hours();
+
+  const [progress, setProgress] = useState(isBypassed ? 100 : 0);
   const [stageIndex, setStageIndex] = useState(0);
-  const [isReadyToExit, setIsReadyToExit] = useState(bypass);
-  const [isFinished, setIsFinished] = useState(bypass);
+  const [isReadyToExit, setIsReadyToExit] = useState(isBypassed);
+  const [isFinished, setIsFinished] = useState(isBypassed);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const glowFilterId = useId();
 
+  // If already visited within 24 hours or bypassed, complete immediately
   useEffect(() => {
-    if (bypass) {
+    if (isBypassed) {
       onComplete?.();
       return;
     }
 
-    // Check if the user already visited during this browser session
-    const hasVisited = typeof window !== 'undefined' && sessionStorage.getItem('visited_ns_portfolio');
-    const targetDuration = hasVisited ? 600 : 1400; // Snappier on repeat visits, cinematic on first visit
+    const targetDuration = 1200; // Fast and cinematic on initial arrival
     const intervalTime = 30;
     const incrementStep = 100 / (targetDuration / intervalTime);
 
     timerRef.current = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) return 100;
-        const next = Math.min(100, prev + incrementStep * 1.1);
+        const next = Math.min(100, prev + incrementStep * 1.15);
         
         // Update stage based on progress bracket
         const stage = Math.min(
@@ -57,35 +74,23 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete, bypass = false
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [bypass, onComplete]);
+  }, [isBypassed, onComplete]);
 
   // Handle completion side-effects outside of state updater
   useEffect(() => {
-    if (progress >= 100 && !isReadyToExit) {
+    if (progress >= 100 && !isReadyToExit && !isBypassed) {
       if (timerRef.current) clearInterval(timerRef.current);
       const exitTimer = setTimeout(() => {
         setIsReadyToExit(true);
         try {
-          sessionStorage.setItem('visited_ns_portfolio', 'true');
+          localStorage.setItem(STORAGE_KEY, Date.now().toString());
         } catch {
           // Ignore storage errors in private modes
         }
-      }, 200);
+      }, 150);
       return () => clearTimeout(exitTimer);
     }
-  }, [progress, isReadyToExit]);
-
-  // Handle manual skip
-  const handleSkip = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    setProgress(100);
-    setIsReadyToExit(true);
-    try {
-      sessionStorage.setItem('visited_ns_portfolio', 'true');
-    } catch {
-      // Ignore
-    }
-  };
+  }, [progress, isReadyToExit, isBypassed]);
 
   if (isFinished) return null;
 
@@ -104,7 +109,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete, bypass = false
             clipPath: 'polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)',
             opacity: 0.9,
             transition: {
-              duration: 0.75,
+              duration: 0.7,
               ease: [0.76, 0, 0.24, 1], // Custom cubic-bezier for snappy shutter open
             },
           }}
@@ -230,15 +235,9 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete, bypass = false
             </div>
           </div>
 
-          {/* Quick Skip Button for Repeat / Impatient Visitors */}
-          <div className="absolute bottom-6 sm:bottom-10 z-10 flex flex-col items-center gap-2">
-            <button
-              onClick={handleSkip}
-              className="text-[11px] font-mono text-[#5a5a66] hover:text-white transition-colors cursor-pointer px-3 py-1 rounded border border-transparent hover:border-white/10"
-            >
-              [ Press or Click to Skip ]
-            </button>
-            <span className="text-[9px] font-mono text-[#40404a] tracking-widest uppercase">
+          {/* Bottom Branding */}
+          <div className="absolute bottom-6 sm:bottom-10 z-10 flex flex-col items-center">
+            <span className="text-[10px] font-mono text-[#5a5a66] tracking-widest uppercase">
               Nick Shahbaz &bull; Portfolio 2026
             </span>
           </div>

@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { Preloader } from '../components/layout/Preloader';
 
 describe('Preloader', () => {
   beforeEach(() => {
+    localStorage.clear();
     sessionStorage.clear();
     vi.useFakeTimers();
   });
@@ -12,12 +13,11 @@ describe('Preloader', () => {
     vi.useRealTimers();
   });
 
-  it('renders monogram, telemetry indicator and progress initially', () => {
+  it('renders monogram, telemetry indicator and progress initially for a new visitor', () => {
     render(<Preloader />);
 
     expect(screen.getByLabelText(/Nick Shahbaz Monogram/i)).toBeDefined();
     expect(screen.getByText(/System Loading/i)).toBeDefined();
-    expect(screen.getByText(/Press or Click to Skip/i)).toBeDefined();
   });
 
   it('bypasses immediately when bypass prop is true', () => {
@@ -28,21 +28,31 @@ describe('Preloader', () => {
     expect(screen.queryByLabelText(/Nick Shahbaz Monogram/i)).toBeNull();
   });
 
-  it('allows user to skip and trigger completion', () => {
+  it('bypasses immediately on refresh if visited within the last 24 hours', () => {
     const onComplete = vi.fn();
+    // Simulate visit 2 hours ago
+    const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+    localStorage.setItem('last_visited_ns_portfolio', twoHoursAgo.toString());
+
     render(<Preloader onComplete={onComplete} />);
 
-    const skipButton = screen.getByText(/Press or Click to Skip/i);
-    fireEvent.click(skipButton);
-
-    act(() => {
-      vi.advanceTimersByTime(500);
-    });
-
-    expect(sessionStorage.getItem('visited_ns_portfolio')).toBe('true');
+    expect(onComplete).toHaveBeenCalled();
+    expect(screen.queryByLabelText(/Nick Shahbaz Monogram/i)).toBeNull();
   });
 
-  it('progresses to 100% and marks session as visited', () => {
+  it('displays preloader if last visit was more than 24 hours ago', () => {
+    const onComplete = vi.fn();
+    // Simulate visit 25 hours ago
+    const twentyFiveHoursAgo = Date.now() - 25 * 60 * 60 * 1000;
+    localStorage.setItem('last_visited_ns_portfolio', twentyFiveHoursAgo.toString());
+
+    render(<Preloader onComplete={onComplete} />);
+
+    expect(screen.getByLabelText(/Nick Shahbaz Monogram/i)).toBeDefined();
+    expect(screen.getByText(/System Loading/i)).toBeDefined();
+  });
+
+  it('progresses to 100% and stores visit timestamp in localStorage', () => {
     render(<Preloader />);
 
     for (let i = 0; i < 50; i++) {
@@ -55,6 +65,8 @@ describe('Preloader', () => {
       vi.advanceTimersByTime(300);
     });
 
-    expect(sessionStorage.getItem('visited_ns_portfolio')).toBe('true');
+    const storedTime = localStorage.getItem('last_visited_ns_portfolio');
+    expect(storedTime).not.toBeNull();
+    expect(Number(storedTime)).toBeGreaterThan(0);
   });
 });
