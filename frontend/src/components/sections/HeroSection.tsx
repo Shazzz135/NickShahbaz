@@ -22,7 +22,7 @@ interface HeroSectionProps {
   isSceneReady?: boolean;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true }) => {
+export const HeroSection: React.FC<HeroSectionProps> = () => {
   const { scrollTo } = useSmoothScroll();
   const { data: rawHeroData } = useSiteMeta('hero', DEFAULT_HERO_META);
   const hero = { ...DEFAULT_HERO_META, ...rawHeroData } as HeroMetaConfig;
@@ -52,7 +52,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true })
       {/* Top Status & Telemetry Header */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
-        animate={isSceneReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
         className="flex items-center justify-between gap-3 flex-wrap pb-6 sm:pb-8 border-b border-white/10"
       >
@@ -86,7 +86,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true })
         <div className="space-y-4 max-w-4xl">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
-            animate={isSceneReady ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#141419] border border-white/10 text-xs font-mono text-[#ff4d55]"
           >
@@ -97,7 +97,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true })
           {/* High-Impact Typography with Crimson Gradient */}
           <motion.h1
             initial={{ opacity: 0, y: 25 }}
-            animate={isSceneReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 25 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.25 }}
             className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.08]"
           >
@@ -110,7 +110,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true })
           {/* Value Proposition Description */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
-            animate={isSceneReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.35 }}
             className="text-[#94949e] text-base sm:text-xl leading-relaxed max-w-3xl"
           >
@@ -121,7 +121,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true })
         {/* Magnetic CTA Action Group */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={isSceneReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.45 }}
           className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:gap-4 pt-2 w-full sm:w-auto"
         >
@@ -163,7 +163,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true })
         {/* Interactive 3D Foreground Elements (Physics Tech Chips) */}
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
-          animate={isSceneReady ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.55 }}
           className="pt-2 sm:pt-4"
         >
@@ -178,7 +178,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ isSceneReady = true })
       {/* Metrics & Performance Ribbon */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
-        animate={isSceneReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, delay: 0.65 }}
         className="mt-6 pt-6 border-t border-white/10 grid grid-cols-2 md:grid-cols-4 gap-4"
       >

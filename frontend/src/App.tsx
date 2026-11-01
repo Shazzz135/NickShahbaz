@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -9,9 +9,12 @@ import { AboutSection } from './components/sections/AboutSection';
 import { ProjectGallery } from './components/sections/ProjectGallery';
 import { ExperienceTimeline } from './components/sections/ExperienceTimeline';
 
-// Code-split 3D canvas and admin routes so entry bundle stays lightweight and fast
+// Code-split 3D canvas, contact section, and admin routes so entry bundle stays lightweight and fast
 const CanvasBackground = lazy(() =>
   import('./components/3d/CanvasBackground').then((m) => ({ default: m.CanvasBackground }))
+);
+const ContactSection = lazy(() =>
+  import('./components/sections/ContactSection').then((m) => ({ default: m.ContactSection }))
 );
 const AdminLogin = lazy(() =>
   import('./pages/AdminLogin').then((m) => ({ default: m.AdminLogin }))
@@ -21,12 +24,10 @@ const AdminDashboard = lazy(() =>
 );
 
 function PublicPortfolio() {
-  const [isSceneReady, setIsSceneReady] = useState(false);
-
   return (
     <>
       {/* Interactive Cyber-Preloader with Shutter Exit */}
-      <Preloader onComplete={() => setIsSceneReady(true)} />
+      <Preloader />
 
       <SmoothScroll>
         <Suspense fallback={null}>
@@ -34,7 +35,7 @@ function PublicPortfolio() {
         </Suspense>
 
         {/* 1. Dynamic Hero Section with 3D Foreground Elements */}
-        <HeroSection isSceneReady={isSceneReady} />
+        <HeroSection />
 
         {/* 2. About Me, Skills Matrix & Philosophy */}
         <AboutSection />
@@ -44,6 +45,11 @@ function PublicPortfolio() {
 
         {/* 4. Experience & Career Interactive Timeline */}
         <ExperienceTimeline />
+
+        {/* 5. Contact & Collaboration Section */}
+        <Suspense fallback={<div className="w-full min-h-[400px]" />}>
+          <ContactSection />
+        </Suspense>
       </SmoothScroll>
     </>
   );
