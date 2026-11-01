@@ -636,14 +636,10 @@ export const ContactSection: React.FC = () => {
           © {new Date().getFullYear()} Nick Shahbaz. Architected with React, WebGL, Tailwind & Supabase.
         </div>
         <div className="flex items-center gap-4">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            All Systems Operational
-          </span>
-          <span className="text-white/20 hidden sm:inline">•</span>
           <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white/80 font-mono text-[11px]">
             Version 4.0
           </span>
+          <span className="text-white/40 hidden sm:inline">•</span>
           <button
             type="button"
             onClick={handleScrollToTop}

@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { Magnetic } from '../common/Magnetic';
 import { FloatingTechChips } from './FloatingTechChips';
@@ -48,7 +47,7 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
   };
 
   return (
-    <section className="relative z-10 min-h-screen flex flex-col justify-center px-4 sm:px-6 lg:px-12 pt-20 pb-16 max-w-7xl mx-auto">
+    <section className="relative z-10 min-h-screen flex flex-col justify-center px-4 sm:px-6 lg:px-12 pt-16 pb-16 max-w-7xl mx-auto">
       {/* Top Status & Telemetry Header */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
@@ -57,7 +56,6 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
         className="flex items-center justify-between gap-3 flex-wrap pb-6 sm:pb-8 border-b border-white/10"
       >
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <Badge variant="crimson" dot>Nick Shahbaz</Badge>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/30 text-[11px] font-mono text-emerald-400">
             {hero.isAvailable ? (
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />

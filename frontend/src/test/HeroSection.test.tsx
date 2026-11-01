@@ -4,10 +4,9 @@ import { HeroSection } from '../components/sections/HeroSection';
 import { SmoothScrollContext } from '../hooks/useSmoothScroll';
 
 describe('HeroSection', () => {
-  it('renders high-impact headline and identity badges', () => {
+  it('renders high-impact headline and status indicators', () => {
     render(<HeroSection isSceneReady />);
 
-    expect(screen.getByText(/Nick Shahbaz/i)).toBeDefined();
     expect(screen.getByText(/Open for Select Contracts/i)).toBeDefined();
     expect(screen.getByText(/Architecting Next-Gen/i)).toBeDefined();
     expect(screen.getByText(/Applications & 3D Systems/i)).toBeDefined();
