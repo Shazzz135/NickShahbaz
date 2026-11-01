@@ -67,9 +67,9 @@
 - [x] **Issue #11**: [UI] Interactive Loading Screen & Scene Entrance Orchestration
   - [x] Subtask 10.1: Build preloader with asset readiness detection and red progress animation.
   - [x] Subtask 10.2: Orchestrate entrance sequence into the Hero section.
-- [ ] **Issue #12**: [Section] Dynamic Hero Section with 3D Foreground Elements
-  - [ ] Subtask 11.1: Build high-impact hero headline, availability status badge, and magnetic CTAs.
-  - [ ] Subtask 11.2: Build interactive 3D foreground element.
+- [x] **Issue #12**: [Section] Dynamic Hero Section with 3D Foreground Elements
+  - [x] Subtask 11.1: Build high-impact hero headline, availability status badge, and magnetic CTAs.
+  - [x] Subtask 11.2: Build interactive 3D foreground element.
 - [ ] **Issue #13**: [Section] Application Development Project Gallery & Detail Modals
   - [ ] Subtask 12.1: Build bento/grid layout with 3D card tilt and glowing crimson borders.
   - [ ] Subtask 12.2: Build rich project detail modal with video/image previews and tech tags.
