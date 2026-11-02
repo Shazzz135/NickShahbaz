@@ -75,7 +75,8 @@ export default function App() {
             {/* Public Website */}
             <Route path="/" element={<PublicPortfolio />} />
 
-            {/* Admin Login */}
+            {/* Admin Login & Fallbacks */}
+            <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
             <Route path="/admin/login" element={<AdminLogin />} />
 
             {/* Protected Admin Routes */}
