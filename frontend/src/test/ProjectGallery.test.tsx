@@ -56,6 +56,26 @@ describe('ProjectGallery', () => {
     });
   });
 
+  it('opens project detail modal with dual-pane layout displaying image left and all data right', async () => {
+    render(<ProjectGallery />);
+
+    const projectTitle = await screen.findByText(/Enterprise AI Workflow Platform/i);
+    fireEvent.click(projectTitle);
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toBeDefined();
+
+    // Verify left visual frame & scale ratio
+    expect(screen.getByText(/Min ratio: 0.72/i)).toBeDefined();
+
+    // Verify all project details are visible on the right
+    expect(screen.getByText(/Executive Overview/i)).toBeDefined();
+    expect(screen.getByText(/System Architecture Overview/i)).toBeDefined();
+    expect(screen.getByText(/Performance & Key Metrics/i)).toBeDefined();
+    expect(screen.getByText(/Technologies Deployed/i)).toBeDefined();
+    expect(screen.getAllByRole('button', { name: /Launch Live Demo/i })[0]).toBeDefined();
+  });
+
   it('closes modal on Escape key press', async () => {
     render(<ProjectGallery />);
 

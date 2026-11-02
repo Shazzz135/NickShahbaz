@@ -14,6 +14,7 @@ interface AdaptiveProjectImageProps {
   imgClassName?: string;
   onClick?: () => void;
   children?: React.ReactNode;
+  onScaleDetected?: (scale: 'mobile' | 'desktop', ratio: number) => void;
 }
 
 const DEFAULT_RATIO = 16 / 9;
@@ -39,6 +40,7 @@ export const AdaptiveProjectImage: React.FC<AdaptiveProjectImageProps> = ({
   imgClassName = '',
   onClick,
   children,
+  onScaleDetected,
 }) => {
   const [ratio, setRatio] = useState<number>(DEFAULT_RATIO);
   const [failed, setFailed] = useState(false);
@@ -70,7 +72,11 @@ export const AdaptiveProjectImage: React.FC<AdaptiveProjectImageProps> = ({
             decoding="async"
             onLoad={(e) => {
               const { naturalWidth, naturalHeight } = e.currentTarget;
-              if (naturalWidth > 0 && naturalHeight > 0) setRatio(naturalWidth / naturalHeight);
+              if (naturalWidth > 0 && naturalHeight > 0) {
+                const r = naturalWidth / naturalHeight;
+                setRatio(r);
+                onScaleDetected?.(r < 1.0 ? 'mobile' : 'desktop', r);
+              }
             }}
             onError={() => setFailed(true)}
             className={`relative w-full h-full object-contain ${imgClassName}`}
