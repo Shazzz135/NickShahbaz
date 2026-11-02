@@ -208,8 +208,7 @@ export function normalizeSpelling(text: string): string {
     .replace(/Leading projects and discuss planning/gi, 'Leading projects and discussing planning')
     .replace(/Less is More!/g, 'Less is more!')
     .replace(/Both Owners retrieve/g, 'Both owners retrieve')
-    .replace(/branches\/locations requests/g, 'branch/location requests')
-    .replace(/Looking through project submissions for discrepancies\./g, 'Reviewing project submissions for architectural integrity and discrepancies.');
+    .replace(/branches\/locations requests/g, 'branch/location requests');
 }
 
 /**

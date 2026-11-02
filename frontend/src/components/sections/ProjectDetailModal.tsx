@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import type { ProjectRow } from '../../lib/mockData';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
+import { AdaptiveProjectImage } from '../common/AdaptiveProjectImage';
 import { 
   X, 
   ExternalLink, 
@@ -90,13 +91,13 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
           <div className="overflow-y-auto p-4 sm:p-6 space-y-6">
             {/* Visual Thumbnail / Banner */}
             {project.thumbnail_url ? (
-              <div className="relative rounded-xl overflow-hidden border border-white/10 aspect-video w-full max-h-72 bg-[#141419]">
-                <img
+              <div className="mx-auto w-full max-w-full" style={{ maxWidth: 'min(100%, 60vh * 16 / 9)' }}>
+                <AdaptiveProjectImage
                   src={project.thumbnail_url}
                   alt={project.title}
-                  className="w-full h-full object-cover"
+                  minRatio={9 / 19.5}
+                  className="rounded-xl border border-white/10 max-h-[60vh] mx-auto"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0d0d10] via-transparent to-transparent opacity-80" />
               </div>
             ) : (
               <div className="relative rounded-xl border border-white/10 aspect-video w-full max-h-56 bg-[#141419] flex items-center justify-center text-[#5a5a66]">

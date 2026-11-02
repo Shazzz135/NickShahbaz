@@ -6,6 +6,7 @@ import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { Card } from '../common/Card';
 import { ProjectDetailModal } from './ProjectDetailModal';
+import { AdaptiveProjectImage } from '../common/AdaptiveProjectImage';
 import { 
   Layers, 
   ExternalLink, 
@@ -88,40 +89,30 @@ export const ProjectGallery: React.FC = () => {
           <p className="text-xs text-[#94949e]">Select another filter or check back soon.</p>
         </div>
       ) : (
-        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-12">
+        // Masonry columns: portrait (mobile) and landscape (desktop) cards have different
+        // heights, so columns let every card keep its natural shape while packing tightly.
+        <div className="columns-1 md:columns-2 lg:columns-3 gap-6 pt-12">
           <AnimatePresence>
-            {filteredProjects.map((project, idx) => {
-              // Bento layout: first featured item can take 2 columns on large screens
-              const isHeroBento = project.featured && idx === 0;
-
+            {filteredProjects.map((project) => {
               return (
                 <motion.div
                   key={project.id}
-                  layout
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={{ duration: 0.4 }}
-                  className={isHeroBento ? 'md:col-span-2' : ''}
+                  className="break-inside-avoid mb-6"
                 >
-                  <Card className="h-full flex flex-col justify-between group overflow-hidden bg-[#0c0c0f] border-white/10 hover:border-[#e50914]/50 p-5 sm:p-6 transition-all duration-300">
+                  <Card className="flex flex-col justify-between group overflow-hidden bg-[#0c0c0f] border-white/10 hover:border-[#e50914]/50 p-5 sm:p-6 transition-all duration-300">
                     <div className="space-y-4">
                       {/* Card Thumbnail / Preview Window */}
-                      <div
+                      <AdaptiveProjectImage
+                        src={project.thumbnail_url}
+                        alt={project.title}
                         onClick={() => setActiveModalProject(project)}
-                        className="relative rounded-xl overflow-hidden aspect-video bg-[#141419] border border-white/10 cursor-pointer group/img"
+                        className="rounded-xl border border-white/10 cursor-pointer group/img"
+                        imgClassName="transition-transform duration-500 group-hover/img:scale-105"
                       >
-                        {project.thumbnail_url ? (
-                          <img
-                            src={project.thumbnail_url}
-                            alt={project.title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[#5a5a66] bg-grid-pattern">
-                            <Layers className="w-10 h-10" />
-                          </div>
-                        )}
 
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0f] via-transparent to-transparent opacity-60" />
 
@@ -138,7 +129,7 @@ export const ProjectGallery: React.FC = () => {
                           <Badge variant="subtle">{project.category}</Badge>
                           {project.featured && <Badge variant="crimson" dot>Featured</Badge>}
                         </div>
-                      </div>
+                      </AdaptiveProjectImage>
 
                       {/* Project Meta & Headlines */}
                       <div className="space-y-1.5">
@@ -223,7 +214,7 @@ export const ProjectGallery: React.FC = () => {
               );
             })}
           </AnimatePresence>
-        </motion.div>
+        </div>
       )}
 
       {/* Project Detail Modal */}
