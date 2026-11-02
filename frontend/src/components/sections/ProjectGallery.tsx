@@ -16,27 +16,31 @@ import {
   Maximize2 
 } from 'lucide-react';
 
-const CATEGORIES = [
+const BASE_CATEGORIES = [
   'All',
   'Full-Stack',
   'Mobile',
   'AI/Cloud',
   'Tools/Web3',
-  'DevOps & Systems',
-  '3D Graphics & Games',
-  'API & Microservices',
-] as const;
-type Category = (typeof CATEGORIES)[number];
+];
 
 export const ProjectGallery: React.FC = () => {
   const { projects, loading } = useProjects();
-  const [selectedCategory, setSelectedCategory] = useState<Category>('All');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [activeModalProject, setActiveModalProject] = useState<ProjectRow | null>(null);
+
+  // Dynamic category tabs: always includes 'All' and baseline tabs, plus any active custom categories from projects
+  const categoryTabs = useMemo(() => {
+    const customCats = projects
+      .map((p) => p.category)
+      .filter((c): c is string => Boolean(c) && !BASE_CATEGORIES.includes(c));
+    return Array.from(new Set([...BASE_CATEGORIES, ...customCats]));
+  }, [projects]);
 
   // Filter projects by category
   const filteredProjects = useMemo(() => {
     if (selectedCategory === 'All') return projects;
-    return projects.filter((p) => p.category === selectedCategory);
+    return projects.filter((p) => p.category.toLowerCase() === selectedCategory.toLowerCase());
   }, [projects, selectedCategory]);
 
   return (
@@ -59,9 +63,9 @@ export const ProjectGallery: React.FC = () => {
 
         {/* Category Filter Pills */}
         <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((cat) => {
-            const count = cat === 'All' ? projects.length : projects.filter((p) => p.category === cat).length;
-            const isSelected = selectedCategory === cat;
+          {categoryTabs.map((cat) => {
+            const count = cat === 'All' ? projects.length : projects.filter((p) => p.category.toLowerCase() === cat.toLowerCase()).length;
+            const isSelected = selectedCategory.toLowerCase() === cat.toLowerCase();
 
             return (
               <button
@@ -123,7 +127,6 @@ export const ProjectGallery: React.FC = () => {
                         className="rounded-xl border border-white/10 cursor-pointer group/img"
                         imgClassName="transition-transform duration-500 group-hover/img:scale-105"
                       >
-
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0f] via-transparent to-transparent opacity-60" />
 
                         {/* Hover Overlay with Inspect Icon */}

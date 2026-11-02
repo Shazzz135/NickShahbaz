@@ -21,7 +21,7 @@ import {
 
 type Project = Database['public']['Tables']['projects']['Row'];
 
-const CATEGORIES = [
+const SUGGESTED_CATEGORIES = [
   'Full-Stack',
   'Mobile',
   'AI/Cloud',
@@ -29,14 +29,36 @@ const CATEGORIES = [
   'DevOps & Systems',
   '3D Graphics & Games',
   'API & Microservices',
-] as const;
-type Category = (typeof CATEGORIES)[number];
+];
 
-const BASE_CATEGORY_FALLBACK: Record<string, string> = {
-  'DevOps & Systems': 'Tools/Web3',
-  '3D Graphics & Games': 'Full-Stack',
-  'API & Microservices': 'Full-Stack',
-};
+const VALID_DB_CATEGORIES = ['Full-Stack', 'Mobile', 'Tools/Web3', 'AI/Cloud'] as const;
+
+function getDbCategoryFallback(cat: string): string {
+  const match = VALID_DB_CATEGORIES.find(
+    (c) => c.toLowerCase() === cat.trim().toLowerCase()
+  );
+  if (match) return match;
+
+  const lower = cat.toLowerCase();
+  if (lower.includes('mobile') || lower.includes('ios') || lower.includes('android') || lower.includes('swift')) {
+    return 'Mobile';
+  }
+  if (lower.includes('ai') || lower.includes('cloud') || lower.includes('ml') || lower.includes('model')) {
+    return 'AI/Cloud';
+  }
+  if (lower.includes('tool') || lower.includes('web3') || lower.includes('devops') || lower.includes('infra') || lower.includes('system') || lower.includes('crypto')) {
+    return 'Tools/Web3';
+  }
+  return 'Full-Stack';
+}
+
+function resolveProjectDisplay(project: Project): Project {
+  const customCat = (project.metrics as Record<string, unknown> | null)?.display_category;
+  if (typeof customCat === 'string' && customCat.trim()) {
+    return { ...project, category: customCat.trim() };
+  }
+  return project;
+}
 
 const POPULAR_TAG_PRESETS = [
   'Vite',
@@ -77,7 +99,7 @@ export const ProjectsManager: React.FC = () => {
   const [slug, setSlug] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<Category>('Full-Stack');
+  const [category, setCategory] = useState<string>('Full-Stack');
   
   // Tech Tags List State
   const [tags, setTags] = useState<string[]>([]);
@@ -102,7 +124,7 @@ export const ProjectsManager: React.FC = () => {
     if (error) {
       setStatusMsg({ type: 'error', text: `Fetch failed: ${error.message}` });
     } else if (data) {
-      setProjects(data);
+      setProjects(data.map(resolveProjectDisplay));
     }
     setLoading(false);
   };
@@ -120,7 +142,7 @@ export const ProjectsManager: React.FC = () => {
       if (error) {
         setStatusMsg({ type: 'error', text: `Fetch failed: ${error.message}` });
       } else if (data) {
-        setProjects(data);
+        setProjects(data.map(resolveProjectDisplay));
       }
       setLoading(false);
     }
@@ -156,18 +178,19 @@ export const ProjectsManager: React.FC = () => {
   };
 
   const handleOpenEdit = (project: Project) => {
-    setEditingId(project.id);
-    setTitle(project.title);
-    setSlug(project.slug);
-    setSubtitle(project.subtitle || '');
-    setDescription(project.description);
-    setCategory((CATEGORIES.includes(project.category as Category) ? project.category : 'Full-Stack') as Category);
-    setTags(project.tags || []);
+    const resolved = resolveProjectDisplay(project);
+    setEditingId(resolved.id);
+    setTitle(resolved.title);
+    setSlug(resolved.slug);
+    setSubtitle(resolved.subtitle || '');
+    setDescription(resolved.description);
+    setCategory(resolved.category || 'Full-Stack');
+    setTags(resolved.tags || []);
     setTagInput('');
-    setLiveUrl(project.live_url || '');
-    setGithubUrl(project.github_url || '');
-    setThumbnailUrl(project.thumbnail_url || '');
-    setFeatured(project.featured);
+    setLiveUrl(resolved.live_url || '');
+    setGithubUrl(resolved.github_url || '');
+    setThumbnailUrl(resolved.thumbnail_url || '');
+    setFeatured(resolved.featured);
     setDetectedScale(null);
     setImageMeta(null);
     setIsFormOpen(true);
@@ -253,8 +276,16 @@ export const ProjectsManager: React.FC = () => {
       return;
     }
 
+    const trimmedCategory = category.trim() || 'Full-Stack';
+    const currentProject = editingId ? projects.find((p) => p.id === editingId) : null;
+    const existingMetrics = (currentProject?.metrics as Record<string, unknown>) || {};
+    const updatedMetrics = {
+      ...existingMetrics,
+      display_category: trimmedCategory,
+    };
+
     if (editingId) {
-      // UPDATE Operation
+      // UPDATE Operation: attempt direct update with user-specified category text
       let { error } = await supabase
         .from('projects')
         .update({
@@ -262,20 +293,21 @@ export const ProjectsManager: React.FC = () => {
           slug,
           subtitle: subtitle || null,
           description,
-          category,
+          category: trimmedCategory,
           tags,
           featured,
           thumbnail_url: thumbnailUrl || null,
           live_url: liveUrl || null,
           github_url: githubUrl || null,
+          metrics: updatedMetrics,
           updated_at: new Date().toISOString(),
         })
         .eq('id', editingId);
 
-      // Gracefully retry with database-safe base category fallback if check constraint is active
+      // If Postgres check constraint projects_category_check rejects the custom category,
+      // store the exact display_category in metrics JSONB and fallback the DB column to satisfy constraint
       if (error && error.message.includes('projects_category_check')) {
-        const fallback = BASE_CATEGORY_FALLBACK[category] || 'Full-Stack';
-        const mergedTags = tags.includes(category) ? tags : [...tags, category];
+        const fallback = getDbCategoryFallback(trimmedCategory);
         const retry = await supabase
           .from('projects')
           .update({
@@ -284,11 +316,12 @@ export const ProjectsManager: React.FC = () => {
             subtitle: subtitle || null,
             description,
             category: fallback,
-            tags: mergedTags,
+            tags,
             featured,
             thumbnail_url: thumbnailUrl || null,
             live_url: liveUrl || null,
             github_url: githubUrl || null,
+            metrics: updatedMetrics,
             updated_at: new Date().toISOString(),
           })
           .eq('id', editingId);
@@ -298,33 +331,34 @@ export const ProjectsManager: React.FC = () => {
       if (error) {
         setStatusMsg({ type: 'error', text: `Update failed: ${error.message}` });
       } else {
-        setStatusMsg({ type: 'success', text: `Project "${title}" updated successfully!` });
+        setStatusMsg({ type: 'success', text: `Project "${title}" updated successfully with category "${trimmedCategory}"!` });
         setIsFormOpen(false);
         setEditingId(null);
         fetchProjects();
       }
     } else {
-      // CREATE Operation
+      // CREATE Operation: attempt direct insert with user-specified category text
       let { error } = await supabase.from('projects').insert([
         {
           title,
           slug,
           subtitle: subtitle || null,
           description,
-          category,
+          category: trimmedCategory,
           tags,
           featured,
           thumbnail_url: thumbnailUrl || null,
           live_url: liveUrl || null,
           github_url: githubUrl || null,
+          metrics: updatedMetrics,
           sort_order: projects.length + 1,
         },
       ]);
 
-      // Gracefully retry with database-safe base category fallback if check constraint is active
+      // If Postgres check constraint projects_category_check rejects the custom category,
+      // store exact display_category in metrics JSONB and fallback DB column to satisfy constraint
       if (error && error.message.includes('projects_category_check')) {
-        const fallback = BASE_CATEGORY_FALLBACK[category] || 'Full-Stack';
-        const mergedTags = tags.includes(category) ? tags : [...tags, category];
+        const fallback = getDbCategoryFallback(trimmedCategory);
         const retry = await supabase.from('projects').insert([
           {
             title,
@@ -332,11 +366,12 @@ export const ProjectsManager: React.FC = () => {
             subtitle: subtitle || null,
             description,
             category: fallback,
-            tags: mergedTags,
+            tags,
             featured,
             thumbnail_url: thumbnailUrl || null,
             live_url: liveUrl || null,
             github_url: githubUrl || null,
+            metrics: updatedMetrics,
             sort_order: projects.length + 1,
           },
         ]);
@@ -346,7 +381,7 @@ export const ProjectsManager: React.FC = () => {
       if (error) {
         setStatusMsg({ type: 'error', text: `Failed to create: ${error.message}` });
       } else {
-        setStatusMsg({ type: 'success', text: `Project "${title}" created successfully!` });
+        setStatusMsg({ type: 'success', text: `Project "${title}" created successfully with category "${trimmedCategory}"!` });
         setIsFormOpen(false);
         fetchProjects();
       }
@@ -457,19 +492,36 @@ export const ProjectsManager: React.FC = () => {
                 />
               </div>
 
+              {/* Text Box for Category instead of Dropdown */}
               <div className="space-y-1">
-                <label className="text-xs font-mono text-[#94949e]">Tech Discipline / Category</label>
-                <select
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-mono text-[#94949e]">Tech Discipline / Category *</label>
+                  <span className="text-[10px] text-[#7e7e8c] font-mono">Custom text category</span>
+                </div>
+                <input
+                  type="text"
+                  required
                   value={category}
-                  onChange={(e) => setCategory(e.target.value as Category)}
-                  className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#ff1e27]"
-                >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder="e.g. Full-Stack, Mobile, 3D Graphics & Games..."
+                  className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
+                />
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {SUGGESTED_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setCategory(cat)}
+                      className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer border ${
+                        category.toLowerCase() === cat.toLowerCase()
+                          ? 'bg-[#ff1e27]/20 border-[#ff1e27] text-white'
+                          : 'bg-[#181822] border-white/10 text-[#94949e] hover:text-white'
+                      }`}
+                    >
                       {cat}
-                    </option>
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
             </div>
 
