@@ -52,6 +52,15 @@ function getDbCategoryFallback(cat: string): string {
   return 'Full-Stack';
 }
 
+
+function sortFeaturedProjectsFirst(items: Project[]): Project[] {
+  return [...items].sort((a, b) => {
+    if (a.featured && !b.featured) return -1;
+    if (!a.featured && b.featured) return 1;
+    return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+  });
+}
+
 function resolveProjectDisplay(project: Project): Project {
   const customCat = (project.metrics as Record<string, unknown> | null)?.display_category;
   if (typeof customCat === 'string' && customCat.trim()) {
@@ -124,7 +133,7 @@ export const ProjectsManager: React.FC = () => {
     if (error) {
       setStatusMsg({ type: 'error', text: `Fetch failed: ${error.message}` });
     } else if (data) {
-      setProjects(data.map(resolveProjectDisplay));
+      setProjects(sortFeaturedProjectsFirst(data.map(resolveProjectDisplay)));
     }
     setLoading(false);
   };
@@ -142,7 +151,7 @@ export const ProjectsManager: React.FC = () => {
       if (error) {
         setStatusMsg({ type: 'error', text: `Fetch failed: ${error.message}` });
       } else if (data) {
-        setProjects(data.map(resolveProjectDisplay));
+        setProjects(sortFeaturedProjectsFirst(data.map(resolveProjectDisplay)));
       }
       setLoading(false);
     }

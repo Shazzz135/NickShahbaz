@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
@@ -22,10 +22,19 @@ export const AboutSection: React.FC = () => {
   const { aboutMeta, loading } = useAboutMeta();
   const [selectedCategory, setSelectedCategory] = useState<SkillCategory | 'All'>('All');
 
-  const filteredSkills = aboutMeta.skills.filter((s: SkillItem) => {
-    if (selectedCategory === 'All') return true;
-    return s.category === selectedCategory;
-  });
+  // Starred / featured skills are sorted first, then by proficiency level
+  const filteredSkills = useMemo(() => {
+    return aboutMeta.skills
+      .filter((s: SkillItem) => {
+        if (selectedCategory === 'All') return true;
+        return s.category === selectedCategory;
+      })
+      .sort((a, b) => {
+        if (a.featured && !b.featured) return -1;
+        if (!a.featured && b.featured) return 1;
+        return (b.level ?? 0) - (a.level ?? 0);
+      });
+  }, [aboutMeta.skills, selectedCategory]);
 
   return (
     <section
@@ -245,7 +254,7 @@ export const AboutSection: React.FC = () => {
               </div>
             </div>
 
-            {/* Skills Grid */}
+            {/* Skills Grid: Starred/Featured skills display first */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
               <AnimatePresence mode="popLayout">
                 {filteredSkills.map((skill: SkillItem, idx: number) => (

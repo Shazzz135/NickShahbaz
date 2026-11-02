@@ -393,10 +393,16 @@ export const AboutManager: React.FC = () => {
     setHasUnsavedChanges(true);
   };
 
-  const filteredSkills = config.skills.filter((s) => {
-    if (selectedSkillCategory === 'All') return true;
-    return s.category === selectedSkillCategory;
-  });
+  const filteredSkills = config.skills
+    .filter((s) => {
+      if (selectedSkillCategory === 'All') return true;
+      return s.category === selectedSkillCategory;
+    })
+    .sort((a, b) => {
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+      return (b.level ?? 0) - (a.level ?? 0);
+    });
 
   return (
     <div className="space-y-6">

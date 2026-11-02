@@ -157,7 +157,6 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
         >
           <div className="flex items-center justify-between pb-2 text-xs font-mono text-[#94949e]">
             <span className="uppercase tracking-widest text-[10px] text-[#ff4d55]">Core Engineering Ecosystem</span>
-            <span className="text-[10px] hidden sm:inline-block">Hover / Move cursor to interact</span>
           </div>
           <FloatingTechChips />
         </motion.div>

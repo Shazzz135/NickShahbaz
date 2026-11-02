@@ -11,7 +11,7 @@ interface TechChip {
 }
 
 const TECH_STACK: TechChip[] = [
-  { id: 'react', name: 'React 19 & Next.js', role: 'Full-Stack UI', icon: <Layers className="w-4 h-4" />, accent: '#ff1e27' },
+  { id: 'react', name: 'React & Node.js', role: 'Full-Stack UI', icon: <Layers className="w-4 h-4" />, accent: '#ff1e27' },
   { id: 'ts', name: 'TypeScript', role: 'Strict Type-Safety', icon: <Code2 className="w-4 h-4" />, accent: '#ffffff' },
   { id: 'three', name: 'Three.js / WebGL', role: '3D GPU Shaders', icon: <Sparkles className="w-4 h-4" />, accent: '#e50914' },
   { id: 'docker', name: 'Docker & Cloud', role: 'Isolated Containers', icon: <Cpu className="w-4 h-4" />, accent: '#ff4d55' },

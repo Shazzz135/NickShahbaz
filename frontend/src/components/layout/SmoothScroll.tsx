@@ -52,9 +52,18 @@ export const SmoothScroll: React.FC<SmoothScrollProps> = ({
 
     rafHandleRef.current = requestAnimationFrame(raf);
 
-    // Sync scroll events to window so external motion and window scroll listeners stay in lockstep
+    // Sync scroll events to window with reentrancy lock to prevent RangeError recursive loops
+    let isDispatching = false;
     lenis.on('scroll', () => {
-      window.dispatchEvent(new Event('scroll'));
+      if (isDispatching) return;
+      isDispatching = true;
+      try {
+        window.dispatchEvent(new Event('scroll'));
+      } catch {
+        // Prevent unhandled errors from breaking animation loop
+      } finally {
+        isDispatching = false;
+      }
     });
 
     return () => {

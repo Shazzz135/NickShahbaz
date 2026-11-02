@@ -15,7 +15,7 @@ describe('HeroSection', () => {
   it('renders interactive tech chips', () => {
     render(<HeroSection isSceneReady />);
 
-    expect(screen.getByText(/React 19 & Next.js/i)).toBeDefined();
+    expect(screen.getByText(/React & Node\.js/i)).toBeDefined();
     expect(screen.getByText(/TypeScript/i)).toBeDefined();
     expect(screen.getByText(/Three.js \/ WebGL/i)).toBeDefined();
     expect(screen.getByText(/Docker & Cloud/i)).toBeDefined();

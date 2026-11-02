@@ -137,10 +137,18 @@ export const ProjectGallery: React.FC = () => {
     return Array.from(new Set([...BASE_CATEGORIES, ...customCats]));
   }, [projects]);
 
-  // Filter projects by category
+  // Filter projects by category and ensure featured / starred projects sort first
   const filteredProjects = useMemo(() => {
-    if (selectedCategory === 'All') return projects;
-    return projects.filter((p) => p.category.toLowerCase() === selectedCategory.toLowerCase());
+    const list = selectedCategory === 'All'
+      ? projects
+      : projects.filter((p) => p.category.toLowerCase() === selectedCategory.toLowerCase());
+
+    return [...list].sort((a, b) => {
+      // Featured / starred projects display first
+      if (a.featured && !b.featured) return -1;
+      if (!a.featured && b.featured) return 1;
+      return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+    });
   }, [projects, selectedCategory]);
 
   const handleScaleDetected = (projectId: string, scale: 'mobile' | 'desktop') => {
