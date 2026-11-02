@@ -1,8 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../types/database.types';
 import { Badge } from '../common/Badge';
-import { sortMilestonesReverseChronological } from '../../lib/timelineUtils';
+import { 
+  sortMilestonesReverseChronological, 
+  extractMilestoneType, 
+  cleanHighlights, 
+  deduplicateMilestones,
+  type MilestoneCategoryType 
+} from '../../lib/timelineUtils';
 import { 
   Plus, 
   Trash2, 
@@ -12,7 +18,7 @@ import {
   Briefcase, 
   GraduationCap,
   Award,
-  Trophy,
+  Trophy, 
   Calendar, 
   MapPin, 
   X,
@@ -21,11 +27,12 @@ import {
 } from 'lucide-react';
 
 type Experience = Database['public']['Tables']['experiences']['Row'];
-type MilestoneType = 'experience' | 'education' | 'certification' | 'event';
+type MilestoneType = MilestoneCategoryType;
 
 export const ExperienceManager: React.FC = () => {
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -54,7 +61,7 @@ export const ExperienceManager: React.FC = () => {
     if (error) {
       setStatusMsg({ type: 'error', text: `Fetch failed: ${error.message}` });
     } else if (data) {
-      setExperiences(sortMilestonesReverseChronological(data));
+      setExperiences(sortMilestonesReverseChronological(deduplicateMilestones(data)));
     }
     setLoading(false);
   };
@@ -72,7 +79,7 @@ export const ExperienceManager: React.FC = () => {
       if (error) {
         setStatusMsg({ type: 'error', text: `Fetch failed: ${error.message}` });
       } else if (data) {
-        setExperiences(sortMilestonesReverseChronological(data));
+        setExperiences(sortMilestonesReverseChronological(deduplicateMilestones(data)));
       }
       setLoading(false);
     }
@@ -100,7 +107,7 @@ export const ExperienceManager: React.FC = () => {
 
   const handleOpenEdit = (exp: Experience) => {
     setEditingId(exp.id);
-    const normalizedType = ((exp.milestone_type as string) === 'work' ? 'experience' : exp.milestone_type) as MilestoneType || 'experience';
+    const normalizedType = extractMilestoneType(exp);
     setMilestoneType(normalizedType);
     setRole(exp.role);
     setCompany(exp.company);
@@ -108,7 +115,7 @@ export const ExperienceManager: React.FC = () => {
     setLocation(exp.location || '');
     setPeriod(exp.period);
     setIsCurrent(exp.is_current);
-    setHighlights(Array.isArray(exp.highlights) ? exp.highlights : []);
+    setHighlights(cleanHighlights(exp.highlights));
     setDeliverableInput('');
     setTechStack(exp.tech_stack || []);
     setTagInput('');
@@ -151,98 +158,109 @@ export const ExperienceManager: React.FC = () => {
 
   const handleSaveExperience = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     if (!role || !company || !period) {
       setStatusMsg({ type: 'error', text: 'Please fill in Title/Role, Organization/Company, and Period.' });
       return;
     }
 
-    // Merge any pending sentence left in deliverableInput
-    const finalHighlights = [...highlights];
-    if (deliverableInput.trim()) {
-      finalHighlights.push(deliverableInput.trim());
-    }
+    setIsSubmitting(true);
 
-    // Merge any pending tag left in tagInput
-    const finalTech = [...techStack];
-    if (tagInput.trim() && !finalTech.includes(tagInput.trim())) {
-      finalTech.push(tagInput.trim());
-    }
+    try {
+      // Merge any pending sentence left in deliverableInput
+      const rawHighlights = cleanHighlights(highlights);
+      if (deliverableInput.trim()) {
+        rawHighlights.push(deliverableInput.trim());
+      }
 
-    const payloadWithMilestone = {
-      milestone_type: milestoneType,
-      role,
-      company,
-      company_url: companyUrl || null,
-      location: location || null,
-      period,
-      is_current: isCurrent,
-      highlights: finalHighlights,
-      tech_stack: finalTech,
-    };
+      // Merge any pending tag left in tagInput
+      const finalTech = [...techStack];
+      if (tagInput.trim() && !finalTech.includes(tagInput.trim())) {
+        finalTech.push(tagInput.trim());
+      }
 
-    const payloadWithoutMilestone = {
-      role,
-      company,
-      company_url: companyUrl || null,
-      location: location || null,
-      period,
-      is_current: isCurrent,
-      highlights: finalHighlights,
-      tech_stack: finalTech,
-    };
+      // Embed metadata tag so milestone category is 100% preserved even if Supabase column milestone_type is missing
+      const finalHighlights = [...rawHighlights, `__type:${milestoneType}`];
 
-    if (editingId) {
-      // UPDATE Operation
-      let { error } = await supabase
-        .from('experiences')
-        .update(payloadWithMilestone)
-        .eq('id', editingId);
+      const payloadWithMilestone = {
+        milestone_type: milestoneType,
+        role,
+        company,
+        company_url: companyUrl || null,
+        location: location || null,
+        period,
+        is_current: isCurrent,
+        highlights: finalHighlights,
+        tech_stack: finalTech,
+      };
 
-      // If remote Supabase schema cache does not have milestone_type column yet, gracefully retry without it
-      if (error && error.message.includes('milestone_type')) {
-        const retry = await supabase
+      const payloadWithoutMilestone = {
+        role,
+        company,
+        company_url: companyUrl || null,
+        location: location || null,
+        period,
+        is_current: isCurrent,
+        highlights: finalHighlights,
+        tech_stack: finalTech,
+      };
+
+      if (editingId) {
+        // UPDATE Operation
+        let { error } = await supabase
           .from('experiences')
-          .update(payloadWithoutMilestone)
+          .update(payloadWithMilestone)
           .eq('id', editingId);
-        error = retry.error;
-      }
 
-      if (error) {
-        setStatusMsg({ type: 'error', text: `Update failed: ${error.message}` });
+        // If remote Supabase schema cache does not have milestone_type column yet, gracefully retry without it
+        if (error && error.message.includes('milestone_type')) {
+          const retry = await supabase
+            .from('experiences')
+            .update(payloadWithoutMilestone)
+            .eq('id', editingId);
+          error = retry.error;
+        }
+
+        if (error) {
+          setStatusMsg({ type: 'error', text: `Update failed: ${error.message}` });
+        } else {
+          setStatusMsg({ type: 'success', text: `Milestone "${role} at ${company}" updated successfully!` });
+          setIsFormOpen(false);
+          setEditingId(null);
+          await fetchExperiences();
+        }
       } else {
-        setStatusMsg({ type: 'success', text: `Milestone "${role} at ${company}" updated successfully!` });
-        setIsFormOpen(false);
-        setEditingId(null);
-        fetchExperiences();
-      }
-    } else {
-      // CREATE Operation
-      let { error } = await supabase.from('experiences').insert([
-        {
-          ...payloadWithMilestone,
-          sort_order: experiences.length + 1,
-        },
-      ]);
-
-      // If remote Supabase schema cache does not have milestone_type column yet, gracefully retry without it
-      if (error && error.message.includes('milestone_type')) {
-        const retry = await supabase.from('experiences').insert([
+        // CREATE Operation
+        let { error } = await supabase.from('experiences').insert([
           {
-            ...payloadWithoutMilestone,
+            ...payloadWithMilestone,
             sort_order: experiences.length + 1,
           },
         ]);
-        error = retry.error;
-      }
 
-      if (error) {
-        setStatusMsg({ type: 'error', text: `Failed to create: ${error.message}` });
-      } else {
-        setStatusMsg({ type: 'success', text: `Milestone "${role} at ${company}" added to timeline!` });
-        setIsFormOpen(false);
-        setEditingId(null);
-        fetchExperiences();
+        // If remote Supabase schema cache does not have milestone_type column yet, gracefully retry without it
+        if (error && error.message.includes('milestone_type')) {
+          const retry = await supabase.from('experiences').insert([
+            {
+              ...payloadWithoutMilestone,
+              sort_order: experiences.length + 1,
+            },
+          ]);
+          error = retry.error;
+        }
+
+        if (error) {
+          setStatusMsg({ type: 'error', text: `Failed to create: ${error.message}` });
+        } else {
+          setStatusMsg({ type: 'success', text: `Milestone "${role} at ${company}" added to timeline!` });
+          setIsFormOpen(false);
+          setEditingId(null);
+          await fetchExperiences();
+        }
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -260,20 +278,21 @@ export const ExperienceManager: React.FC = () => {
     }
   };
 
-  const getNormalizedType = (type?: string): MilestoneType => {
-    if (type === 'work' || !type) return 'experience';
-    return type as MilestoneType;
-  };
+  const uniqueExperiences = useMemo(() => {
+    return deduplicateMilestones(experiences);
+  }, [experiences]);
 
-  const filteredExperiences = experiences.filter((exp) => {
-    if (activeTab === 'all') return true;
-    return getNormalizedType(exp.milestone_type) === activeTab;
-  });
+  const filteredExperiences = useMemo(() => {
+    return uniqueExperiences.filter((exp) => {
+      if (activeTab === 'all') return true;
+      return extractMilestoneType(exp) === activeTab;
+    });
+  }, [uniqueExperiences, activeTab]);
 
-  const expCount = experiences.filter((e) => getNormalizedType(e.milestone_type) === 'experience').length;
-  const eduCount = experiences.filter((e) => getNormalizedType(e.milestone_type) === 'education').length;
-  const certCount = experiences.filter((e) => getNormalizedType(e.milestone_type) === 'certification').length;
-  const eventCount = experiences.filter((e) => getNormalizedType(e.milestone_type) === 'event').length;
+  const expCount = uniqueExperiences.filter((e) => extractMilestoneType(e) === 'experience').length;
+  const eduCount = uniqueExperiences.filter((e) => extractMilestoneType(e) === 'education').length;
+  const certCount = uniqueExperiences.filter((e) => extractMilestoneType(e) === 'certification').length;
+  const eventCount = uniqueExperiences.filter((e) => extractMilestoneType(e) === 'event').length;
 
   const getTypeMeta = (type: MilestoneType) => {
     switch (type) {
@@ -286,7 +305,7 @@ export const ExperienceManager: React.FC = () => {
           orgLabel: 'University / Institution *',
           periodLabel: 'Graduation / Period *',
           highlightsLabel: 'Academic Focus & Honors (press Enter to add)',
-          techLabel: 'Core Topics & Coursework (press Enter to add)',
+          techLabel: 'Technologies & Frameworks (press Enter to add)',
           placeholderTitle: 'B.S. in Computer Science & Software Engineering',
           placeholderOrg: 'Academic Foundations',
           placeholderPeriod: '2018 — 2022',
@@ -300,7 +319,7 @@ export const ExperienceManager: React.FC = () => {
           orgLabel: 'Issuing Organization *',
           periodLabel: 'Issue Date / Validity Period *',
           highlightsLabel: 'Skills Validated & Credentials (press Enter to add)',
-          techLabel: 'Covered Domains & Tools (press Enter to add)',
+          techLabel: 'Technologies & Frameworks (press Enter to add)',
           placeholderTitle: 'AWS Certified Solutions Architect',
           placeholderOrg: 'Amazon Web Services (AWS)',
           placeholderPeriod: '2023 — Present',
@@ -314,7 +333,7 @@ export const ExperienceManager: React.FC = () => {
           orgLabel: 'Event / Hackathon / Conference *',
           periodLabel: 'Event Date / Duration *',
           highlightsLabel: 'Accolades, Deliverables & Outcomes (press Enter to add)',
-          techLabel: 'Technologies & Tools Built With (press Enter to add)',
+          techLabel: 'Technologies & Frameworks (press Enter to add)',
           placeholderTitle: 'Grand Prize Winner & Lead Architect',
           placeholderOrg: 'Global AI & Web3 Hackathon',
           placeholderPeriod: '2023',
@@ -328,7 +347,7 @@ export const ExperienceManager: React.FC = () => {
           orgLabel: 'Company / Studio *',
           periodLabel: 'Period / Dates *',
           highlightsLabel: 'Key Deliverables & Architecture (press Enter to add)',
-          techLabel: 'Technologies & Tools Used (press Enter to add)',
+          techLabel: 'Technologies & Frameworks (press Enter to add)',
           placeholderTitle: 'Lead Application Developer & Solutions Architect',
           placeholderOrg: 'Independent / Digital Studio',
           placeholderPeriod: '2024 — Present',
@@ -345,7 +364,7 @@ export const ExperienceManager: React.FC = () => {
         <div>
           <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
             <span>Career & Milestones Timeline</span>
-            <Badge variant="crimson">{experiences.length} Milestones</Badge>
+            <Badge variant="crimson">{uniqueExperiences.length} Milestones</Badge>
           </h2>
           <p className="text-xs text-[#94949e] mt-0.5">
             Manage Experiences, Education, Certifications, and Hackathons/Events in <code className="text-[#ff1e27]">public.experiences</code>.
@@ -400,7 +419,7 @@ export const ExperienceManager: React.FC = () => {
               : 'text-[#94949e] hover:text-white hover:bg-white/5'
           }`}
         >
-          All ({experiences.length})
+          All ({uniqueExperiences.length})
         </button>
         <button
           onClick={() => setActiveTab('experience')}
@@ -523,16 +542,16 @@ export const ExperienceManager: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-mono text-[#94949e]">{currentMeta.titleLabel}</label>
                 <input
                   type="text"
-                  required
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                   placeholder={currentMeta.placeholderTitle}
-                  className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
+                  className="w-full px-3 py-2 rounded-lg bg-[#0d0d10] border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#ff1e27]"
+                  required
                 />
               </div>
 
@@ -540,11 +559,22 @@ export const ExperienceManager: React.FC = () => {
                 <label className="text-xs font-mono text-[#94949e]">{currentMeta.orgLabel}</label>
                 <input
                   type="text"
-                  required
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
                   placeholder={currentMeta.placeholderOrg}
-                  className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
+                  className="w-full px-3 py-2 rounded-lg bg-[#0d0d10] border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#ff1e27]"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-mono text-[#94949e]">Web Link / URL</label>
+                <input
+                  type="url"
+                  value={companyUrl}
+                  onChange={(e) => setCompanyUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full px-3 py-2 rounded-lg bg-[#0d0d10] border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#ff1e27]"
                 />
               </div>
 
@@ -552,53 +582,66 @@ export const ExperienceManager: React.FC = () => {
                 <label className="text-xs font-mono text-[#94949e]">{currentMeta.periodLabel}</label>
                 <input
                   type="text"
-                  required
                   value={period}
                   onChange={(e) => setPeriod(e.target.value)}
                   placeholder={currentMeta.placeholderPeriod}
-                  className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
+                  className="w-full px-3 py-2 rounded-lg bg-[#0d0d10] border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#ff1e27]"
+                  required
                 />
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1 md:col-span-2">
                 <label className="text-xs font-mono text-[#94949e]">Location</label>
                 <input
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Toronto, Canada / Remote / Global"
-                  className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
-                />
-              </div>
-
-              <div className="space-y-1 sm:col-span-2">
-                <label className="text-xs font-mono text-[#94949e]">Reference / Link URL (optional)</label>
-                <input
-                  type="url"
-                  value={companyUrl}
-                  onChange={(e) => setCompanyUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
+                  placeholder="e.g. Remote / Toronto, Canada / San Francisco, CA"
+                  className="w-full px-3 py-2 rounded-lg bg-[#0d0d10] border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#ff1e27]"
                 />
               </div>
             </div>
 
-            {/* Key Deliverables / Highlights list & sentence input */}
+            {/* Deliverables / Highlights list with sentence-by-sentence input */}
             <div className="space-y-2">
-              <label className="text-xs font-mono text-[#94949e]">{currentMeta.highlightsLabel}</label>
+              <label className="text-xs font-mono text-[#94949e] flex items-center justify-between">
+                <span>{currentMeta.highlightsLabel}</span>
+                <span className="text-[10px] text-[#ff1e27]">{highlights.length} added</span>
+              </label>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={deliverableInput}
+                  onChange={(e) => setDeliverableInput(e.target.value)}
+                  onKeyDown={handleAddDeliverableKeyDown}
+                  placeholder="Type a deliverable and press Enter (or click Add)..."
+                  className="flex-1 px-3 py-2 rounded-lg bg-[#0d0d10] border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-[#ff1e27]"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddDeliverable}
+                  className="px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-mono transition-colors cursor-pointer shrink-0"
+                >
+                  Add
+                </button>
+              </div>
 
               {highlights.length > 0 && (
-                <div className="space-y-1.5">
-                  {highlights.map((item, idx) => (
+                <div className="space-y-1.5 pt-1">
+                  {highlights.map((h, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start justify-between gap-2.5 p-2.5 rounded-lg bg-[#0d0d10] border border-white/10 text-xs text-white"
+                      className="flex items-start justify-between gap-2 p-2 rounded-lg bg-[#0d0d10] border border-white/5 text-xs text-[#c4c4cc]"
                     >
-                      <span className="flex-1 leading-relaxed break-words text-[#e4e4e7]">{item}</span>
+                      <div className="flex items-start gap-2 min-w-0">
+                        <span className="text-[10px] font-mono text-[#ff1e27] mt-0.5">{idx + 1}.</span>
+                        <span className="break-words">{h}</span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => handleRemoveDeliverable(idx)}
-                        className="text-[#94949e] hover:text-[#ff1e27] cursor-pointer p-0.5 transition-colors shrink-0"
+                        className="text-[#94949e] hover:text-[#ff1e27] transition-colors p-0.5 shrink-0"
                         title="Remove deliverable"
                       >
                         <X className="w-3.5 h-3.5" />
@@ -607,43 +650,22 @@ export const ExperienceManager: React.FC = () => {
                   ))}
                 </div>
               )}
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={deliverableInput}
-                  onChange={(e) => setDeliverableInput(e.target.value)}
-                  onKeyDown={handleAddDeliverableKeyDown}
-                  placeholder={highlights.length === 0 ? "Type deliverable sentence & press Enter..." : "Add another deliverable sentence..."}
-                  className="flex-1 bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddDeliverable}
-                  disabled={!deliverableInput.trim()}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#1a1a24] hover:bg-[#252533] text-xs font-mono text-white border border-white/10 transition-colors cursor-pointer disabled:opacity-40 shrink-0"
-                >
-                  <Plus className="w-3.5 h-3.5 text-[#ff1e27]" />
-                  <span>Add</span>
-                </button>
-              </div>
             </div>
 
-            {/* Tech Stack / Focus Areas Tags */}
+            {/* Technologies & Frameworks Chips */}
             <div className="space-y-2">
               <label className="text-xs font-mono text-[#94949e]">{currentMeta.techLabel}</label>
-              
-              <div className="flex flex-wrap gap-1.5 min-h-[36px] p-2 bg-[#0d0d10] border border-white/10 rounded-lg items-center">
-                {techStack.map((tag) => (
+              <div className="flex flex-wrap gap-1.5 p-2 rounded-lg bg-[#0d0d10] border border-white/10 min-h-[42px] items-center">
+                {techStack.map((tech) => (
                   <span
-                    key={tag}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#1a1a24] text-xs font-mono text-white border border-white/10"
+                    key={tech}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#1a1a24] text-xs font-mono text-white/90 border border-white/10"
                   >
-                    <span>{tag}</span>
+                    <span>{tech}</span>
                     <button
                       type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className="text-[#94949e] hover:text-[#ff1e27] cursor-pointer"
+                      onClick={() => handleRemoveTag(tech)}
+                      className="text-[#94949e] hover:text-white transition-colors"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -654,19 +676,20 @@ export const ExperienceManager: React.FC = () => {
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={handleAddTag}
-                  placeholder={techStack.length === 0 ? 'Type tag & hit Enter...' : 'Add another...'}
-                  className="bg-transparent text-xs font-mono text-white placeholder-[#5a5a66] focus:outline-none flex-1 min-w-[150px] py-0.5"
+                  placeholder={techStack.length === 0 ? "Type tech and press Enter (e.g. React, Three.js)..." : ""}
+                  className="flex-1 min-w-[120px] bg-transparent text-xs font-mono text-white focus:outline-none px-1"
                 />
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-[#94949e]">
+            {/* Bottom Form Actions with Right-Aligned Save Button */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-white/10">
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-mono text-[#94949e]">
                 <input
                   type="checkbox"
                   checked={isCurrent}
                   onChange={(e) => setIsCurrent(e.target.checked)}
-                  className="accent-[#e50914] rounded cursor-pointer w-4 h-4"
+                  className="rounded border-white/20 bg-[#0d0d10] text-[#ff1e27] focus:ring-0 cursor-pointer"
                 />
                 <span>
                   {milestoneType === 'experience'
@@ -692,10 +715,11 @@ export const ExperienceManager: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#e50914] hover:bg-[#ff1e27] text-white text-xs font-mono font-medium transition-colors cursor-pointer"
+                  disabled={isSubmitting}
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#e50914] hover:bg-[#ff1e27] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-mono font-medium transition-colors cursor-pointer"
                 >
                   <Save className="w-4 h-4" />
-                  <span>{editingId ? 'Update Milestone' : 'Save Milestone'}</span>
+                  <span>{isSubmitting ? 'Saving...' : editingId ? 'Update Milestone' : 'Save Milestone'}</span>
                 </button>
               </div>
             </div>
@@ -722,8 +746,10 @@ export const ExperienceManager: React.FC = () => {
       ) : (
         <div className="space-y-3">
           {filteredExperiences.map((exp) => {
-            const meta = getTypeMeta(getNormalizedType(exp.milestone_type));
+            const expType = extractMilestoneType(exp);
+            const meta = getTypeMeta(expType);
             const IconComponent = meta.icon;
+            const itemHighlights = cleanHighlights(exp.highlights);
 
             return (
               <div
@@ -747,9 +773,12 @@ export const ExperienceManager: React.FC = () => {
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     )}
-                    <span className={`px-2 py-0.5 text-[10px] font-mono rounded border ${meta.colorClass}`}>
-                      {meta.label}
-                    </span>
+                    {/* Remove redundant red Experience badge; display category pill for other milestones */}
+                    {meta.label !== 'Experience' && (
+                      <span className={`px-2 py-0.5 text-[10px] font-mono rounded border ${meta.colorClass}`}>
+                        {meta.label}
+                      </span>
+                    )}
                     {exp.is_current && <Badge variant="emerald" dot>Active</Badge>}
                   </div>
 
@@ -766,9 +795,9 @@ export const ExperienceManager: React.FC = () => {
                     )}
                   </div>
 
-                  {exp.highlights.length > 0 && (
+                  {itemHighlights.length > 0 && (
                     <ul className="text-xs text-[#94949e] list-disc list-inside space-y-0.5 pt-1">
-                      {exp.highlights.map((h, idx) => (
+                      {itemHighlights.map((h, idx) => (
                         <li key={idx}>{h}</li>
                       ))}
                     </ul>

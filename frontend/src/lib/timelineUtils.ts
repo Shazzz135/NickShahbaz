@@ -70,3 +70,118 @@ export function sortMilestonesReverseChronological<T extends Partial<ExperienceR
     return 0;
   });
 }
+
+export type MilestoneCategoryType = 'experience' | 'education' | 'certification' | 'event';
+
+/**
+ * Intelligently infers milestone category when milestone_type is missing from older schema rows.
+ */
+export function inferMilestoneType(item: Partial<ExperienceRow>): MilestoneCategoryType {
+  const text = `${item.role || ''} ${item.company || ''} ${(item.highlights || []).join(' ')}`.toLowerCase();
+
+  // Education keywords
+  if (
+    text.includes('bachelor') ||
+    text.includes('undergraduate') ||
+    text.includes('university') ||
+    text.includes('college') ||
+    text.includes('degree') ||
+    text.includes('b.s.') ||
+    text.includes('m.s.') ||
+    text.includes('b.a.') ||
+    text.includes('ph.d') ||
+    text.includes('academic') ||
+    text.includes('curriculum') ||
+    text.includes('coursework') ||
+    text.includes('student') ||
+    text.includes('education') ||
+    text.includes('laurier')
+  ) {
+    return 'education';
+  }
+
+  // Event / Hackathon keywords
+  if (
+    text.includes('hackathon') ||
+    text.includes('hack to the future') ||
+    text.includes('hack') ||
+    text.includes('sprint') ||
+    text.includes('competition') ||
+    text.includes('conference') ||
+    text.includes('summit') ||
+    text.includes('event') ||
+    text.includes('grand prize') ||
+    text.includes('fellowship')
+  ) {
+    return 'event';
+  }
+
+  // Certification keywords
+  if (
+    text.includes('certified') ||
+    text.includes('certification') ||
+    text.includes('accreditation') ||
+    text.includes('credential') ||
+    text.includes('license') ||
+    text.includes('aws certified') ||
+    text.includes('cloud practitioner')
+  ) {
+    return 'certification';
+  }
+
+  return 'experience';
+}
+
+/**
+ * Extracts normalized milestone category, reading explicit field, embedded metadata, or intelligent inference.
+ */
+export function extractMilestoneType(item: Partial<ExperienceRow>): MilestoneCategoryType {
+  const rawType = item.milestone_type as string | undefined;
+  if (
+    rawType &&
+    rawType !== 'work' &&
+    ['experience', 'education', 'certification', 'event'].includes(rawType)
+  ) {
+    return rawType as MilestoneCategoryType;
+  }
+
+  // Check highlights for internal type marker
+  if (Array.isArray(item.highlights)) {
+    const marker = item.highlights.find((h) => typeof h === 'string' && h.startsWith('__type:'));
+    if (marker) {
+      const type = marker.replace('__type:', '').trim();
+      if (['experience', 'education', 'certification', 'event'].includes(type)) {
+        return type as MilestoneCategoryType;
+      }
+    }
+  }
+
+  return inferMilestoneType(item);
+}
+
+/**
+ * Strips internal metadata markers (e.g. __type:*) from deliverable highlights before rendering.
+ */
+export function cleanHighlights(highlights?: string[]): string[] {
+  if (!Array.isArray(highlights)) return [];
+  return highlights.filter((h) => typeof h === 'string' && !h.startsWith('__type:') && h.trim().length > 0);
+}
+
+/**
+ * Deduplicates milestones by unique ID or role+company combo to prevent any duplicate card rendering.
+ */
+export function deduplicateMilestones<T extends Partial<ExperienceRow>>(items: T[]): T[] {
+  const seenIds = new Set<string>();
+  const seenSignatures = new Set<string>();
+
+  return items.filter((item) => {
+    if (item.id) {
+      if (seenIds.has(item.id)) return false;
+      seenIds.add(item.id);
+    }
+    const signature = `${(item.role || '').trim().toLowerCase()}:::${(item.company || '').trim().toLowerCase()}:::${(item.period || '').trim().toLowerCase()}`;
+    if (seenSignatures.has(signature)) return false;
+    seenSignatures.add(signature);
+    return true;
+  });
+}

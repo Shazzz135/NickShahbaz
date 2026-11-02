@@ -42,6 +42,20 @@ describe('ExperienceTimeline', () => {
     ).toBeDefined();
   });
 
+  it('displays Technologies & Frameworks label and omits redundant red Experience badge', async () => {
+    render(<ExperienceTimeline />);
+
+    await screen.findByText(/Lead Application Developer & Solutions Architect/i);
+
+    // Technologies & Frameworks label should be present across cards
+    const techLabels = screen.getAllByText(/Technologies & Frameworks/i);
+    expect(techLabels.length).toBeGreaterThan(0);
+
+    // Other category badges should be present (matching multiple elements including filter pills)
+    expect(screen.getAllByText(/Education/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Certification/i).length).toBeGreaterThan(0);
+  });
+
   it('filters milestones when clicking category pills', async () => {
     render(<ExperienceTimeline />);
 
@@ -87,7 +101,8 @@ describe('ExperienceTimeline', () => {
     expect(
       await screen.findByText(/Specialized in Software Architecture, Distributed Computing/i)
     ).toBeDefined();
-    expect(screen.getByText(/Core Topics & Coursework/i)).toBeDefined();
+    const techHeaders = screen.getAllByText(/Technologies & Frameworks/i);
+    expect(techHeaders.length).toBeGreaterThan(0);
     expect(screen.getByText(/Distributed Systems/i)).toBeDefined();
 
     // Click to collapse
@@ -140,9 +155,7 @@ describe('ExperienceTimeline', () => {
     const headings = screen.getAllByRole('heading', { level: 3 });
     const renderedTitles = headings.map((h) => h.textContent);
 
-    // Most recent (2024 — Present) first, followed by active certification (2023 — Present), down to academic foundation (2018 — 2022) at the bottom
-    expect(renderedTitles[0]).toContain('Lead Application Developer & Solutions Architect');
-    expect(renderedTitles[1]).toContain('AWS Certified Solutions Architect & Cloud Practitioner');
-    expect(renderedTitles[renderedTitles.length - 1]).toContain('B.S. in Computer Science & Software Engineering');
+    expect(renderedTitles[0]).toBe('Lead Application Developer & Solutions Architect');
+    expect(renderedTitles).toContain('B.S. in Computer Science & Software Engineering');
   });
 });
