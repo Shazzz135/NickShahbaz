@@ -36,7 +36,6 @@ export const ExperienceManager: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<'all' | MilestoneType>('all');
 
   // Form State
   const [milestoneType, setMilestoneType] = useState<MilestoneType>('experience');
@@ -282,18 +281,6 @@ export const ExperienceManager: React.FC = () => {
     return deduplicateMilestones(experiences);
   }, [experiences]);
 
-  const filteredExperiences = useMemo(() => {
-    return uniqueExperiences.filter((exp) => {
-      if (activeTab === 'all') return true;
-      return extractMilestoneType(exp) === activeTab;
-    });
-  }, [uniqueExperiences, activeTab]);
-
-  const expCount = uniqueExperiences.filter((e) => extractMilestoneType(e) === 'experience').length;
-  const eduCount = uniqueExperiences.filter((e) => extractMilestoneType(e) === 'education').length;
-  const certCount = uniqueExperiences.filter((e) => extractMilestoneType(e) === 'certification').length;
-  const eventCount = uniqueExperiences.filter((e) => extractMilestoneType(e) === 'event').length;
-
   const getTypeMeta = (type: MilestoneType) => {
     switch (type) {
       case 'education':
@@ -408,64 +395,6 @@ export const ExperienceManager: React.FC = () => {
           <span className="break-all">{statusMsg.text}</span>
         </div>
       )}
-
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-white/5 pb-2 overflow-x-auto no-scrollbar">
-        <button
-          onClick={() => setActiveTab('all')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer shrink-0 ${
-            activeTab === 'all'
-              ? 'bg-white/10 text-white font-semibold'
-              : 'text-[#94949e] hover:text-white hover:bg-white/5'
-          }`}
-        >
-          All ({uniqueExperiences.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('experience')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 ${
-            activeTab === 'experience'
-              ? 'bg-[#e50914]/20 text-[#ff1e27] font-semibold border border-[#e50914]/30'
-              : 'text-[#94949e] hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <Briefcase className="w-3.5 h-3.5" />
-          <span>Experiences ({expCount})</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('education')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 ${
-            activeTab === 'education'
-              ? 'bg-blue-500/20 text-blue-400 font-semibold border border-blue-500/30'
-              : 'text-[#94949e] hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <GraduationCap className="w-3.5 h-3.5" />
-          <span>Education ({eduCount})</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('certification')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 ${
-            activeTab === 'certification'
-              ? 'bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30'
-              : 'text-[#94949e] hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <Award className="w-3.5 h-3.5" />
-          <span>Certifications ({certCount})</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('event')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 ${
-            activeTab === 'event'
-              ? 'bg-amber-500/20 text-amber-400 font-semibold border border-amber-500/30'
-              : 'text-[#94949e] hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <Trophy className="w-3.5 h-3.5" />
-          <span>Events ({eventCount})</span>
-        </button>
-      </div>
 
       {/* Experience Form - Simple, Static, Responsive */}
       {isFormOpen && (
@@ -733,11 +662,11 @@ export const ExperienceManager: React.FC = () => {
           <div className="w-5 h-5 border-2 border-[#e50914] border-t-transparent rounded-full animate-spin mx-auto" />
           <p>Syncing timeline from Supabase...</p>
         </div>
-      ) : filteredExperiences.length === 0 ? (
+      ) : uniqueExperiences.length === 0 ? (
         <div className="p-6 sm:p-8 rounded-xl bg-[#141419] border border-white/5 text-center space-y-3">
-          <p className="text-xs sm:text-sm text-[#94949e]">No milestones found in this category.</p>
+          <p className="text-xs sm:text-sm text-[#94949e]">No milestones found.</p>
           <button
-            onClick={() => handleOpenCreate(activeTab === 'all' ? 'experience' : activeTab)}
+            onClick={() => handleOpenCreate('experience')}
             className="px-4 py-2 rounded-lg bg-[#e50914] hover:bg-[#ff1e27] text-white text-xs font-mono font-medium transition-colors cursor-pointer"
           >
             Add Milestone
@@ -745,7 +674,7 @@ export const ExperienceManager: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredExperiences.map((exp) => {
+          {uniqueExperiences.map((exp) => {
             const expType = extractMilestoneType(exp);
             const meta = getTypeMeta(expType);
             const IconComponent = meta.icon;
