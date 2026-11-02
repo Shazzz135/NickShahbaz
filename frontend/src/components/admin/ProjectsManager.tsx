@@ -32,6 +32,12 @@ const CATEGORIES = [
 ] as const;
 type Category = (typeof CATEGORIES)[number];
 
+const BASE_CATEGORY_FALLBACK: Record<string, string> = {
+  'DevOps & Systems': 'Tools/Web3',
+  '3D Graphics & Games': 'Full-Stack',
+  'API & Microservices': 'Full-Stack',
+};
+
 const POPULAR_TAG_PRESETS = [
   'Vite',
   'React',
@@ -199,21 +205,8 @@ export const ProjectsManager: React.FC = () => {
       const height = img.naturalHeight || img.height;
       const ratio = width / height;
 
-      // Desktop Widescreen Scale (~16:9 = 1.78, 16:10 = 1.6, 3:2 = 1.5): accepted range 1.35 to 2.15
-      const isDesktop = ratio >= 1.35 && ratio <= 2.15;
-      // Mobile Portrait Scale (~9:16 = 0.56, 9:19.5 = 0.46, 3:4 = 0.75): accepted range 0.45 to 0.78
-      const isMobile = ratio >= 0.45 && ratio <= 0.78;
-
-      if (!isDesktop && !isMobile) {
-        setStatusMsg({
-          type: 'error',
-          text: `Aspect ratio rejected (${ratio.toFixed(2)}:1, ${width}x${height}px). For visual consistency in the gallery, please upload either a Desktop scale image (approx 16:9 landscape, ratio 1.35 - 2.15) or a Mobile scale image (approx 9:16 portrait, ratio 0.45 - 0.78).`,
-        });
-        setUploading(false);
-        return;
-      }
-
-      const scaleType = isDesktop ? 'desktop' : 'mobile';
+      const isMobile = ratio < 1.0;
+      const scaleType = isMobile ? 'mobile' : 'desktop';
       setDetectedScale(scaleType);
       setImageMeta({ width, height, ratio });
 
@@ -240,7 +233,7 @@ export const ProjectsManager: React.FC = () => {
       setUploading(false);
       setStatusMsg({ 
         type: 'success', 
-        text: `Image uploaded successfully as ${scaleType === 'desktop' ? 'Desktop Landscape (16:9)' : 'Mobile Portrait (9:16)'}!` 
+        text: `Image uploaded successfully as ${scaleType === 'desktop' ? 'Windows Landscape' : 'Mobile Portrait'} (${width}x${height}px, ratio ${ratio.toFixed(2)})!` 
       });
     };
 
@@ -262,7 +255,7 @@ export const ProjectsManager: React.FC = () => {
 
     if (editingId) {
       // UPDATE Operation
-      const { error } = await supabase
+      let { error } = await supabase
         .from('projects')
         .update({
           title,
@@ -279,6 +272,29 @@ export const ProjectsManager: React.FC = () => {
         })
         .eq('id', editingId);
 
+      // Gracefully retry with database-safe base category fallback if check constraint is active
+      if (error && error.message.includes('projects_category_check')) {
+        const fallback = BASE_CATEGORY_FALLBACK[category] || 'Full-Stack';
+        const mergedTags = tags.includes(category) ? tags : [...tags, category];
+        const retry = await supabase
+          .from('projects')
+          .update({
+            title,
+            slug,
+            subtitle: subtitle || null,
+            description,
+            category: fallback,
+            tags: mergedTags,
+            featured,
+            thumbnail_url: thumbnailUrl || null,
+            live_url: liveUrl || null,
+            github_url: githubUrl || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingId);
+        error = retry.error;
+      }
+
       if (error) {
         setStatusMsg({ type: 'error', text: `Update failed: ${error.message}` });
       } else {
@@ -289,7 +305,7 @@ export const ProjectsManager: React.FC = () => {
       }
     } else {
       // CREATE Operation
-      const { error } = await supabase.from('projects').insert([
+      let { error } = await supabase.from('projects').insert([
         {
           title,
           slug,
@@ -304,6 +320,28 @@ export const ProjectsManager: React.FC = () => {
           sort_order: projects.length + 1,
         },
       ]);
+
+      // Gracefully retry with database-safe base category fallback if check constraint is active
+      if (error && error.message.includes('projects_category_check')) {
+        const fallback = BASE_CATEGORY_FALLBACK[category] || 'Full-Stack';
+        const mergedTags = tags.includes(category) ? tags : [...tags, category];
+        const retry = await supabase.from('projects').insert([
+          {
+            title,
+            slug,
+            subtitle: subtitle || null,
+            description,
+            category: fallback,
+            tags: mergedTags,
+            featured,
+            thumbnail_url: thumbnailUrl || null,
+            live_url: liveUrl || null,
+            github_url: githubUrl || null,
+            sort_order: projects.length + 1,
+          },
+        ]);
+        error = retry.error;
+      }
 
       if (error) {
         setStatusMsg({ type: 'error', text: `Failed to create: ${error.message}` });

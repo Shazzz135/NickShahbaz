@@ -33,7 +33,7 @@ function getOrientation(ratio: number): ImageOrientation {
 export const AdaptiveProjectImage: React.FC<AdaptiveProjectImageProps> = ({
   src,
   alt,
-  minRatio = 9 / 16,
+  minRatio = 0.72,
   maxRatio = 21 / 9,
   className = '',
   imgClassName = '',

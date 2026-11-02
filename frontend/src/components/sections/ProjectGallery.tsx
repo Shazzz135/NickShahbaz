@@ -16,7 +16,16 @@ import {
   Maximize2 
 } from 'lucide-react';
 
-const CATEGORIES = ['All', 'Full-Stack', 'Mobile', 'AI/Cloud', 'Tools/Web3'] as const;
+const CATEGORIES = [
+  'All',
+  'Full-Stack',
+  'Mobile',
+  'AI/Cloud',
+  'Tools/Web3',
+  'DevOps & Systems',
+  '3D Graphics & Games',
+  'API & Microservices',
+] as const;
 type Category = (typeof CATEGORIES)[number];
 
 export const ProjectGallery: React.FC = () => {
@@ -109,6 +118,7 @@ export const ProjectGallery: React.FC = () => {
                       <AdaptiveProjectImage
                         src={project.thumbnail_url}
                         alt={project.title}
+                        minRatio={0.72}
                         onClick={() => setActiveModalProject(project)}
                         className="rounded-xl border border-white/10 cursor-pointer group/img"
                         imgClassName="transition-transform duration-500 group-hover/img:scale-105"

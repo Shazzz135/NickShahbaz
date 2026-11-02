@@ -95,7 +95,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
                 <AdaptiveProjectImage
                   src={project.thumbnail_url}
                   alt={project.title}
-                  minRatio={9 / 19.5}
+                  minRatio={0.72}
                   className="rounded-xl border border-white/10 max-h-[60vh] mx-auto"
                 />
               </div>
