@@ -292,7 +292,7 @@ export const ExperienceManager: React.FC = () => {
           orgLabel: 'University / Institution *',
           periodLabel: 'Graduation / Period *',
           highlightsLabel: 'Academic Focus & Honors (press Enter to add)',
-          techLabel: 'Technologies & Frameworks (press Enter to add)',
+          techLabel: 'Core Topics & Coursework (press Enter to add)',
           placeholderTitle: 'B.S. in Computer Science & Software Engineering',
           placeholderOrg: 'Academic Foundations',
           placeholderPeriod: '2018 — 2022',
@@ -306,21 +306,21 @@ export const ExperienceManager: React.FC = () => {
           orgLabel: 'Issuing Organization *',
           periodLabel: 'Issue Date / Validity Period *',
           highlightsLabel: 'Skills Validated & Credentials (press Enter to add)',
-          techLabel: 'Technologies & Frameworks (press Enter to add)',
+          techLabel: 'Technologies & Competencies (press Enter to add)',
           placeholderTitle: 'AWS Certified Solutions Architect',
           placeholderOrg: 'Amazon Web Services (AWS)',
           placeholderPeriod: '2023 — Present',
         };
       case 'event':
         return {
-          label: 'Event / Hackathon',
+          label: 'Event',
           icon: Trophy,
           colorClass: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
           titleLabel: 'Role / Award / Project Name *',
-          orgLabel: 'Event / Hackathon / Conference *',
+          orgLabel: 'Event / Organization *',
           periodLabel: 'Event Date / Duration *',
           highlightsLabel: 'Accolades, Deliverables & Outcomes (press Enter to add)',
-          techLabel: 'Technologies & Frameworks (press Enter to add)',
+          techLabel: 'Technologies Built With (press Enter to add)',
           placeholderTitle: 'Grand Prize Winner & Lead Architect',
           placeholderOrg: 'Global AI & Web3 Hackathon',
           placeholderPeriod: '2023',
@@ -354,7 +354,7 @@ export const ExperienceManager: React.FC = () => {
             <Badge variant="crimson">{uniqueExperiences.length} Milestones</Badge>
           </h2>
           <p className="text-xs text-[#94949e] mt-0.5">
-            Manage Experiences, Education, Certifications, and Hackathons/Events in <code className="text-[#ff1e27]">public.experiences</code>.
+            Manage Experiences, Education, Certifications, and Events in <code className="text-[#ff1e27]">public.experiences</code>.
           </p>
         </div>
 
