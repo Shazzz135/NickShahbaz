@@ -4,6 +4,7 @@ import type { ProjectRow } from '../../lib/mockData';
 import { Badge } from '../common/Badge';
 import { Button } from '../common/Button';
 import { AdaptiveProjectImage } from '../common/AdaptiveProjectImage';
+import { useSmoothScroll } from '../../hooks/useSmoothScroll';
 import { 
   X, 
   ExternalLink, 
@@ -24,6 +25,7 @@ interface ProjectDetailModalProps {
 export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project, onClose }) => {
   const [prevId, setPrevId] = useState<string | null>(null);
   const [detectedScale, setDetectedScale] = useState<'mobile' | 'desktop' | null>(null);
+  const { lenis } = useSmoothScroll();
 
   // Reset scale state when project changes without effect-driven cascading render
   if (project && project.id !== prevId) {
@@ -31,68 +33,36 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
     setDetectedScale(null);
   }
 
-  // Strict scroll-lock to block background scroll and guarantee popup scroll works
+  // Lock background scroll (including Lenis) and activate internal modal scrolling
   useEffect(() => {
     if (!project) return;
+
+    // 1. Deactivate Lenis background smooth scroll while modal is active
+    lenis?.stop();
+
+    // 2. Lock document body and root HTML scroll
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalTouchAction = document.body.style.touchAction;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
-
-    const originalBodyOverflow = document.body.style.overflow;
-    const originalHtmlOverflow = document.documentElement.style.overflow;
-    const originalBodyOverscroll = document.body.style.overscrollBehavior;
-
-    // Lock main window and html scrolling
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overscrollBehavior = 'none';
-
-    // Intercept wheel events so background page NEVER scrolls
-    const handleWheel = (e: WheelEvent) => {
-      const scrollable = document.getElementById('modal-scrollable-body');
-      if (!scrollable) {
-        e.preventDefault();
-        return;
-      }
-
-      // If wheel event target is outside the scrollable container, block it
-      if (!scrollable.contains(e.target as Node)) {
-        e.preventDefault();
-        return;
-      }
-
-      // If inside scrollable container, prevent scroll chaining when reaching boundaries
-      const { scrollTop, scrollHeight, clientHeight } = scrollable;
-      const isAtTop = scrollTop <= 0 && e.deltaY < 0;
-      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1 && e.deltaY > 0;
-
-      if (isAtTop || isAtBottom) {
-        e.preventDefault();
-      }
-    };
-
-    // Intercept touchmove on mobile so backdrop/margins never scroll background
-    const handleTouchMove = (e: TouchEvent) => {
-      const scrollable = document.getElementById('modal-scrollable-body');
-      if (!scrollable || !scrollable.contains(e.target as Node)) {
-        e.preventDefault();
-      }
-    };
-
-    window.addEventListener('wheel', handleWheel, { passive: false });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
+      // Restore Lenis and page scrolling on close
+      lenis?.start();
       document.body.style.overflow = originalBodyOverflow;
       document.documentElement.style.overflow = originalHtmlOverflow;
-      document.body.style.overscrollBehavior = originalBodyOverscroll;
-      window.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('touchmove', handleTouchMove);
+      document.body.style.touchAction = originalTouchAction;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [project, onClose]);
+  }, [project, onClose, lenis]);
 
   if (!project) return null;
 
@@ -104,7 +74,9 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-project-title"
-        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden overscroll-none"
+        data-lenis-prevent="true"
+        onWheel={(e) => e.stopPropagation()}
+        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden"
       >
         {/* Backdrop with Blur */}
         <motion.div
@@ -115,21 +87,22 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
           className="fixed inset-0 bg-black/80 backdrop-blur-md"
         />
 
-        {/* Modal Window Container: definite height ensures flex child scrolls accurately */}
+        {/* Modal Window Container: expanded max-w-6xl for dual-pane desktop deepdive */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="relative w-full max-w-5xl lg:max-w-6xl h-[88vh] md:h-[90vh] max-h-[90vh] bg-[#0d0d10] border border-white/15 rounded-2xl shadow-[0_0_60px_rgba(229,9,20,0.3)] overflow-hidden flex flex-col z-10 overscroll-contain"
+          data-lenis-prevent="true"
+          className="relative w-full max-w-5xl lg:max-w-6xl max-h-[90vh] bg-[#0d0d10] border border-white/15 rounded-2xl shadow-[0_0_60px_rgba(229,9,20,0.3)] overflow-hidden flex flex-col z-10"
         >
-          {/* Top Header Bar (Fixed height, cannot shrink) */}
+          {/* Top Header Bar */}
           <div className="flex items-center justify-between p-3.5 sm:p-5 border-b border-white/10 bg-[#121217] shrink-0">
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <Badge variant="crimson">{project.category}</Badge>
               {project.featured && <Badge variant="emerald" dot>Featured Application</Badge>}
-              
-              {/* Clean Viewport Scale Indicator */}
+
+              {/* Dynamic Viewport Scale Indicator */}
               {detectedScale === 'mobile' && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/25">
                   <Smartphone className="w-3 h-3" />
@@ -139,7 +112,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
               {detectedScale === 'desktop' && (
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-purple-500/10 text-purple-400 border border-purple-500/25">
                   <Monitor className="w-3 h-3" />
-                  <span>Windows View</span>
+                  <span>Windows / Desktop</span>
                 </span>
               )}
 
@@ -158,14 +131,16 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
             </button>
           </div>
 
-          {/* Scrollable Content Body - rigid min-h-0 and flex-1 guarantee internal scroll works smoothly */}
-          <div 
-            id="modal-scrollable-body"
-            className="overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8 flex-1 min-h-0 [scrollbar-width:thin] [scrollbar-color:#3f3f4e_transparent]"
+          {/* Scrollable Content Body - Guaranteed active internal scroll, background inactive */}
+          <div
+            data-lenis-prevent="true"
+            tabIndex={0}
+            className="overflow-y-auto p-4 sm:p-6 lg:p-8 flex-1 min-h-0 overscroll-contain focus:outline-none"
+            style={{ WebkitOverflowScrolling: 'touch' }}
           >
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-start">
               
-              {/* LEFT COLUMN: Visual Media Showcase (Image Left, Windows & Mobile dynamic scale) */}
+              {/* LEFT COLUMN: Visual Media Showcase (Image Left, fills available width) */}
               <div className="md:col-span-6 lg:col-span-6 flex flex-col gap-4">
                 <div className="relative rounded-xl border border-white/10 bg-[#141419] overflow-hidden shadow-lg p-2 sm:p-3">
                   {project.thumbnail_url ? (
@@ -175,7 +150,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
                         alt={project.title}
                         minRatio={0.72}
                         onScaleDetected={(scale) => setDetectedScale(scale)}
-                        className="rounded-lg border border-white/5 max-h-[60vh] w-full mx-auto shadow-inner"
+                        className="rounded-lg border border-white/5 max-h-[65vh] w-full mx-auto shadow-inner"
                       />
                     </div>
                   ) : (
@@ -253,7 +228,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
                   </div>
                 )}
 
-                {/* Performance & Key Metrics (100% visible in right pane) */}
+                {/* Performance & Key Metrics */}
                 {metrics && Object.keys(metrics).length > 0 && (
                   <div className="space-y-2.5">
                     <h3 className="text-xs font-mono uppercase tracking-wider text-[#94949e]">
@@ -326,7 +301,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
             </div>
           </div>
 
-          {/* Bottom Bar for quick navigation / close (Fixed height, cannot shrink) */}
+          {/* Bottom Bar for quick navigation / close */}
           <div className="p-3 sm:p-4 border-t border-white/10 bg-[#121217] flex items-center justify-between shrink-0">
             <span className="text-xs font-mono text-[#7e7e8c] truncate">
               {project.title} &bull; Deep Dive Detail
