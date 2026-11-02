@@ -45,15 +45,10 @@ export const AboutSection: React.FC = () => {
           transition={{ delay: 0.1 }}
           className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-tight"
         >
-          {aboutMeta.headline.split('&')[0]}
-          {aboutMeta.headline.includes('&') && (
-            <>
-              & <br />
-              <span className="bg-gradient-to-r from-[#ff1e27] via-[#ff6b72] to-white bg-clip-text text-transparent">
-                {aboutMeta.headline.split('&')[1]}
-              </span>
-            </>
-          )}
+          {aboutMeta.headlinePrefix || 'Here are some things you want to know'}{' '}
+          <span className="bg-gradient-to-r from-[#ff1e27] via-[#ff6b72] to-white bg-clip-text text-transparent">
+            {aboutMeta.headlineGradient || 'about me.'}
+          </span>
         </motion.h2>
 
         <motion.p

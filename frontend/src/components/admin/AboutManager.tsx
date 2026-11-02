@@ -99,9 +99,31 @@ export const AboutManager: React.FC = () => {
           id: s.id || `sk-${idx}-${s.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`,
         }));
 
+        let prefix = val.headlinePrefix;
+        let gradient = val.headlineGradient;
+
+        if (!prefix && !gradient && val.headline) {
+          const lower = val.headline.toLowerCase();
+          if (lower.includes('about me')) {
+            const idx = lower.indexOf('about me');
+            prefix = val.headline.slice(0, idx).trim();
+            gradient = val.headline.slice(idx).trim();
+          } else if (val.headline.includes('&')) {
+            const parts = val.headline.split('&');
+            prefix = `${parts[0].trim()} &`;
+            gradient = parts.slice(1).join('&').trim();
+          } else {
+            prefix = val.headline;
+            gradient = '';
+          }
+        }
+
         const merged: AboutMetaConfig = {
           ...DEFAULT_ABOUT_META,
           ...val,
+          headlinePrefix: prefix ?? DEFAULT_ABOUT_META.headlinePrefix,
+          headlineGradient: gradient ?? DEFAULT_ABOUT_META.headlineGradient,
+          headline: val.headline ?? `${prefix ?? ''} ${gradient ?? ''}`.trim(),
           stats: Array.isArray(val.stats) ? val.stats : DEFAULT_ABOUT_META.stats,
           principles: Array.isArray(val.principles) ? val.principles : DEFAULT_ABOUT_META.principles,
           skills: normalizedSkills,
@@ -167,6 +189,9 @@ export const AboutManager: React.FC = () => {
 
     const updatedConfig: AboutMetaConfig = {
       ...config,
+      headlinePrefix: config.headlinePrefix || DEFAULT_ABOUT_META.headlinePrefix,
+      headlineGradient: config.headlineGradient || DEFAULT_ABOUT_META.headlineGradient,
+      headline: config.headline || `${config.headlinePrefix || ''} ${config.headlineGradient || ''}`.trim(),
       bioParagraphs: parsedParagraphs.length > 0 ? parsedParagraphs : DEFAULT_ABOUT_META.bioParagraphs,
     };
 
@@ -484,14 +509,45 @@ export const AboutManager: React.FC = () => {
                   />
                 </div>
 
-                <div className="space-y-1 sm:col-span-2">
-                  <label className="text-xs font-mono text-[#94949e]">Main Section Headline</label>
-                  <input
-                    type="text"
-                    value={config.headline}
-                    onChange={(e) => setConfig({ ...config, headline: e.target.value })}
-                    className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
-                  />
+                {/* Headline & Typography Settings (Structured like Site Settings) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:col-span-2">
+                  <div className="space-y-1">
+                    <label className="text-xs font-mono text-[#94949e]">Headline (Primary White Text)</label>
+                    <input
+                      type="text"
+                      value={config.headlinePrefix ?? ''}
+                      onChange={(e) => {
+                        const prefix = e.target.value;
+                        setConfig({
+                          ...config,
+                          headlinePrefix: prefix,
+                          headline: `${prefix} ${config.headlineGradient ?? ''}`.trim(),
+                        });
+                        setHasUnsavedChanges(true);
+                      }}
+                      placeholder="Here are some things you want to know"
+                      className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-mono text-[#94949e]">Headline Highlight (Crimson Gradient)</label>
+                    <input
+                      type="text"
+                      value={config.headlineGradient ?? ''}
+                      onChange={(e) => {
+                        const grad = e.target.value;
+                        setConfig({
+                          ...config,
+                          headlineGradient: grad,
+                          headline: `${config.headlinePrefix ?? ''} ${grad}`.trim(),
+                        });
+                        setHasUnsavedChanges(true);
+                      }}
+                      placeholder="about me."
+                      className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-1 sm:col-span-2">

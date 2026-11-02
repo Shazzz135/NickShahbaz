@@ -8,7 +8,8 @@ describe('AboutSection', () => {
 
     // Wait for hydration
     expect(await screen.findByText(/Nick Shahbaz/i)).toBeDefined();
-    expect(screen.getByText(/Engineering Robust Software with Precision/i)).toBeDefined();
+    expect(screen.getByText(/Here are some things you want to know/i)).toBeDefined();
+    expect(screen.getByText(/about me\./i)).toBeDefined();
     expect(screen.queryByText(/Solutions Architect & Full-Stack Engineer/i)).toBeNull();
     expect(screen.queryByText(/^Lead$/i)).toBeNull();
     expect(screen.getByText(/Toronto, Ontario, Canada/i)).toBeDefined();
