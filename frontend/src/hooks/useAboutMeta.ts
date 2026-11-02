@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { DEFAULT_ABOUT_META, type AboutMetaConfig } from '../types/siteMeta';
+import { normalizeTechName } from '../lib/timelineUtils';
 
 export function useAboutMeta() {
   const [aboutMeta, setAboutMeta] = useState<AboutMetaConfig>(DEFAULT_ABOUT_META);
@@ -26,12 +27,37 @@ export function useAboutMeta() {
 
         if (data && data.value) {
           const val = data.value as unknown as Partial<AboutMetaConfig>;
+          let prefix = val.headlinePrefix;
+          let gradient = val.headlineGradient;
+
+          if (!prefix && !gradient && val.headline) {
+            const lower = val.headline.toLowerCase();
+            if (lower.includes('about me')) {
+              const idx = lower.indexOf('about me');
+              prefix = val.headline.slice(0, idx).trim();
+              gradient = val.headline.slice(idx).trim();
+            } else if (val.headline.includes('&')) {
+              const parts = val.headline.split('&');
+              prefix = `${parts[0].trim()} &`;
+              gradient = parts.slice(1).join('&').trim();
+            } else {
+              prefix = val.headline;
+              gradient = '';
+            }
+          }
+
           setAboutMeta({
             ...DEFAULT_ABOUT_META,
             ...val,
+            headlinePrefix: prefix ?? DEFAULT_ABOUT_META.headlinePrefix,
+            headlineGradient: gradient ?? DEFAULT_ABOUT_META.headlineGradient,
+            headline: val.headline ?? `${prefix ?? ''} ${gradient ?? ''}`.trim(),
             stats: Array.isArray(val.stats) ? val.stats : DEFAULT_ABOUT_META.stats,
             principles: Array.isArray(val.principles) ? val.principles : DEFAULT_ABOUT_META.principles,
-            skills: Array.isArray(val.skills) ? val.skills : DEFAULT_ABOUT_META.skills,
+            skills: (Array.isArray(val.skills) ? val.skills : DEFAULT_ABOUT_META.skills).map((s) => ({
+              ...s,
+              name: normalizeTechName(s.name),
+            })),
             bioParagraphs: Array.isArray(val.bioParagraphs) ? val.bioParagraphs : DEFAULT_ABOUT_META.bioParagraphs,
           });
         } else {

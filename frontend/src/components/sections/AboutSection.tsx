@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
@@ -22,10 +22,19 @@ export const AboutSection: React.FC = () => {
   const { aboutMeta, loading } = useAboutMeta();
   const [selectedCategory, setSelectedCategory] = useState<SkillCategory | 'All'>('All');
 
-  const filteredSkills = aboutMeta.skills.filter((s: SkillItem) => {
-    if (selectedCategory === 'All') return true;
-    return s.category === selectedCategory;
-  });
+  // Starred / featured skills are sorted first, then by proficiency level
+  const filteredSkills = useMemo(() => {
+    return aboutMeta.skills
+      .filter((s: SkillItem) => {
+        if (selectedCategory === 'All') return true;
+        return s.category === selectedCategory;
+      })
+      .sort((a, b) => {
+        if (a.featured && !b.featured) return -1;
+        if (!a.featured && b.featured) return 1;
+        return (b.level ?? 0) - (a.level ?? 0);
+      });
+  }, [aboutMeta.skills, selectedCategory]);
 
   return (
     <section
@@ -45,15 +54,10 @@ export const AboutSection: React.FC = () => {
           transition={{ delay: 0.1 }}
           className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-tight"
         >
-          {aboutMeta.headline.split('&')[0]}
-          {aboutMeta.headline.includes('&') && (
-            <>
-              & <br />
-              <span className="bg-gradient-to-r from-[#ff1e27] via-[#ff6b72] to-white bg-clip-text text-transparent">
-                {aboutMeta.headline.split('&')[1]}
-              </span>
-            </>
-          )}
+          {aboutMeta.headlinePrefix || 'Here are some things you want to know'}{' '}
+          <span className="bg-gradient-to-r from-[#ff1e27] via-[#ff6b72] to-white bg-clip-text text-transparent">
+            {aboutMeta.headlineGradient || 'about me.'}
+          </span>
         </motion.h2>
 
         <motion.p
@@ -250,7 +254,7 @@ export const AboutSection: React.FC = () => {
               </div>
             </div>
 
-            {/* Skills Grid */}
+            {/* Skills Grid: Starred/Featured skills display first */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
               <AnimatePresence mode="popLayout">
                 {filteredSkills.map((skill: SkillItem, idx: number) => (

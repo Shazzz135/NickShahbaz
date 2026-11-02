@@ -3,21 +3,24 @@ import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
 import { 
   Briefcase, 
   GraduationCap, 
-  Award,
-  Trophy,
+  Award, 
+  Trophy, 
   Calendar, 
   MapPin, 
   ExternalLink, 
   ChevronDown, 
-  Sparkles,
-  Layers
+  Sparkles, 
+  Layers 
 } from 'lucide-react';
 import { useExperiences } from '../../hooks/useExperiences';
 import type { ExperienceRow } from '../../lib/mockData';
 import { Badge } from '../common/Badge';
-import { sortMilestonesReverseChronological } from '../../lib/timelineUtils';
-
-type MilestoneCategory = 'all' | 'experience' | 'education' | 'certification' | 'event';
+import { 
+  sortMilestonesReverseChronological, 
+  extractMilestoneType, 
+  cleanHighlights, 
+  deduplicateMilestones 
+} from '../../lib/timelineUtils';
 
 interface MilestoneTheme {
   label: string;
@@ -34,7 +37,7 @@ interface MilestoneTheme {
 }
 
 const getCategoryTheme = (type?: string): MilestoneTheme => {
-  const normalized = (type === 'work' ? 'experience' : type) || 'experience';
+  const normalized = type || 'experience';
 
   switch (normalized) {
     case 'education':
@@ -48,7 +51,7 @@ const getCategoryTheme = (type?: string): MilestoneTheme => {
         nodeBg: 'bg-blue-600',
         pillBorder: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
         bodyIconColor: 'text-blue-400',
-        highlightLabel: 'Academic Focus & Honors',
+        highlightLabel: 'Academic Focus & Coursework',
         techLabel: 'Core Topics & Coursework',
       };
     case 'certification':
@@ -110,8 +113,10 @@ const TimelineCard: React.FC<TimelineCardProps> = ({
   onToggle,
 }) => {
   const isEven = index % 2 === 0;
-  const theme = getCategoryTheme(item.milestone_type);
+  const itemCategory = extractMilestoneType(item);
+  const theme = getCategoryTheme(itemCategory);
   const IconComponent = theme.icon;
+  const cleanedHighlights = cleanHighlights(item.highlights);
 
   return (
     <div
@@ -238,20 +243,26 @@ const TimelineCard: React.FC<TimelineCardProps> = ({
 
           {/* Quick Preview Chips (Visible when collapsed) */}
           {!isExpanded && item.tech_stack && item.tech_stack.length > 0 && (
-            <div className="mt-3.5 flex flex-wrap gap-1.5">
-              {item.tech_stack.slice(0, 4).map((tech, idx) => (
-                <span
-                  key={idx}
-                  className="px-2 py-0.5 text-[11px] font-mono rounded-md bg-[#16161e] text-[#94949e] border border-white/5"
-                >
-                  {tech}
-                </span>
-              ))}
-              {item.tech_stack.length > 4 && (
-                <span className="px-1.5 py-0.5 text-[10px] font-mono rounded bg-white/5 text-[#94949e]">
-                  +{item.tech_stack.length - 4}
-                </span>
-              )}
+            <div className="mt-3.5 space-y-1.5">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-[#94949e] flex items-center gap-1.5">
+                <Layers className={`w-3 h-3 ${theme.bodyIconColor}`} />
+                <span>{theme.techLabel}</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {item.tech_stack.slice(0, 5).map((tech, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2 py-0.5 text-[11px] font-mono rounded-md bg-[#16161e] text-[#94949e] border border-white/5"
+                  >
+                    {tech}
+                  </span>
+                ))}
+                {item.tech_stack.length > 5 && (
+                  <span className="px-1.5 py-0.5 text-[10px] font-mono rounded bg-white/5 text-[#94949e]">
+                    +{item.tech_stack.length - 5}
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
@@ -267,19 +278,19 @@ const TimelineCard: React.FC<TimelineCardProps> = ({
               >
                 <div className="mt-4 pt-4 border-t border-white/10 space-y-4">
                   {/* Highlights / Responsibilities / Accolades */}
-                  {item.highlights && item.highlights.length > 0 && (
+                  {cleanedHighlights.length > 0 && (
                     <div className="space-y-2">
                       <h4 className="text-xs font-mono uppercase tracking-wider text-[#94949e] flex items-center gap-1.5">
                         <Sparkles className={`w-3.5 h-3.5 ${theme.bodyIconColor}`} />
                         <span>{theme.highlightLabel}</span>
                       </h4>
                       <ul className="space-y-2">
-                        {item.highlights.map((highlight, hIdx) => (
+                        {cleanedHighlights.map((highlight, hIdx) => (
                           <li
                             key={hIdx}
                             className="flex items-start gap-2.5 text-xs sm:text-sm text-[#c4c4cc] leading-relaxed"
                           >
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#ff1e27] mt-2 shrink-0" />
+                            <span className={`w-1.5 h-1.5 rounded-full ${theme.nodeBg} mt-2 shrink-0`} />
                             <span>{highlight}</span>
                           </li>
                         ))}
@@ -287,7 +298,7 @@ const TimelineCard: React.FC<TimelineCardProps> = ({
                     </div>
                   )}
 
-                  {/* Tech Stack / Coursework / Competencies */}
+                  {/* Respective Tech Stack Label for this Category */}
                   {item.tech_stack && item.tech_stack.length > 0 && (
                     <div className="space-y-2 pt-2">
                       <h4 className="text-xs font-mono uppercase tracking-wider text-[#94949e] flex items-center gap-1.5">
@@ -318,10 +329,7 @@ const TimelineCard: React.FC<TimelineCardProps> = ({
 
 export const ExperienceTimeline: React.FC = () => {
   const { experiences, loading } = useExperiences();
-  const [selectedCategory, setSelectedCategory] = useState<MilestoneCategory>('all');
-  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({
-    'exp-1': true, // Auto-expand first leadership experience for immediate impact
-  });
+  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
   const containerRef = useRef<HTMLElement>(null);
 
   // Scroll tracking for glowing spine progress
@@ -335,41 +343,44 @@ export const ExperienceTimeline: React.FC = () => {
     restDelta: 0.001,
   });
 
-  const toggleExpand = (id: string) => {
-    setExpandedIds((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
-
-  const getNormalizedType = (type?: string): string => {
-    if (type === 'work' || !type) return 'experience';
-    return type;
-  };
-
   const sortedExperiences = useMemo(() => {
-    return sortMilestonesReverseChronological(experiences);
+    const deduplicated = deduplicateMilestones(experiences);
+    return sortMilestonesReverseChronological(deduplicated);
   }, [experiences]);
 
-  const filteredItems = sortedExperiences.filter((item) => {
-    if (selectedCategory === 'all') return true;
-    return getNormalizedType(item.milestone_type) === selectedCategory;
-  });
+  const hasUserToggled = Object.keys(expandedIds).length > 0;
 
-  const expCount = sortedExperiences.filter((e) => getNormalizedType(e.milestone_type) === 'experience').length;
-  const eduCount = sortedExperiences.filter((e) => getNormalizedType(e.milestone_type) === 'education').length;
-  const certCount = sortedExperiences.filter((e) => getNormalizedType(e.milestone_type) === 'certification').length;
-  const eventCount = sortedExperiences.filter((e) => getNormalizedType(e.milestone_type) === 'event').length;
+  const isCardExpanded = (id: string, idx: number): boolean => {
+    if (expandedIds[id] !== undefined) {
+      return expandedIds[id];
+    }
+    // By default, before user interaction, expand the first card for immediate impact
+    return !hasUserToggled && idx === 0;
+  };
 
-  const allFilteredIds = filteredItems.map((e) => e.id);
-  const isAllExpanded = allFilteredIds.length > 0 && allFilteredIds.every((id) => expandedIds[id]);
+  const toggleExpand = (id: string, idx: number) => {
+    setExpandedIds((prev) => {
+      const current = prev[id] !== undefined ? prev[id] : (!hasUserToggled && idx === 0);
+      return {
+        ...prev,
+        [id]: !current,
+      };
+    });
+  };
+
+  const allIds = sortedExperiences.map((e) => e.id);
+  const isAllExpanded = allIds.length > 0 && allIds.every((id, idx) => isCardExpanded(id, idx));
 
   const handleToggleAll = () => {
     if (isAllExpanded) {
-      setExpandedIds({});
+      const next: Record<string, boolean> = {};
+      allIds.forEach((id) => {
+        next[id] = false;
+      });
+      setExpandedIds(next);
     } else {
-      const next: Record<string, boolean> = { ...expandedIds };
-      allFilteredIds.forEach((id) => {
+      const next: Record<string, boolean> = {};
+      allIds.forEach((id) => {
         next[id] = true;
       });
       setExpandedIds(next);
@@ -411,77 +422,8 @@ export const ExperienceTimeline: React.FC = () => {
           A unified journey tracing professional engineering leadership, competitive hackathons, industry accreditations, and academic foundations.
         </motion.p>
 
-        {/* Category Filter Pills on Public Timeline */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.25 }}
-          className="pt-2 flex items-center justify-center gap-2 flex-wrap"
-        >
-          <button
-            onClick={() => setSelectedCategory('all')}
-            aria-label="Filter by all milestones"
-            className={`px-3.5 py-1.5 rounded-full text-xs font-mono transition-colors cursor-pointer ${
-              selectedCategory === 'all'
-                ? 'bg-white/15 text-white border border-white/30 font-semibold'
-                : 'bg-white/5 text-[#94949e] hover:text-white border border-white/5 hover:border-white/10'
-            }`}
-          >
-            All ({experiences.length})
-          </button>
-          <button
-            onClick={() => setSelectedCategory('experience')}
-            aria-label="Filter by experiences"
-            className={`px-3.5 py-1.5 rounded-full text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5 ${
-              selectedCategory === 'experience'
-                ? 'bg-[#e50914]/20 text-[#ff1e27] border border-[#e50914]/40 font-semibold'
-                : 'bg-white/5 text-[#94949e] hover:text-[#ff1e27] border border-white/5 hover:border-white/10'
-            }`}
-          >
-            <Briefcase className="w-3.5 h-3.5" />
-            <span>Experiences ({expCount})</span>
-          </button>
-          <button
-            onClick={() => setSelectedCategory('event')}
-            aria-label="Filter by events"
-            className={`px-3.5 py-1.5 rounded-full text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5 ${
-              selectedCategory === 'event'
-                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 font-semibold'
-                : 'bg-white/5 text-[#94949e] hover:text-amber-400 border border-white/5 hover:border-white/10'
-            }`}
-          >
-            <Trophy className="w-3.5 h-3.5" />
-            <span>Events ({eventCount})</span>
-          </button>
-          <button
-            onClick={() => setSelectedCategory('certification')}
-            aria-label="Filter by certifications"
-            className={`px-3.5 py-1.5 rounded-full text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5 ${
-              selectedCategory === 'certification'
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-semibold'
-                : 'bg-white/5 text-[#94949e] hover:text-emerald-400 border border-white/5 hover:border-white/10'
-            }`}
-          >
-            <Award className="w-3.5 h-3.5" />
-            <span>Certifications ({certCount})</span>
-          </button>
-          <button
-            onClick={() => setSelectedCategory('education')}
-            aria-label="Filter by education"
-            className={`px-3.5 py-1.5 rounded-full text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5 ${
-              selectedCategory === 'education'
-                ? 'bg-blue-500/20 text-blue-400 border border-blue-500/40 font-semibold'
-                : 'bg-white/5 text-[#94949e] hover:text-blue-400 border border-white/5 hover:border-white/10'
-            }`}
-          >
-            <GraduationCap className="w-3.5 h-3.5" />
-            <span>Education ({eduCount})</span>
-          </button>
-        </motion.div>
-
         {/* Global Expand/Collapse Controller */}
-        {filteredItems.length > 0 && (
+        {sortedExperiences.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -505,10 +447,10 @@ export const ExperienceTimeline: React.FC = () => {
           <div className="w-8 h-8 border-2 border-[#e50914] border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs font-mono text-[#94949e]">Syncing timeline milestones from database...</p>
         </div>
-      ) : filteredItems.length === 0 ? (
+      ) : sortedExperiences.length === 0 ? (
         <div className="p-8 rounded-2xl bg-[#0f0f13] border border-white/10 text-center space-y-2 max-w-md mx-auto">
-          <p className="text-sm text-white font-medium">No milestones found in this category.</p>
-          <p className="text-xs text-[#94949e]">Select another filter or add entries in the Admin Dashboard.</p>
+          <p className="text-sm text-white font-medium">No milestones found.</p>
+          <p className="text-xs text-[#94949e]">Add entries in the Admin Dashboard to populate the timeline.</p>
         </div>
       ) : (
         <div className="relative max-w-5xl mx-auto">
@@ -523,13 +465,13 @@ export const ExperienceTimeline: React.FC = () => {
 
           {/* Unified Continuous Timeline */}
           <div className="relative">
-            {filteredItems.map((item, idx) => (
+            {sortedExperiences.map((item, idx) => (
               <TimelineCard
                 key={item.id}
                 item={item}
                 index={idx}
-                isExpanded={Boolean(expandedIds[item.id])}
-                onToggle={() => toggleExpand(item.id)}
+                isExpanded={isCardExpanded(item.id, idx)}
+                onToggle={() => toggleExpand(item.id, idx)}
               />
             ))}
           </div>

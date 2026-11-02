@@ -21,7 +21,7 @@ import {
 
 type Project = Database['public']['Tables']['projects']['Row'];
 
-const CATEGORIES = [
+const SUGGESTED_CATEGORIES = [
   'Full-Stack',
   'Mobile',
   'AI/Cloud',
@@ -29,8 +29,45 @@ const CATEGORIES = [
   'DevOps & Systems',
   '3D Graphics & Games',
   'API & Microservices',
-] as const;
-type Category = (typeof CATEGORIES)[number];
+];
+
+const VALID_DB_CATEGORIES = ['Full-Stack', 'Mobile', 'Tools/Web3', 'AI/Cloud'] as const;
+
+function getDbCategoryFallback(cat: string): string {
+  const match = VALID_DB_CATEGORIES.find(
+    (c) => c.toLowerCase() === cat.trim().toLowerCase()
+  );
+  if (match) return match;
+
+  const lower = cat.toLowerCase();
+  if (lower.includes('mobile') || lower.includes('ios') || lower.includes('android') || lower.includes('swift')) {
+    return 'Mobile';
+  }
+  if (lower.includes('ai') || lower.includes('cloud') || lower.includes('ml') || lower.includes('model')) {
+    return 'AI/Cloud';
+  }
+  if (lower.includes('tool') || lower.includes('web3') || lower.includes('devops') || lower.includes('infra') || lower.includes('system') || lower.includes('crypto')) {
+    return 'Tools/Web3';
+  }
+  return 'Full-Stack';
+}
+
+
+function sortFeaturedProjectsFirst(items: Project[]): Project[] {
+  return [...items].sort((a, b) => {
+    if (a.featured && !b.featured) return -1;
+    if (!a.featured && b.featured) return 1;
+    return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+  });
+}
+
+function resolveProjectDisplay(project: Project): Project {
+  const customCat = (project.metrics as Record<string, unknown> | null)?.display_category;
+  if (typeof customCat === 'string' && customCat.trim()) {
+    return { ...project, category: customCat.trim() };
+  }
+  return project;
+}
 
 const POPULAR_TAG_PRESETS = [
   'Vite',
@@ -71,7 +108,7 @@ export const ProjectsManager: React.FC = () => {
   const [slug, setSlug] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<Category>('Full-Stack');
+  const [category, setCategory] = useState<string>('Full-Stack');
   
   // Tech Tags List State
   const [tags, setTags] = useState<string[]>([]);
@@ -96,7 +133,7 @@ export const ProjectsManager: React.FC = () => {
     if (error) {
       setStatusMsg({ type: 'error', text: `Fetch failed: ${error.message}` });
     } else if (data) {
-      setProjects(data);
+      setProjects(sortFeaturedProjectsFirst(data.map(resolveProjectDisplay)));
     }
     setLoading(false);
   };
@@ -114,7 +151,7 @@ export const ProjectsManager: React.FC = () => {
       if (error) {
         setStatusMsg({ type: 'error', text: `Fetch failed: ${error.message}` });
       } else if (data) {
-        setProjects(data);
+        setProjects(sortFeaturedProjectsFirst(data.map(resolveProjectDisplay)));
       }
       setLoading(false);
     }
@@ -150,18 +187,19 @@ export const ProjectsManager: React.FC = () => {
   };
 
   const handleOpenEdit = (project: Project) => {
-    setEditingId(project.id);
-    setTitle(project.title);
-    setSlug(project.slug);
-    setSubtitle(project.subtitle || '');
-    setDescription(project.description);
-    setCategory((CATEGORIES.includes(project.category as Category) ? project.category : 'Full-Stack') as Category);
-    setTags(project.tags || []);
+    const resolved = resolveProjectDisplay(project);
+    setEditingId(resolved.id);
+    setTitle(resolved.title);
+    setSlug(resolved.slug);
+    setSubtitle(resolved.subtitle || '');
+    setDescription(resolved.description);
+    setCategory(resolved.category || 'Full-Stack');
+    setTags(resolved.tags || []);
     setTagInput('');
-    setLiveUrl(project.live_url || '');
-    setGithubUrl(project.github_url || '');
-    setThumbnailUrl(project.thumbnail_url || '');
-    setFeatured(project.featured);
+    setLiveUrl(resolved.live_url || '');
+    setGithubUrl(resolved.github_url || '');
+    setThumbnailUrl(resolved.thumbnail_url || '');
+    setFeatured(resolved.featured);
     setDetectedScale(null);
     setImageMeta(null);
     setIsFormOpen(true);
@@ -199,21 +237,8 @@ export const ProjectsManager: React.FC = () => {
       const height = img.naturalHeight || img.height;
       const ratio = width / height;
 
-      // Desktop Widescreen Scale (~16:9 = 1.78, 16:10 = 1.6, 3:2 = 1.5): accepted range 1.35 to 2.15
-      const isDesktop = ratio >= 1.35 && ratio <= 2.15;
-      // Mobile Portrait Scale (~9:16 = 0.56, 9:19.5 = 0.46, 3:4 = 0.75): accepted range 0.45 to 0.78
-      const isMobile = ratio >= 0.45 && ratio <= 0.78;
-
-      if (!isDesktop && !isMobile) {
-        setStatusMsg({
-          type: 'error',
-          text: `Aspect ratio rejected (${ratio.toFixed(2)}:1, ${width}x${height}px). For visual consistency in the gallery, please upload either a Desktop scale image (approx 16:9 landscape, ratio 1.35 - 2.15) or a Mobile scale image (approx 9:16 portrait, ratio 0.45 - 0.78).`,
-        });
-        setUploading(false);
-        return;
-      }
-
-      const scaleType = isDesktop ? 'desktop' : 'mobile';
+      const isMobile = ratio < 1.0;
+      const scaleType = isMobile ? 'mobile' : 'desktop';
       setDetectedScale(scaleType);
       setImageMeta({ width, height, ratio });
 
@@ -240,7 +265,7 @@ export const ProjectsManager: React.FC = () => {
       setUploading(false);
       setStatusMsg({ 
         type: 'success', 
-        text: `Image uploaded successfully as ${scaleType === 'desktop' ? 'Desktop Landscape (16:9)' : 'Mobile Portrait (9:16)'}!` 
+        text: `Image uploaded successfully as ${scaleType === 'desktop' ? 'Windows Landscape' : 'Mobile Portrait'} (${width}x${height}px, ratio ${ratio.toFixed(2)})!` 
       });
     };
 
@@ -260,55 +285,112 @@ export const ProjectsManager: React.FC = () => {
       return;
     }
 
+    const trimmedCategory = category.trim() || 'Full-Stack';
+    const currentProject = editingId ? projects.find((p) => p.id === editingId) : null;
+    const existingMetrics = (currentProject?.metrics as Record<string, unknown>) || {};
+    const updatedMetrics = {
+      ...existingMetrics,
+      display_category: trimmedCategory,
+    };
+
     if (editingId) {
-      // UPDATE Operation
-      const { error } = await supabase
+      // UPDATE Operation: attempt direct update with user-specified category text
+      let { error } = await supabase
         .from('projects')
         .update({
           title,
           slug,
           subtitle: subtitle || null,
           description,
-          category,
+          category: trimmedCategory,
           tags,
           featured,
           thumbnail_url: thumbnailUrl || null,
           live_url: liveUrl || null,
           github_url: githubUrl || null,
+          metrics: updatedMetrics,
           updated_at: new Date().toISOString(),
         })
         .eq('id', editingId);
 
+      // If Postgres check constraint projects_category_check rejects the custom category,
+      // store the exact display_category in metrics JSONB and fallback the DB column to satisfy constraint
+      if (error && error.message.includes('projects_category_check')) {
+        const fallback = getDbCategoryFallback(trimmedCategory);
+        const retry = await supabase
+          .from('projects')
+          .update({
+            title,
+            slug,
+            subtitle: subtitle || null,
+            description,
+            category: fallback,
+            tags,
+            featured,
+            thumbnail_url: thumbnailUrl || null,
+            live_url: liveUrl || null,
+            github_url: githubUrl || null,
+            metrics: updatedMetrics,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingId);
+        error = retry.error;
+      }
+
       if (error) {
         setStatusMsg({ type: 'error', text: `Update failed: ${error.message}` });
       } else {
-        setStatusMsg({ type: 'success', text: `Project "${title}" updated successfully!` });
+        setStatusMsg({ type: 'success', text: `Project "${title}" updated successfully with category "${trimmedCategory}"!` });
         setIsFormOpen(false);
         setEditingId(null);
         fetchProjects();
       }
     } else {
-      // CREATE Operation
-      const { error } = await supabase.from('projects').insert([
+      // CREATE Operation: attempt direct insert with user-specified category text
+      let { error } = await supabase.from('projects').insert([
         {
           title,
           slug,
           subtitle: subtitle || null,
           description,
-          category,
+          category: trimmedCategory,
           tags,
           featured,
           thumbnail_url: thumbnailUrl || null,
           live_url: liveUrl || null,
           github_url: githubUrl || null,
+          metrics: updatedMetrics,
           sort_order: projects.length + 1,
         },
       ]);
 
+      // If Postgres check constraint projects_category_check rejects the custom category,
+      // store exact display_category in metrics JSONB and fallback DB column to satisfy constraint
+      if (error && error.message.includes('projects_category_check')) {
+        const fallback = getDbCategoryFallback(trimmedCategory);
+        const retry = await supabase.from('projects').insert([
+          {
+            title,
+            slug,
+            subtitle: subtitle || null,
+            description,
+            category: fallback,
+            tags,
+            featured,
+            thumbnail_url: thumbnailUrl || null,
+            live_url: liveUrl || null,
+            github_url: githubUrl || null,
+            metrics: updatedMetrics,
+            sort_order: projects.length + 1,
+          },
+        ]);
+        error = retry.error;
+      }
+
       if (error) {
         setStatusMsg({ type: 'error', text: `Failed to create: ${error.message}` });
       } else {
-        setStatusMsg({ type: 'success', text: `Project "${title}" created successfully!` });
+        setStatusMsg({ type: 'success', text: `Project "${title}" created successfully with category "${trimmedCategory}"!` });
         setIsFormOpen(false);
         fetchProjects();
       }
@@ -419,19 +501,36 @@ export const ProjectsManager: React.FC = () => {
                 />
               </div>
 
+              {/* Text Box for Category instead of Dropdown */}
               <div className="space-y-1">
-                <label className="text-xs font-mono text-[#94949e]">Tech Discipline / Category</label>
-                <select
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-mono text-[#94949e]">Tech Discipline / Category *</label>
+                  <span className="text-[10px] text-[#7e7e8c] font-mono">Custom text category</span>
+                </div>
+                <input
+                  type="text"
+                  required
                   value={category}
-                  onChange={(e) => setCategory(e.target.value as Category)}
-                  className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#ff1e27]"
-                >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
+                  onChange={(e) => setCategory(e.target.value)}
+                  placeholder="e.g. Full-Stack, Mobile, 3D Graphics & Games..."
+                  className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
+                />
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {SUGGESTED_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setCategory(cat)}
+                      className={`px-2 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer border ${
+                        category.toLowerCase() === cat.toLowerCase()
+                          ? 'bg-[#ff1e27]/20 border-[#ff1e27] text-white'
+                          : 'bg-[#181822] border-white/10 text-[#94949e] hover:text-white'
+                      }`}
+                    >
                       {cat}
-                    </option>
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
             </div>
 

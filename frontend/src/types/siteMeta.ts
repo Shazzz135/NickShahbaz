@@ -53,6 +53,8 @@ export interface AboutStatItem {
 }
 
 export interface AboutMetaConfig {
+  headlinePrefix?: string;
+  headlineGradient?: string;
   headline: string;
   bioParagraphs: string[];
   avatarUrl?: string | null;
@@ -64,7 +66,9 @@ export interface AboutMetaConfig {
 }
 
 export const DEFAULT_ABOUT_META: AboutMetaConfig = {
-  headline: 'Engineering Robust Software with Precision, Rigor & Aesthetic Depth.',
+  headlinePrefix: 'Here are some things you want to know',
+  headlineGradient: 'about me.',
+  headline: 'Here are some things you want to know about me.',
   bioParagraphs: [
     'I am a Solutions Architect and Lead Application Developer specializing in distributed full-stack systems, modern cloud infrastructure, and immersive 3D web applications.',
     'With over five years of production engineering experience, I bridge the gap between rigorous low-latency backend architectures (PostgreSQL, Docker, distributed cloud services) and fluid, GPU-accelerated client interfaces (Three.js, React 19, Motion).',

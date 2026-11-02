@@ -575,8 +575,7 @@ export const ContactSection: React.FC = () => {
               </div>
 
               <p className="text-xs text-[#94949e] leading-relaxed">
-                Operating internationally across Eastern, Pacific, and UTC timezones. Guaranteed
-                technical inquiry response within 24 hours.
+                I'll get back to you ASAP!
               </p>
             </div>
           </motion.div>

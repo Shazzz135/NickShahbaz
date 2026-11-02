@@ -224,10 +224,10 @@ describe('Admin Modules - Full Functionality Verification', () => {
   });
 
   // =========================================================================
-  // 3. ProjectsManager (Project CRUD & Immediate Deletion)
+  // 3. ProjectsManager (Project CRUD, Category Text Box & Update)
   // =========================================================================
   describe('ProjectsManager', () => {
-    it('renders projects and supports project creation modal', async () => {
+    it('renders projects and supports project creation modal with text box category', async () => {
       render(<ProjectsManager />);
 
       await waitFor(() => {
@@ -239,6 +239,56 @@ describe('Admin Modules - Full Functionality Verification', () => {
 
       fireEvent.click(addBtn);
       expect(screen.getByPlaceholderText(/e\.g\. Distributed AI Orchestrator/i)).toBeDefined();
+      expect(screen.getByPlaceholderText(/e\.g\. Full-Stack, Mobile/i)).toBeDefined();
+    });
+
+    it('supports custom text category and preserves exact category on edit/update', async () => {
+      const mockProject = {
+        id: 'proj-123',
+        title: 'Simple Blackjack',
+        slug: 'simple-blackjack',
+        subtitle: 'Classic card game',
+        description: 'Systems programming card game engine.',
+        category: '3D Graphics & Games',
+        tags: ['C', 'Shell'],
+        featured: false,
+        thumbnail_url: null,
+        live_url: null,
+        github_url: null,
+        metrics: { display_category: '3D Graphics & Games' },
+        sort_order: 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const chain = createQueryMock();
+      chain.order.mockResolvedValue({ data: [mockProject], error: null });
+      vi.spyOn(supabase, 'from').mockReturnValue(chain as unknown as ReturnType<typeof supabase.from>);
+
+      render(<ProjectsManager />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Simple Blackjack')).toBeDefined();
+      });
+
+      expect(screen.getByText('3D Graphics & Games')).toBeDefined();
+
+      const editBtn = screen.getByTitle(/Edit Project/i);
+      fireEvent.click(editBtn);
+
+      const categoryInput = screen.getByPlaceholderText(/e\.g\. Full-Stack, Mobile/i) as HTMLInputElement;
+      expect(categoryInput).toBeDefined();
+      expect(categoryInput.value).toBe('3D Graphics & Games');
+
+      fireEvent.change(categoryInput, { target: { value: 'Embedded & Robotics' } });
+      expect(categoryInput.value).toBe('Embedded & Robotics');
+
+      const saveBtn = screen.getByRole('button', { name: /Update Project/i });
+      fireEvent.click(saveBtn);
+
+      await waitFor(() => {
+        expect(chain.update).toHaveBeenCalled();
+      });
     });
   });
 
@@ -256,6 +306,25 @@ describe('Admin Modules - Full Functionality Verification', () => {
       expect(await screen.findByText(/Career & Milestones Timeline/i)).toBeDefined();
       const addMilestoneButtons = screen.getAllByRole('button', { name: /Add Milestone/i });
       expect(addMilestoneButtons.length).toBeGreaterThan(0);
+    });
+
+    it('scans and triggers batch database update to fix spelling and typos', async () => {
+      const mockChain = createQueryMock();
+      vi.spyOn(supabase, 'from').mockReturnValue(mockChain as unknown as ReturnType<typeof supabase.from>);
+
+      render(<ExperienceManager />);
+
+      await waitFor(() => {
+        expect(screen.queryByText(/Syncing experience timeline from Supabase/i)).toBeNull();
+      });
+
+      const fixBtn = await screen.findByRole('button', { name: /Fix Typos in Database/i });
+      expect(fixBtn).toBeDefined();
+
+      fireEvent.click(fixBtn);
+      await waitFor(() => {
+        expect(screen.getByText(/verified and updated/i)).toBeDefined();
+      });
     });
   });
 
