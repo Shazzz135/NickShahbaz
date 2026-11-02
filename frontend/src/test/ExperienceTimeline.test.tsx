@@ -3,24 +3,17 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ExperienceTimeline } from '../components/sections/ExperienceTimeline';
 
 describe('ExperienceTimeline', () => {
-  it('renders section title, subtitle, and all category filter buttons', async () => {
+  it('renders section title and subtitle', async () => {
     render(<ExperienceTimeline />);
 
     expect(screen.getByText(/Engineering Journey &/i)).toBeDefined();
     expect(screen.getByText(/Interactive Milestones/i)).toBeDefined();
-
-    // Category filter pills
-    expect(await screen.findByRole('button', { name: /Filter by all milestones/i })).toBeDefined();
-    expect(screen.getByRole('button', { name: /Filter by experiences/i })).toBeDefined();
-    expect(screen.getByRole('button', { name: /Filter by education/i })).toBeDefined();
-    expect(screen.getByRole('button', { name: /Filter by certifications/i })).toBeDefined();
-    expect(screen.getByRole('button', { name: /Filter by events/i })).toBeDefined();
   });
 
-  it('hydrates experiences, events, certifications, and education milestones', async () => {
+  it('hydrates and displays all milestones directly in the unified timeline', async () => {
     render(<ExperienceTimeline />);
 
-    // Experience item
+    // Experience items
     expect(
       await screen.findByText(/Lead Application Developer & Solutions Architect/i)
     ).toBeDefined();
@@ -51,34 +44,9 @@ describe('ExperienceTimeline', () => {
     const techLabels = screen.getAllByText(/Technologies & Frameworks/i);
     expect(techLabels.length).toBeGreaterThan(0);
 
-    // Other category badges should be present (matching multiple elements including filter pills)
+    // Respective category pills for Education and Certification should be present
     expect(screen.getAllByText(/Education/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Certification/i).length).toBeGreaterThan(0);
-  });
-
-  it('filters milestones when clicking category pills', async () => {
-    render(<ExperienceTimeline />);
-
-    // Wait for hydration
-    await screen.findByText(/Lead Application Developer & Solutions Architect/i);
-
-    // Click 'Education' filter pill
-    const eduFilterBtn = screen.getByRole('button', { name: /Filter by education/i });
-    fireEvent.click(eduFilterBtn);
-
-    // Education should remain visible
-    expect(screen.getByText(/B.S. in Computer Science & Software Engineering/i)).toBeDefined();
-
-    // Work / Event items should no longer be rendered
-    expect(screen.queryByText(/Lead Application Developer & Solutions Architect/i)).toBeNull();
-    expect(screen.queryByText(/Grand Prize Winner & Lead System Architect/i)).toBeNull();
-
-    // Click 'Events' filter pill
-    const eventFilterBtn = screen.getByRole('button', { name: /Filter by events/i });
-    fireEvent.click(eventFilterBtn);
-
-    expect(screen.getByText(/Grand Prize Winner & Lead System Architect/i)).toBeDefined();
-    expect(screen.queryByText(/B.S. in Computer Science & Software Engineering/i)).toBeNull();
   });
 
   it('allows expanding and collapsing timeline cards to toggle deliverables', async () => {

@@ -19,11 +19,8 @@ import {
   sortMilestonesReverseChronological, 
   extractMilestoneType, 
   cleanHighlights, 
-  deduplicateMilestones,
-  type MilestoneCategoryType 
+  deduplicateMilestones 
 } from '../../lib/timelineUtils';
-
-type MilestoneCategory = 'all' | MilestoneCategoryType;
 
 interface MilestoneTheme {
   label: string;
@@ -335,7 +332,6 @@ const TimelineCard: React.FC<TimelineCardProps> = ({
 
 export const ExperienceTimeline: React.FC = () => {
   const { experiences, loading } = useExperiences();
-  const [selectedCategory, setSelectedCategory] = useState<MilestoneCategory>('all');
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
   const containerRef = useRef<HTMLElement>(null);
 
@@ -354,13 +350,6 @@ export const ExperienceTimeline: React.FC = () => {
     const deduplicated = deduplicateMilestones(experiences);
     return sortMilestonesReverseChronological(deduplicated);
   }, [experiences]);
-
-  const filteredItems = useMemo(() => {
-    return sortedExperiences.filter((item) => {
-      if (selectedCategory === 'all') return true;
-      return extractMilestoneType(item) === selectedCategory;
-    });
-  }, [sortedExperiences, selectedCategory]);
 
   const hasUserToggled = Object.keys(expandedIds).length > 0;
 
@@ -382,24 +371,19 @@ export const ExperienceTimeline: React.FC = () => {
     });
   };
 
-  const expCount = sortedExperiences.filter((e) => extractMilestoneType(e) === 'experience').length;
-  const eduCount = sortedExperiences.filter((e) => extractMilestoneType(e) === 'education').length;
-  const certCount = sortedExperiences.filter((e) => extractMilestoneType(e) === 'certification').length;
-  const eventCount = sortedExperiences.filter((e) => extractMilestoneType(e) === 'event').length;
-
-  const allFilteredIds = filteredItems.map((e) => e.id);
-  const isAllExpanded = allFilteredIds.length > 0 && allFilteredIds.every((id, idx) => isCardExpanded(id, idx));
+  const allIds = sortedExperiences.map((e) => e.id);
+  const isAllExpanded = allIds.length > 0 && allIds.every((id, idx) => isCardExpanded(id, idx));
 
   const handleToggleAll = () => {
     if (isAllExpanded) {
       const next: Record<string, boolean> = {};
-      allFilteredIds.forEach((id) => {
+      allIds.forEach((id) => {
         next[id] = false;
       });
       setExpandedIds(next);
     } else {
       const next: Record<string, boolean> = {};
-      allFilteredIds.forEach((id) => {
+      allIds.forEach((id) => {
         next[id] = true;
       });
       setExpandedIds(next);
@@ -441,77 +425,8 @@ export const ExperienceTimeline: React.FC = () => {
           A unified journey tracing professional engineering leadership, competitive hackathons, industry accreditations, and academic foundations.
         </motion.p>
 
-        {/* Category Filter Pills on Public Timeline */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.25 }}
-          className="pt-2 flex items-center justify-center gap-2 flex-wrap"
-        >
-          <button
-            onClick={() => setSelectedCategory('all')}
-            aria-label="Filter by all milestones"
-            className={`px-3.5 py-1.5 rounded-full text-xs font-mono transition-colors cursor-pointer ${
-              selectedCategory === 'all'
-                ? 'bg-white/15 text-white border border-white/30 font-semibold'
-                : 'bg-white/5 text-[#94949e] hover:text-white border border-white/5 hover:border-white/10'
-            }`}
-          >
-            All ({sortedExperiences.length})
-          </button>
-          <button
-            onClick={() => setSelectedCategory('experience')}
-            aria-label="Filter by experiences"
-            className={`px-3.5 py-1.5 rounded-full text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5 ${
-              selectedCategory === 'experience'
-                ? 'bg-[#e50914]/20 text-[#ff1e27] border border-[#e50914]/40 font-semibold'
-                : 'bg-white/5 text-[#94949e] hover:text-[#ff1e27] border border-white/5 hover:border-white/10'
-            }`}
-          >
-            <Briefcase className="w-3.5 h-3.5" />
-            <span>Experiences ({expCount})</span>
-          </button>
-          <button
-            onClick={() => setSelectedCategory('event')}
-            aria-label="Filter by events"
-            className={`px-3.5 py-1.5 rounded-full text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5 ${
-              selectedCategory === 'event'
-                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 font-semibold'
-                : 'bg-white/5 text-[#94949e] hover:text-amber-400 border border-white/5 hover:border-white/10'
-            }`}
-          >
-            <Trophy className="w-3.5 h-3.5" />
-            <span>Events ({eventCount})</span>
-          </button>
-          <button
-            onClick={() => setSelectedCategory('certification')}
-            aria-label="Filter by certifications"
-            className={`px-3.5 py-1.5 rounded-full text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5 ${
-              selectedCategory === 'certification'
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-semibold'
-                : 'bg-white/5 text-[#94949e] hover:text-emerald-400 border border-white/5 hover:border-white/10'
-            }`}
-          >
-            <Award className="w-3.5 h-3.5" />
-            <span>Certifications ({certCount})</span>
-          </button>
-          <button
-            onClick={() => setSelectedCategory('education')}
-            aria-label="Filter by education"
-            className={`px-3.5 py-1.5 rounded-full text-xs font-mono transition-colors cursor-pointer flex items-center gap-1.5 ${
-              selectedCategory === 'education'
-                ? 'bg-blue-500/20 text-blue-400 border border-blue-500/40 font-semibold'
-                : 'bg-white/5 text-[#94949e] hover:text-blue-400 border border-white/5 hover:border-white/10'
-            }`}
-          >
-            <GraduationCap className="w-3.5 h-3.5" />
-            <span>Education ({eduCount})</span>
-          </button>
-        </motion.div>
-
         {/* Global Expand/Collapse Controller */}
-        {filteredItems.length > 0 && (
+        {sortedExperiences.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -535,10 +450,10 @@ export const ExperienceTimeline: React.FC = () => {
           <div className="w-8 h-8 border-2 border-[#e50914] border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs font-mono text-[#94949e]">Syncing timeline milestones from database...</p>
         </div>
-      ) : filteredItems.length === 0 ? (
+      ) : sortedExperiences.length === 0 ? (
         <div className="p-8 rounded-2xl bg-[#0f0f13] border border-white/10 text-center space-y-2 max-w-md mx-auto">
-          <p className="text-sm text-white font-medium">No milestones found in this category.</p>
-          <p className="text-xs text-[#94949e]">Select another filter or add entries in the Admin Dashboard.</p>
+          <p className="text-sm text-white font-medium">No milestones found.</p>
+          <p className="text-xs text-[#94949e]">Add entries in the Admin Dashboard to populate the timeline.</p>
         </div>
       ) : (
         <div className="relative max-w-5xl mx-auto">
@@ -553,7 +468,7 @@ export const ExperienceTimeline: React.FC = () => {
 
           {/* Unified Continuous Timeline */}
           <div className="relative">
-            {filteredItems.map((item, idx) => (
+            {sortedExperiences.map((item, idx) => (
               <TimelineCard
                 key={item.id}
                 item={item}
