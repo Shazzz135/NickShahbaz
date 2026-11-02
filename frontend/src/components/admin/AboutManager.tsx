@@ -10,6 +10,7 @@ import {
   type AboutStatItem 
 } from '../../types/siteMeta';
 import { Badge } from '../common/Badge';
+import { normalizeTechName } from '../../lib/timelineUtils';
 import { 
   User, 
   Save, 
@@ -193,6 +194,10 @@ export const AboutManager: React.FC = () => {
       headlineGradient: config.headlineGradient || DEFAULT_ABOUT_META.headlineGradient,
       headline: config.headline || `${config.headlinePrefix || ''} ${config.headlineGradient || ''}`.trim(),
       bioParagraphs: parsedParagraphs.length > 0 ? parsedParagraphs : DEFAULT_ABOUT_META.bioParagraphs,
+      skills: (config.skills || []).map((s) => ({
+        ...s,
+        name: normalizeTechName(s.name),
+      })),
     };
 
     const { error } = await supabase

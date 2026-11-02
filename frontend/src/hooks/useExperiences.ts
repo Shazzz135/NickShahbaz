@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { mockExperiences, type ExperienceRow } from '../lib/mockData';
-import { extractMilestoneType, deduplicateMilestones } from '../lib/timelineUtils';
+import { extractMilestoneType, deduplicateMilestones, normalizeTechName } from '../lib/timelineUtils';
 
 export function useExperiences() {
   const [experiences, setExperiences] = useState<ExperienceRow[]>(mockExperiences);
@@ -28,6 +28,7 @@ export function useExperiences() {
           const processed = data.map((item) => ({
             ...item,
             milestone_type: extractMilestoneType(item),
+            tech_stack: (item.tech_stack || []).map(normalizeTechName),
           }));
           setExperiences(deduplicateMilestones(processed));
         } else {

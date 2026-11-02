@@ -164,7 +164,9 @@ export function extractMilestoneType(item: Partial<ExperienceRow>): MilestoneCat
  */
 export function cleanHighlights(highlights?: string[]): string[] {
   if (!Array.isArray(highlights)) return [];
-  return highlights.filter((h) => typeof h === 'string' && !h.startsWith('__type:') && h.trim().length > 0);
+  return highlights
+    .filter((h) => typeof h === 'string' && !h.startsWith('__type:') && h.trim().length > 0)
+    .map(normalizeSpelling);
 }
 
 /**
@@ -184,4 +186,43 @@ export function deduplicateMilestones<T extends Partial<ExperienceRow>>(items: T
     seenSignatures.add(signature);
     return true;
   });
+}
+
+/**
+ * Normalizes spelling, grammatical, and typographical errors in milestone text.
+ */
+export function normalizeSpelling(text: string): string {
+  if (!text || typeof text !== 'string') return '';
+  return text
+    .replace(/\bdiffucult\b/gi, 'difficult')
+    .replace(/\bOrginized\b/g, 'Organized')
+    .replace(/\borginized\b/g, 'organized')
+    .replace(/\brepo's\b/gi, 'repos')
+    .replace(/\bAPI's\b/g, 'APIs')
+    .replace(/\bOperating System's\b/gi, 'Operating Systems')
+    .replace(/Grade 11 and 12\(2 years of Python experience\./g, 'Grade 11 and 12 (2 years of Python experience).')
+    .replace(/Designed slide show presentations cover diffucult topics/gi, 'Designed slideshow presentations covering difficult topics')
+    .replace(/Designed slide show presentations cover difficult topics/gi, 'Designed slideshow presentations covering difficult topics')
+    .replace(/lecture events ran by LCS/gi, 'lecture events run by LCS')
+    .replace(/Teaching basics to new students basics of/gi, 'Teaching new students the basics of')
+    .replace(/Leading projects and discuss planning/gi, 'Leading projects and discussing planning')
+    .replace(/Less is More!/g, 'Less is more!')
+    .replace(/Both Owners retrieve/g, 'Both owners retrieve')
+    .replace(/branches\/locations requests/g, 'branch/location requests')
+    .replace(/Looking through project submissions for discrepancies\./g, 'Reviewing project submissions for architectural integrity and discrepancies.');
+}
+
+/**
+ * Normalizes known technology casing and typos.
+ */
+export function normalizeTechName(tech: string): string {
+  if (!tech || typeof tech !== 'string') return '';
+  const trimmed = tech.trim();
+  const lower = trimmed.toLowerCase();
+  if (lower === 'github') return 'GitHub';
+  if (lower === 'typescript') return 'TypeScript';
+  if (lower === 'google cloud' || trimmed === 'Google CLoud') return 'Google Cloud';
+  if (trimmed === "Operating System's") return 'Operating Systems';
+  if (lower === 'fast api' || lower === 'fastapi') return 'FastAPI';
+  return trimmed;
 }

@@ -7,6 +7,8 @@ import {
   extractMilestoneType, 
   cleanHighlights, 
   deduplicateMilestones,
+  normalizeSpelling,
+  normalizeTechName,
   type MilestoneCategoryType 
 } from '../../lib/timelineUtils';
 import { 
@@ -23,7 +25,8 @@ import {
   MapPin, 
   X,
   ExternalLink,
-  Save
+  Save,
+  Sparkles
 } from 'lucide-react';
 
 type Experience = Database['public']['Tables']['experiences']['Row'];
@@ -33,6 +36,46 @@ export const ExperienceManager: React.FC = () => {
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFixingDb, setIsFixingDb] = useState(false);
+
+  const handleFixSpellingInDatabase = async () => {
+    setIsFixingDb(true);
+    setStatusMsg(null);
+    try {
+      let updatedCount = 0;
+      for (const exp of experiences) {
+        const marker = exp.highlights.find((h) => typeof h === 'string' && h.startsWith('__type:'));
+        const cleaned = exp.highlights
+          .filter((h) => typeof h === 'string' && !h.startsWith('__type:') && h.trim().length > 0)
+          .map(normalizeSpelling);
+        const finalHighlights = marker ? [...cleaned, marker] : cleaned;
+        const normalizedTech = (exp.tech_stack || []).map(normalizeTechName);
+
+        const { error } = await supabase
+          .from('experiences')
+          .update({
+            highlights: finalHighlights,
+            tech_stack: normalizedTech,
+          })
+          .eq('id', exp.id);
+
+        if (!error) updatedCount++;
+      }
+
+      await fetchExperiences();
+      setStatusMsg({
+        type: 'success',
+        text: `Successfully verified and updated ${updatedCount} milestones in database with clean spelling and typography!`,
+      });
+    } catch (err) {
+      setStatusMsg({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Database update failed',
+      });
+    } finally {
+      setIsFixingDb(false);
+    }
+  };
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -358,29 +401,41 @@ export const ExperienceManager: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            if (isFormOpen) {
-              setIsFormOpen(false);
-              setEditingId(null);
-            } else {
-              handleOpenCreate('experience');
-            }
-          }}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#e50914] hover:bg-[#ff1e27] text-white text-xs font-mono font-medium transition-colors cursor-pointer w-full sm:w-auto"
-        >
-          {isFormOpen ? (
-            <>
-              <X className="w-4 h-4" />
-              <span>Cancel</span>
-            </>
-          ) : (
-            <>
-              <Plus className="w-4 h-4" />
-              <span>Add Milestone</span>
-            </>
-          )}
-        </button>
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+          <button
+            onClick={handleFixSpellingInDatabase}
+            disabled={isFixingDb}
+            title="Auto-scan and update any typos, grammar, and casing discrepancies across all milestones in database"
+            className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-[#141419] hover:bg-[#1a1a24] text-[#94949e] hover:text-white border border-white/10 text-xs font-mono font-medium transition-colors cursor-pointer w-full sm:w-auto disabled:opacity-50"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#ff1e27]" />
+            <span>{isFixingDb ? 'Fixing Database...' : 'Fix Typos in Database'}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              if (isFormOpen) {
+                setIsFormOpen(false);
+                setEditingId(null);
+              } else {
+                handleOpenCreate('experience');
+              }
+            }}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#e50914] hover:bg-[#ff1e27] text-white text-xs font-mono font-medium transition-colors cursor-pointer w-full sm:w-auto"
+          >
+            {isFormOpen ? (
+              <>
+                <X className="w-4 h-4" />
+                <span>Cancel</span>
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4" />
+                <span>Add Milestone</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {statusMsg && (

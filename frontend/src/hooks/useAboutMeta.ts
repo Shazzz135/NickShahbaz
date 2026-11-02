@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { DEFAULT_ABOUT_META, type AboutMetaConfig } from '../types/siteMeta';
+import { normalizeTechName } from '../lib/timelineUtils';
 
 export function useAboutMeta() {
   const [aboutMeta, setAboutMeta] = useState<AboutMetaConfig>(DEFAULT_ABOUT_META);
@@ -53,7 +54,10 @@ export function useAboutMeta() {
             headline: val.headline ?? `${prefix ?? ''} ${gradient ?? ''}`.trim(),
             stats: Array.isArray(val.stats) ? val.stats : DEFAULT_ABOUT_META.stats,
             principles: Array.isArray(val.principles) ? val.principles : DEFAULT_ABOUT_META.principles,
-            skills: Array.isArray(val.skills) ? val.skills : DEFAULT_ABOUT_META.skills,
+            skills: (Array.isArray(val.skills) ? val.skills : DEFAULT_ABOUT_META.skills).map((s) => ({
+              ...s,
+              name: normalizeTechName(s.name),
+            })),
             bioParagraphs: Array.isArray(val.bioParagraphs) ? val.bioParagraphs : DEFAULT_ABOUT_META.bioParagraphs,
           });
         } else {

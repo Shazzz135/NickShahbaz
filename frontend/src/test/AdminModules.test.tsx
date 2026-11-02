@@ -257,6 +257,25 @@ describe('Admin Modules - Full Functionality Verification', () => {
       const addMilestoneButtons = screen.getAllByRole('button', { name: /Add Milestone/i });
       expect(addMilestoneButtons.length).toBeGreaterThan(0);
     });
+
+    it('scans and triggers batch database update to fix spelling and typos', async () => {
+      const mockChain = createQueryMock();
+      vi.spyOn(supabase, 'from').mockReturnValue(mockChain as unknown as ReturnType<typeof supabase.from>);
+
+      render(<ExperienceManager />);
+
+      await waitFor(() => {
+        expect(screen.queryByText(/Syncing experience timeline from Supabase/i)).toBeNull();
+      });
+
+      const fixBtn = await screen.findByRole('button', { name: /Fix Typos in Database/i });
+      expect(fixBtn).toBeDefined();
+
+      fireEvent.click(fixBtn);
+      await waitFor(() => {
+        expect(screen.getByText(/verified and updated/i)).toBeDefined();
+      });
+    });
   });
 
   // =========================================================================
