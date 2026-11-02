@@ -35,12 +35,12 @@ describe('ExperienceTimeline', () => {
     ).toBeDefined();
   });
 
-  it('displays Technologies & Frameworks label and renders category badges including Experience', async () => {
+  it('displays Technologies & Frameworks specifically for Experience items and appropriate labels for others', async () => {
     render(<ExperienceTimeline />);
 
     await screen.findByText(/Lead Application Developer & Solutions Architect/i);
 
-    // Technologies & Frameworks label should be present across cards
+    // Technologies & Frameworks label should be present for experience items
     const techLabels = screen.getAllByText(/Technologies & Frameworks/i);
     expect(techLabels.length).toBeGreaterThan(0);
 
@@ -50,7 +50,7 @@ describe('ExperienceTimeline', () => {
     expect(screen.getAllByText(/Certification/i).length).toBeGreaterThan(0);
   });
 
-  it('allows expanding and collapsing timeline cards to toggle deliverables', async () => {
+  it('allows expanding and collapsing timeline cards to toggle deliverables and respective category labels', async () => {
     render(<ExperienceTimeline />);
 
     const eduRole = await screen.findByText(
@@ -63,15 +63,14 @@ describe('ExperienceTimeline', () => {
       screen.queryByText(/Specialized in Software Architecture, Distributed Computing/i)
     ).toBeNull();
 
-    // Click to expand
+    // Click to expand education card
     fireEvent.click(eduRole);
 
-    // Now expanded: deliverables and coursework are visible
+    // Now expanded: deliverables and coursework are visible with Education-specific tech label
     expect(
       await screen.findByText(/Specialized in Software Architecture, Distributed Computing/i)
     ).toBeDefined();
-    const techHeaders = screen.getAllByText(/Technologies & Frameworks/i);
-    expect(techHeaders.length).toBeGreaterThan(0);
+    expect(screen.getByText(/Core Topics & Coursework/i)).toBeDefined();
     expect(screen.getByText(/Distributed Systems/i)).toBeDefined();
 
     // Click to collapse

@@ -52,7 +52,7 @@ const getCategoryTheme = (type?: string): MilestoneTheme => {
         pillBorder: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
         bodyIconColor: 'text-blue-400',
         highlightLabel: 'Academic Focus & Coursework',
-        techLabel: 'Technologies & Frameworks',
+        techLabel: 'Core Topics & Coursework',
       };
     case 'certification':
       return {
@@ -66,7 +66,7 @@ const getCategoryTheme = (type?: string): MilestoneTheme => {
         pillBorder: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
         bodyIconColor: 'text-emerald-400',
         highlightLabel: 'Validated Skills & Domains',
-        techLabel: 'Technologies & Frameworks',
+        techLabel: 'Technologies & Competencies',
       };
     case 'event':
       return {
@@ -80,7 +80,7 @@ const getCategoryTheme = (type?: string): MilestoneTheme => {
         pillBorder: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
         bodyIconColor: 'text-amber-400',
         highlightLabel: 'Accolades & Deliverables',
-        techLabel: 'Technologies & Frameworks',
+        techLabel: 'Technologies Built With',
       };
     default:
       return {
@@ -246,7 +246,7 @@ const TimelineCard: React.FC<TimelineCardProps> = ({
             <div className="mt-3.5 space-y-1.5">
               <div className="text-[10px] font-mono uppercase tracking-wider text-[#94949e] flex items-center gap-1.5">
                 <Layers className={`w-3 h-3 ${theme.bodyIconColor}`} />
-                <span>Technologies & Frameworks</span>
+                <span>{theme.techLabel}</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {item.tech_stack.slice(0, 5).map((tech, idx) => (
@@ -298,12 +298,12 @@ const TimelineCard: React.FC<TimelineCardProps> = ({
                     </div>
                   )}
 
-                  {/* Technologies & Frameworks Full Stack */}
+                  {/* Respective Tech Stack Label for this Category */}
                   {item.tech_stack && item.tech_stack.length > 0 && (
                     <div className="space-y-2 pt-2">
                       <h4 className="text-xs font-mono uppercase tracking-wider text-[#94949e] flex items-center gap-1.5">
                         <Layers className={`w-3.5 h-3.5 ${theme.bodyIconColor}`} />
-                        <span>Technologies & Frameworks</span>
+                        <span>{theme.techLabel}</span>
                       </h4>
                       <div className="flex flex-wrap gap-1.5">
                         {item.tech_stack.map((tech, tIdx) => (
