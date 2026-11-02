@@ -65,8 +65,13 @@ describe('ProjectGallery', () => {
     const dialog = screen.getByRole('dialog');
     expect(dialog).toBeDefined();
 
-    // Verify left visual frame & scale ratio
-    expect(screen.getByText(/Min ratio: 0.72/i)).toBeDefined();
+    // Verify background scrolling is locked on body and document
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.documentElement.style.overflow).toBe('hidden');
+
+    // Verify technical ratio debug text is removed from the user interface
+    expect(screen.queryByText(/Landscape Windows Frame/i)).toBeNull();
+    expect(screen.queryByText(/Min ratio: 0.72/i)).toBeNull();
 
     // Verify all project details are visible on the right
     expect(screen.getByText(/Executive Overview/i)).toBeDefined();
