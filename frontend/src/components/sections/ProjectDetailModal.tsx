@@ -31,7 +31,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
     setDetectedScale(null);
   }
 
-  // Lock body & document scroll completely when modal is open and handle Escape key
+  // Strict scroll-lock to block background scroll and guarantee popup scroll works
   useEffect(() => {
     if (!project) return;
 
@@ -41,15 +41,55 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
 
     const originalBodyOverflow = document.body.style.overflow;
     const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyOverscroll = document.body.style.overscrollBehavior;
 
-    // Completely lock background scrolling
+    // Lock main window and html scrolling
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+
+    // Intercept wheel events so background page NEVER scrolls
+    const handleWheel = (e: WheelEvent) => {
+      const scrollable = document.getElementById('modal-scrollable-body');
+      if (!scrollable) {
+        e.preventDefault();
+        return;
+      }
+
+      // If wheel event target is outside the scrollable container, block it
+      if (!scrollable.contains(e.target as Node)) {
+        e.preventDefault();
+        return;
+      }
+
+      // If inside scrollable container, prevent scroll chaining when reaching boundaries
+      const { scrollTop, scrollHeight, clientHeight } = scrollable;
+      const isAtTop = scrollTop <= 0 && e.deltaY < 0;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1 && e.deltaY > 0;
+
+      if (isAtTop || isAtBottom) {
+        e.preventDefault();
+      }
+    };
+
+    // Intercept touchmove on mobile so backdrop/margins never scroll background
+    const handleTouchMove = (e: TouchEvent) => {
+      const scrollable = document.getElementById('modal-scrollable-body');
+      if (!scrollable || !scrollable.contains(e.target as Node)) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.body.style.overflow = originalBodyOverflow;
       document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.overscrollBehavior = originalBodyOverscroll;
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [project, onClose]);
@@ -64,7 +104,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-project-title"
-        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden overscroll-contain"
+        className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden overscroll-none"
       >
         {/* Backdrop with Blur */}
         <motion.div
@@ -75,15 +115,15 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
           className="fixed inset-0 bg-black/80 backdrop-blur-md"
         />
 
-        {/* Modal Window Container: expanded max-w-6xl for dual-pane desktop deepdive */}
+        {/* Modal Window Container: definite height ensures flex child scrolls accurately */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="relative w-full max-w-5xl lg:max-w-6xl h-auto max-h-[92vh] bg-[#0d0d10] border border-white/15 rounded-2xl shadow-[0_0_60px_rgba(229,9,20,0.3)] overflow-hidden flex flex-col z-10 overscroll-contain"
+          className="relative w-full max-w-5xl lg:max-w-6xl h-[88vh] md:h-[90vh] max-h-[90vh] bg-[#0d0d10] border border-white/15 rounded-2xl shadow-[0_0_60px_rgba(229,9,20,0.3)] overflow-hidden flex flex-col z-10 overscroll-contain"
         >
-          {/* Top Header Bar */}
+          {/* Top Header Bar (Fixed height, cannot shrink) */}
           <div className="flex items-center justify-between p-3.5 sm:p-5 border-b border-white/10 bg-[#121217] shrink-0">
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <Badge variant="crimson">{project.category}</Badge>
@@ -118,8 +158,11 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
             </button>
           </div>
 
-          {/* Scrollable Content Body - min-h-0 ensures inner scroll without triggering background scroll */}
-          <div className="overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8 flex-1 min-h-0">
+          {/* Scrollable Content Body - rigid min-h-0 and flex-1 guarantee internal scroll works smoothly */}
+          <div 
+            id="modal-scrollable-body"
+            className="overflow-y-auto overscroll-contain p-4 sm:p-6 lg:p-8 flex-1 min-h-0 [scrollbar-width:thin] [scrollbar-color:#3f3f4e_transparent]"
+          >
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-start">
               
               {/* LEFT COLUMN: Visual Media Showcase (Image Left, Windows & Mobile dynamic scale) */}
@@ -132,7 +175,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
                         alt={project.title}
                         minRatio={0.72}
                         onScaleDetected={(scale) => setDetectedScale(scale)}
-                        className="rounded-lg border border-white/5 max-h-[65vh] w-full mx-auto shadow-inner"
+                        className="rounded-lg border border-white/5 max-h-[60vh] w-full mx-auto shadow-inner"
                       />
                     </div>
                   ) : (
@@ -283,7 +326,7 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
             </div>
           </div>
 
-          {/* Bottom Bar for quick navigation / close */}
+          {/* Bottom Bar for quick navigation / close (Fixed height, cannot shrink) */}
           <div className="p-3 sm:p-4 border-t border-white/10 bg-[#121217] flex items-center justify-between shrink-0">
             <span className="text-xs font-mono text-[#7e7e8c] truncate">
               {project.title} &bull; Deep Dive Detail
