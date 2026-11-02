@@ -179,14 +179,11 @@ const TimelineCard: React.FC<TimelineCardProps> = ({
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1 flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  {/* Remove redundant red Experience badge; display category pill for other milestones */}
-                  {theme.label !== 'Experience' && (
-                    <span
-                      className={`px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider rounded border ${theme.pillBorder}`}
-                    >
-                      {theme.label}
-                    </span>
-                  )}
+                  <span
+                    className={`px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider rounded border ${theme.pillBorder}`}
+                  >
+                    {theme.label}
+                  </span>
                   {item.is_current && (
                     <Badge variant="emerald" dot>
                       Active

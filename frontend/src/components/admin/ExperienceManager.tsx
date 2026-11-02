@@ -702,12 +702,9 @@ export const ExperienceManager: React.FC = () => {
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     )}
-                    {/* Remove redundant red Experience badge; display category pill for other milestones */}
-                    {meta.label !== 'Experience' && (
-                      <span className={`px-2 py-0.5 text-[10px] font-mono rounded border ${meta.colorClass}`}>
-                        {meta.label}
-                      </span>
-                    )}
+                    <span className={`px-2 py-0.5 text-[10px] font-mono rounded border ${meta.colorClass}`}>
+                      {meta.label}
+                    </span>
                     {exp.is_current && <Badge variant="emerald" dot>Active</Badge>}
                   </div>
 

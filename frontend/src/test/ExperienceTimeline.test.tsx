@@ -35,7 +35,7 @@ describe('ExperienceTimeline', () => {
     ).toBeDefined();
   });
 
-  it('displays Technologies & Frameworks label and omits redundant red Experience badge', async () => {
+  it('displays Technologies & Frameworks label and renders category badges including Experience', async () => {
     render(<ExperienceTimeline />);
 
     await screen.findByText(/Lead Application Developer & Solutions Architect/i);
@@ -44,7 +44,8 @@ describe('ExperienceTimeline', () => {
     const techLabels = screen.getAllByText(/Technologies & Frameworks/i);
     expect(techLabels.length).toBeGreaterThan(0);
 
-    // Respective category pills for Education and Certification should be present
+    // Respective category pills for Experience, Education and Certification should be present
+    expect(screen.getAllByText(/Experience/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Education/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Certification/i).length).toBeGreaterThan(0);
   });
