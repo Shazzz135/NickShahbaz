@@ -6,8 +6,8 @@ describe('ExperienceTimeline', () => {
   it('renders section title and subtitle', async () => {
     render(<ExperienceTimeline />);
 
-    expect(screen.getByText(/Engineering Journey &/i)).toBeDefined();
-    expect(screen.getByText(/Interactive Milestones/i)).toBeDefined();
+    expect(screen.getByText(/Growth Timeline and/i)).toBeDefined();
+    expect(screen.getAllByText(/Milestones/i).length).toBeGreaterThan(0);
   });
 
   it('hydrates and displays all milestones directly in the unified timeline', async () => {

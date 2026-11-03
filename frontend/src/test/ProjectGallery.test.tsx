@@ -6,8 +6,8 @@ describe('ProjectGallery', () => {
   it('renders section title, subtitle, and all category filter tabs', () => {
     render(<ProjectGallery />);
 
-    expect(screen.getByText(/Engineering High-Performance/i)).toBeDefined();
-    expect(screen.getByText(/Digital Products/i)).toBeDefined();
+    expect(screen.getByText(/My Best Working Projects/i)).toBeDefined();
+    expect(screen.getByText(/Learning Process/i)).toBeDefined();
     expect(screen.getByRole('button', { name: /All/i })).toBeDefined();
     expect(screen.getByRole('button', { name: /Full-Stack/i })).toBeDefined();
     expect(screen.getByRole('button', { name: /Mobile/i })).toBeDefined();

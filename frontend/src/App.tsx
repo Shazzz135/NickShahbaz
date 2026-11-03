@@ -9,6 +9,9 @@ import { AboutSection } from './components/sections/AboutSection';
 import { ProjectGallery } from './components/sections/ProjectGallery';
 import { ExperienceTimeline } from './components/sections/ExperienceTimeline';
 import { useSiteMeta } from './hooks/useSiteMeta';
+import { useAboutMeta } from './hooks/useAboutMeta';
+import { useProjects } from './hooks/useProjects';
+import { useExperiences } from './hooks/useExperiences';
 import { useDynamicFavicon } from './hooks/useDynamicFavicon';
 import { DEFAULT_HERO_META, type HeroMetaConfig } from './types/siteMeta';
 
@@ -34,32 +37,42 @@ function GlobalBranding() {
 }
 
 function PublicPortfolio() {
+  const { loading: heroLoading } = useSiteMeta('hero', DEFAULT_HERO_META);
+  const { loading: aboutLoading } = useAboutMeta();
+  const { loading: projectsLoading } = useProjects();
+  const { loading: experiencesLoading } = useExperiences();
+
+  // All primary database tables must be resolved before revealing content
+  const isDataReady = !heroLoading && !aboutLoading && !projectsLoading && !experiencesLoading;
+
   return (
     <>
       {/* Interactive Cyber-Preloader with Shutter Exit */}
-      <Preloader />
+      <Preloader isReady={isDataReady} />
 
       <SmoothScroll>
         <Suspense fallback={null}>
           <CanvasBackground />
         </Suspense>
 
-        {/* 1. Dynamic Hero Section with 3D Foreground Elements */}
-        <HeroSection />
+        <div className={`transition-opacity duration-700 ease-out ${isDataReady ? 'opacity-100' : 'opacity-0'}`}>
+          {/* 1. Dynamic Hero Section with 3D Foreground Elements */}
+          <HeroSection />
 
-        {/* 2. About Me, Skills Matrix & Philosophy */}
-        <AboutSection />
+          {/* 2. About Me, Skills Matrix & Philosophy */}
+          <AboutSection />
 
-        {/* 3. Application Development Project Gallery & Detail Modals */}
-        <ProjectGallery />
+          {/* 3. Application Development Project Gallery & Detail Modals */}
+          <ProjectGallery />
 
-        {/* 4. Experience & Career Interactive Timeline */}
-        <ExperienceTimeline />
+          {/* 4. Experience & Career Interactive Timeline */}
+          <ExperienceTimeline />
 
-        {/* 5. Contact & Collaboration Section */}
-        <Suspense fallback={<div className="w-full min-h-[400px]" />}>
-          <ContactSection />
-        </Suspense>
+          {/* 5. Contact & Collaboration Section */}
+          <Suspense fallback={<div className="w-full min-h-[400px]" />}>
+            <ContactSection />
+          </Suspense>
+        </div>
       </SmoothScroll>
     </>
   );

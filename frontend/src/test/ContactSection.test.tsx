@@ -18,8 +18,9 @@ describe('ContactSection', () => {
   it('renders section header and peripheral widgets', () => {
     render(<ContactSection />);
 
-    expect(screen.getByText(/Architectural Partnership/i)).toBeDefined();
-    expect(screen.getByRole('heading', { name: /Project Specification/i })).toBeDefined();
+    expect(screen.getByText(/Please reach out to/i)).toBeDefined();
+    expect(screen.getByText(/me directly/i)).toBeDefined();
+    expect(screen.getByRole('heading', { name: /Contact Me/i })).toBeDefined();
     expect(screen.getByText(/Direct Line/i)).toBeDefined();
     expect(screen.getByText(/nickshahbaz135@gmail.com/i)).toBeDefined();
     expect(screen.getByText(/Location & Timezone/i)).toBeDefined();
@@ -28,13 +29,13 @@ describe('ContactSection', () => {
     expect(screen.getByText(/GitHub/i)).toBeDefined();
     expect(screen.getByText(/X \(Twitter\)/i)).toBeDefined();
     expect(screen.getByText(/LinkedIn/i)).toBeDefined();
-    expect(screen.getByText(/Version 4.0/i)).toBeDefined();
+    expect(screen.getByText(/Version 4\.1/i)).toBeDefined();
   });
 
   it('validates required fields on empty submit attempt', async () => {
     render(<ContactSection />);
 
-    const submitBtn = screen.getByRole('button', { name: /Dispatch Technical Inquiry/i });
+    const submitBtn = screen.getByRole('button', { name: /Send Message/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
@@ -49,13 +50,13 @@ describe('ContactSection', () => {
 
     const nameInput = screen.getByPlaceholderText(/Alex Mercer/i);
     const emailInput = screen.getByPlaceholderText(/alex@enterprise.com/i);
-    const messageInput = screen.getByPlaceholderText(/Outline system goals/i);
+    const messageInput = screen.getByPlaceholderText(/Message Here\.\.\./i);
 
     fireEvent.change(nameInput, { target: { value: 'Nick Developer' } });
     fireEvent.change(emailInput, { target: { value: 'not-an-email' } });
     fireEvent.change(messageInput, { target: { value: 'We need high performance 3D architecture' } });
 
-    const submitBtn = screen.getByRole('button', { name: /Dispatch Technical Inquiry/i });
+    const submitBtn = screen.getByRole('button', { name: /Send Message/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
@@ -73,17 +74,17 @@ describe('ContactSection', () => {
 
     const nameInput = screen.getByPlaceholderText(/Alex Mercer/i) as HTMLInputElement;
     const emailInput = screen.getByPlaceholderText(/alex@enterprise.com/i) as HTMLInputElement;
-    const messageInput = screen.getByPlaceholderText(/Outline system goals/i) as HTMLTextAreaElement;
+    const messageInput = screen.getByPlaceholderText(/Message Here\.\.\./i) as HTMLTextAreaElement;
 
     fireEvent.change(nameInput, { target: { value: 'Elena Rostova' } });
     fireEvent.change(emailInput, { target: { value: 'elena@cybernetics.io' } });
     fireEvent.change(messageInput, { target: { value: 'Building an enterprise 3D spatial web interface.' } });
 
-    const submitBtn = screen.getByRole('button', { name: /Dispatch Technical Inquiry/i });
+    const submitBtn = screen.getByRole('button', { name: /Send Message/i });
     fireEvent.click(submitBtn);
 
     await waitFor(() => {
-      expect(screen.getByText(/Inquiry Dispatched Successfully/i)).toBeDefined();
+      expect(screen.getByText(/Message Sent Successfully/i)).toBeDefined();
       expect(screen.getByText(/Your inquiry has been received/i)).toBeDefined();
     });
 

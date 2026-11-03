@@ -75,11 +75,11 @@ export const InquiriesViewer: React.FC = () => {
       <div className="pb-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            <span>Inquiries Inbox</span>
+            <span>Inbox</span>
             <Badge variant="crimson">{inquiries.filter((i) => i.status === 'unread').length} Unread</Badge>
           </h2>
           <p className="text-xs text-[#94949e] mt-0.5">
-            Visitor submissions routed to <code className="text-[#ff1e27]">public.inquiries</code>.
+            Visitor submissions routed to <code className="text-[#ff1e27]">public.emails</code>.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -104,7 +104,7 @@ export const InquiriesViewer: React.FC = () => {
       {loading ? (
         <div className="p-8 sm:p-12 text-center text-xs font-mono text-[#94949e] space-y-2">
           <div className="w-5 h-5 border-2 border-[#e50914] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p>Syncing inquiries from Supabase...</p>
+          <p>Syncing emails from Supabase...</p>
         </div>
       ) : inquiries.length === 0 ? (
         <div className="p-6 sm:p-8 text-center bg-[#141419] rounded-xl border border-white/5 space-y-2">
@@ -135,19 +135,6 @@ export const InquiriesViewer: React.FC = () => {
                   <Clock className="w-3.5 h-3.5" />
                   <span>{new Date(inq.created_at).toLocaleString()}</span>
                 </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2 text-xs">
-                {inq.project_type && (
-                  <span className="px-2.5 py-1 rounded bg-[#1c1c24] border border-white/5 text-[#a1a1aa] font-mono">
-                    Type: <strong className="text-white">{inq.project_type}</strong>
-                  </span>
-                )}
-                {inq.budget_range && (
-                  <span className="px-2.5 py-1 rounded bg-[#1c1c24] border border-white/5 text-[#a1a1aa] font-mono">
-                    Budget: <strong className="text-white">{inq.budget_range}</strong>
-                  </span>
-                )}
               </div>
 
               <p className="text-xs text-[#94949e] leading-relaxed whitespace-pre-wrap break-words bg-[#0a0a0d] p-3 rounded-lg border border-white/5">

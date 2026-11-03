@@ -2,10 +2,19 @@ import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { DEFAULT_ABOUT_META, type AboutMetaConfig } from '../types/siteMeta';
 import { normalizeTechName } from '../lib/timelineUtils';
+import { getStorageCache, setStorageCache } from '../lib/storageCache';
 
 export function useAboutMeta() {
-  const [aboutMeta, setAboutMeta] = useState<AboutMetaConfig>(DEFAULT_ABOUT_META);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [aboutMeta, setAboutMeta] = useState<AboutMetaConfig>(() => {
+    const cached = getStorageCache<AboutMetaConfig>('about');
+    return cached || DEFAULT_ABOUT_META;
+  });
+
+  const [loading, setLoading] = useState<boolean>(() => {
+    const cached = getStorageCache<AboutMetaConfig>('about');
+    return !cached;
+  });
+
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,7 +55,7 @@ export function useAboutMeta() {
             }
           }
 
-          setAboutMeta({
+          const resolved: AboutMetaConfig = {
             ...DEFAULT_ABOUT_META,
             ...val,
             headlinePrefix: prefix ?? DEFAULT_ABOUT_META.headlinePrefix,
@@ -59,7 +68,10 @@ export function useAboutMeta() {
               name: normalizeTechName(s.name),
             })),
             bioParagraphs: Array.isArray(val.bioParagraphs) ? val.bioParagraphs : DEFAULT_ABOUT_META.bioParagraphs,
-          });
+          };
+
+          setAboutMeta(resolved);
+          setStorageCache('about', resolved);
         } else {
           setAboutMeta(DEFAULT_ABOUT_META);
         }

@@ -339,7 +339,7 @@ describe('Admin Modules - Full Functionality Verification', () => {
         expect(screen.queryByText(/Syncing inquiries from Supabase/i)).toBeNull();
       });
 
-      expect(await screen.findByText(/Inquiries Inbox/i)).toBeDefined();
+      expect(await screen.findByRole('heading', { name: /Inbox/i })).toBeDefined();
       expect(screen.getByText(/Inbox is Clear/i)).toBeDefined();
     });
   });

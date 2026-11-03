@@ -1,12 +1,20 @@
 import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { getStorageCache, setStorageCache } from '../lib/storageCache';
 
 export function useSiteMeta<T extends object = Record<string, unknown>>(
   key: string, 
   defaultValue: T = {} as T
 ) {
-  const [data, setData] = useState<T>(defaultValue);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [data, setData] = useState<T>(() => {
+    const cached = getStorageCache<T>(`meta_${key}`);
+    return cached || defaultValue;
+  });
+
+  const [loading, setLoading] = useState<boolean>(() => {
+    const cached = getStorageCache<T>(`meta_${key}`);
+    return !cached;
+  });
 
   useEffect(() => {
     async function fetchMeta() {
@@ -25,7 +33,9 @@ export function useSiteMeta<T extends object = Record<string, unknown>>(
 
         if (error) throw error;
         if (row && row.value) {
-          setData(row.value as unknown as T);
+          const val = row.value as unknown as T;
+          setData(val);
+          setStorageCache(`meta_${key}`, val);
         }
       } catch (err) {
         console.warn(`Failed to fetch site_meta for ${key}:`, err);

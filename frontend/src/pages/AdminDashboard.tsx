@@ -132,7 +132,7 @@ export const AdminDashboard: React.FC = () => {
               }`}
             >
               <Mail className="w-4 h-4" />
-              <span>5. Inquiries Inbox</span>
+              <span>5. Inbox</span>
             </button>
           </div>
         </nav>

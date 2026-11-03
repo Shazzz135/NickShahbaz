@@ -6,6 +6,8 @@ interface PreloaderProps {
   onComplete?: () => void;
   /** Force bypass (e.g. for testing) */
   bypass?: boolean;
+  /** Whether the underlying database data has finished loading */
+  isReady?: boolean;
 }
 
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
@@ -33,8 +35,23 @@ const TELEMETRY_STAGES = [
   'SYSTEM READY — UNMASKING INTERFACE',
 ];
 
-export const Preloader: React.FC<PreloaderProps> = ({ onComplete, bypass = false }) => {
-  const isBypassed = bypass || hasVisitedWithin24Hours();
+export const Preloader: React.FC<PreloaderProps> = ({ 
+  onComplete, 
+  bypass = false,
+  isReady = true 
+}) => {
+  const [dataTimedOut, setDataTimedOut] = useState(false);
+
+  // Safety fallback: never hold user longer than 1.5s even if database is slow/offline
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDataTimedOut(true);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const ready = isReady || dataTimedOut;
+  const isBypassed = bypass || (hasVisitedWithin24Hours() && ready);
 
   const [progress, setProgress] = useState(isBypassed ? 100 : 0);
   const [stageIndex, setStageIndex] = useState(0);
@@ -44,23 +61,28 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete, bypass = false
 
   const glowFilterId = useId();
 
-  // If already visited within 24 hours or bypassed, complete immediately
+  // If already visited within 24 hours AND data is ready, complete immediately
   useEffect(() => {
     if (isBypassed) {
       onComplete?.();
       return;
     }
 
-    const targetDuration = 1200; // Fast and cinematic on initial arrival
-    const intervalTime = 30;
+    const targetDuration = 1000; // Snappy and cinematic
+    const intervalTime = 25;
     const incrementStep = 100 / (targetDuration / intervalTime);
 
     timerRef.current = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) return 100;
-        const next = Math.min(100, prev + incrementStep * 1.15);
-        
-        // Update stage based on progress bracket
+
+        // Hold at 92% until database data has finished loading
+        if (prev >= 92 && !ready) {
+          setStageIndex(3); // 'ESTABLISHING SUPABASE LINK...'
+          return 92;
+        }
+
+        const next = Math.min(100, prev + incrementStep * 1.2);
         const stage = Math.min(
           TELEMETRY_STAGES.length - 1,
           Math.floor((next / 100) * TELEMETRY_STAGES.length)
@@ -74,11 +96,11 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete, bypass = false
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isBypassed, onComplete]);
+  }, [isBypassed, onComplete, ready]);
 
-  // Handle completion side-effects outside of state updater
+  // When progress reaches 100% and data is ready, trigger exit shutter
   useEffect(() => {
-    if (progress >= 100 && !isReadyToExit && !isBypassed) {
+    if (progress >= 100 && ready && !isReadyToExit && !isBypassed) {
       if (timerRef.current) clearInterval(timerRef.current);
       const exitTimer = setTimeout(() => {
         setIsReadyToExit(true);
@@ -87,10 +109,10 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete, bypass = false
         } catch {
           // Ignore storage errors in private modes
         }
-      }, 150);
+      }, 100);
       return () => clearTimeout(exitTimer);
     }
-  }, [progress, isReadyToExit, isBypassed]);
+  }, [progress, ready, isReadyToExit, isBypassed]);
 
   if (isFinished) return null;
 

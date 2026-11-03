@@ -406,9 +406,9 @@ export const ExperienceTimeline: React.FC = () => {
           transition={{ delay: 0.1 }}
           className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white"
         >
-          Engineering Journey & <br />
+          Growth Timeline and<br />
           <span className="bg-gradient-to-r from-[#ff1e27] via-[#ff6b72] to-white bg-clip-text text-transparent">
-            Interactive Milestones
+             Milestones
           </span>
         </motion.h2>
 
@@ -419,7 +419,7 @@ export const ExperienceTimeline: React.FC = () => {
           transition={{ delay: 0.2 }}
           className="text-sm sm:text-base text-[#94949e] leading-relaxed max-w-2xl mx-auto"
         >
-          A unified journey tracing professional engineering leadership, competitive hackathons, industry accreditations, and academic foundations.
+          Track my journey and what brought me to where I am today. From education to professional experience, certifications, and events, this timeline showcases the milestones that have shaped my career and expertise.
         </motion.p>
 
         {/* Global Expand/Collapse Controller */}

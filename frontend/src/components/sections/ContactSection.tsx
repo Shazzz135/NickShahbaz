@@ -207,9 +207,9 @@ export const ContactSection: React.FC = () => {
           transition={{ delay: 0.1 }}
           className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white leading-tight"
         >
-          Initiate An <br className="hidden sm:inline" />
+          Please reach out to <br className="hidden sm:inline" />
           <span className="bg-gradient-to-r from-[#ff1e27] via-[#ff6b72] to-white bg-clip-text text-transparent">
-            Architectural Partnership.
+            me directly
           </span>
         </motion.h2>
 
@@ -220,8 +220,7 @@ export const ContactSection: React.FC = () => {
           transition={{ delay: 0.2 }}
           className="text-base sm:text-lg text-[#94949e] font-sans leading-relaxed"
         >
-          Have an engineering challenge, high-performance web platform, or 3D interactive application
-          ready for production? Send your technical specifications or connect directly.
+          I'm open to discussing work, collaborations, or even just a simple coffee chat. 
         </motion.p>
       </div>
 
@@ -242,7 +241,7 @@ export const ContactSection: React.FC = () => {
             <div>
               <h3 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
                 <Send className="w-5 h-5 text-[#ff1e27]" />
-                Project Specification
+                Contact Me
               </h3>
               <p className="text-xs font-mono text-[#94949e] mt-1">
                 Direct relay to personal inbox
@@ -405,7 +404,7 @@ export const ContactSection: React.FC = () => {
                 id={`${formId}-message`}
                 required
                 rows={6}
-                placeholder="Outline system goals, architecture constraints, target deliverables, or timeline requirements..."
+                placeholder="Message Here..."
                 value={message}
                 onChange={(e) => {
                   setMessage(e.target.value);
@@ -438,7 +437,7 @@ export const ContactSection: React.FC = () => {
                 >
                   <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-white">Inquiry Dispatched Successfully</p>
+                    <p className="font-semibold text-white">Message Sent Successfully</p>
                     <p className="text-xs font-mono text-emerald-300 mt-1">{statusMessage}</p>
                   </div>
                 </motion.div>
@@ -473,17 +472,17 @@ export const ContactSection: React.FC = () => {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Transmitting Specifications...</span>
+                  <span>Working...</span>
                 </>
               ) : submitStatus === 'success' ? (
                 <>
                   <Check className="w-4 h-4 text-emerald-400" />
-                  <span>Inquiry Transmitted — Send Another</span>
+                  <span>Message Sent — Send Another</span>
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  <span>Dispatch Technical Inquiry</span>
+                  <span>Send Message</span>
                 </>
               )}
             </button>
@@ -636,7 +635,7 @@ export const ContactSection: React.FC = () => {
         </div>
         <div className="flex items-center gap-4">
           <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-white/80 font-mono text-[11px]">
-            Version 4.0
+            Version 4.1
           </span>
           <span className="text-white/40 hidden sm:inline">•</span>
           <button
