@@ -141,10 +141,10 @@ export const SiteSettingsManager: React.FC = () => {
   };
 
   const handleResetIcon = () => {
-    setConfig((prev) => ({ ...prev, browserIconUrl: '/favicon.svg' }));
+    setConfig((prev) => ({ ...prev, browserIconUrl: '/favicon.png' }));
     setStatusMsg({
       type: 'success',
-      text: 'Reset to default NS monogram icon (/favicon.svg). Save to persist.',
+      text: 'Reset to default Lightning N icon (/favicon.png). Save to persist.',
     });
   };
 
@@ -211,7 +211,7 @@ export const SiteSettingsManager: React.FC = () => {
                       alt="Favicon preview"
                       className="w-full h-full object-contain"
                       onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = '/favicon.svg';
+                        (e.currentTarget as HTMLImageElement).src = '/favicon.png';
                       }}
                     />
                   ) : (
@@ -224,7 +224,7 @@ export const SiteSettingsManager: React.FC = () => {
                     <span className="truncate">Nick Shahbaz — Solutions Architect</span>
                   </div>
                   <span className="text-[10px] font-mono text-[#94949e] block truncate">
-                    {config.browserIconUrl || '/favicon.svg'}
+                    {config.browserIconUrl || '/favicon.png'}
                   </span>
                 </div>
               </div>
@@ -236,7 +236,7 @@ export const SiteSettingsManager: React.FC = () => {
                     type="text"
                     value={config.browserIconUrl || ''}
                     onChange={(e) => setConfig({ ...config, browserIconUrl: e.target.value })}
-                    placeholder="/favicon.svg or https://..."
+                    placeholder="/favicon.png or https://..."
                     className="w-full bg-[#0d0d10] border border-white/10 rounded-lg px-3 py-2 text-xs font-mono text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27]"
                   />
                 </div>

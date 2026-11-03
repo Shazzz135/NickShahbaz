@@ -40,33 +40,28 @@ export const Preloader: React.FC<PreloaderProps> = ({
   bypass = false,
   isReady = true 
 }) => {
-  const [dataTimedOut, setDataTimedOut] = useState(false);
-
-  // Safety fallback: never hold user longer than 1.5s even if database is slow/offline
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDataTimedOut(true);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const ready = isReady || dataTimedOut;
-  const isBypassed = bypass || (hasVisitedWithin24Hours() && ready);
+  // If bypassed or visited within 24 hours, determine statically at mount
+  const [isBypassed] = useState(() => bypass || hasVisitedWithin24Hours());
 
   const [progress, setProgress] = useState(isBypassed ? 100 : 0);
   const [stageIndex, setStageIndex] = useState(0);
   const [isReadyToExit, setIsReadyToExit] = useState(isBypassed);
   const [isFinished, setIsFinished] = useState(isBypassed);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const exitFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const glowFilterId = useId();
 
-  // If already visited within 24 hours AND data is ready, complete immediately
+  // If already visited within 24 hours or bypassed, complete immediately
   useEffect(() => {
     if (isBypassed) {
       onComplete?.();
-      return;
     }
+  }, [isBypassed, onComplete]);
+
+  // Main progress loop for first-time visitors
+  useEffect(() => {
+    if (isBypassed) return;
 
     const targetDuration = 1000; // Snappy and cinematic
     const intervalTime = 25;
@@ -76,10 +71,10 @@ export const Preloader: React.FC<PreloaderProps> = ({
       setProgress((prev) => {
         if (prev >= 100) return 100;
 
-        // Hold at 92% until database data has finished loading
-        if (prev >= 92 && !ready) {
+        // If data is still loading, pause briefly at 90%
+        if (prev >= 90 && !isReady) {
           setStageIndex(3); // 'ESTABLISHING SUPABASE LINK...'
-          return 92;
+          return 90;
         }
 
         const next = Math.min(100, prev + incrementStep * 1.2);
@@ -93,14 +88,21 @@ export const Preloader: React.FC<PreloaderProps> = ({
       });
     }, intervalTime);
 
+    // Hard safety ceiling: Preloader must NEVER run longer than 1500ms total
+    const forceExitTimer = setTimeout(() => {
+      setProgress(100);
+      setStageIndex(TELEMETRY_STAGES.length - 1);
+    }, 1500);
+
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      clearTimeout(forceExitTimer);
     };
-  }, [isBypassed, onComplete, ready]);
+  }, [isBypassed, isReady]);
 
-  // When progress reaches 100% and data is ready, trigger exit shutter
+  // When progress reaches 100%, trigger exit shutter
   useEffect(() => {
-    if (progress >= 100 && ready && !isReadyToExit && !isBypassed) {
+    if (progress >= 100 && !isReadyToExit && !isBypassed) {
       if (timerRef.current) clearInterval(timerRef.current);
       const exitTimer = setTimeout(() => {
         setIsReadyToExit(true);
@@ -109,10 +111,20 @@ export const Preloader: React.FC<PreloaderProps> = ({
         } catch {
           // Ignore storage errors in private modes
         }
-      }, 100);
-      return () => clearTimeout(exitTimer);
+      }, 80);
+
+      // Failsafe: Unconditionally unmount preloader 900ms after triggering exit
+      exitFallbackRef.current = setTimeout(() => {
+        setIsFinished(true);
+        onComplete?.();
+      }, 900);
+
+      return () => {
+        clearTimeout(exitTimer);
+        if (exitFallbackRef.current) clearTimeout(exitFallbackRef.current);
+      };
     }
-  }, [progress, ready, isReadyToExit, isBypassed]);
+  }, [progress, isReadyToExit, isBypassed, onComplete]);
 
   if (isFinished) return null;
 
@@ -129,13 +141,15 @@ export const Preloader: React.FC<PreloaderProps> = ({
           initial={{ opacity: 1 }}
           exit={{
             clipPath: 'polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)',
-            opacity: 0.9,
+            opacity: 0,
             transition: {
-              duration: 0.7,
+              duration: 0.6,
               ease: [0.76, 0, 0.24, 1], // Custom cubic-bezier for snappy shutter open
             },
           }}
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#08080a] text-white overflow-hidden select-none"
+          className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#08080a] text-white overflow-hidden select-none ${
+            isReadyToExit ? 'pointer-events-none' : ''
+          }`}
           style={{ clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' }}
         >
           {/* Architectural Background Grid */}

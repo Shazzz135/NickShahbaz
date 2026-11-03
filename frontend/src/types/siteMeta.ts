@@ -24,7 +24,7 @@ export const DEFAULT_HERO_META: HeroMetaConfig = {
   metricUptime: '99.9%',
   metricLatency: '< 50ms',
   metricWebgl: '60 FPS',
-  browserIconUrl: '/favicon.svg',
+  browserIconUrl: '/favicon.png',
   isMailingServiceActive: true,
 };
 

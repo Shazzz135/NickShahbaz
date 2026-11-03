@@ -216,7 +216,7 @@ describe('Admin Modules - Full Functionality Verification', () => {
     it('updates favicon URL with instant preview', async () => {
       render(<SiteSettingsManager />);
 
-      const faviconInput = await screen.findByPlaceholderText(/\/favicon\.svg/i);
+      const faviconInput = await screen.findByPlaceholderText(/\/favicon\.(png|svg)/i);
       fireEvent.change(faviconInput, { target: { value: 'https://cdn.example.com/custom-icon.png' } });
 
       expect((faviconInput as HTMLInputElement).value).toBe('https://cdn.example.com/custom-icon.png');

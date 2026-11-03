@@ -55,7 +55,7 @@ function PublicPortfolio() {
           <CanvasBackground />
         </Suspense>
 
-        <div className={`transition-opacity duration-700 ease-out ${isDataReady ? 'opacity-100' : 'opacity-0'}`}>
+        <div>
           {/* 1. Dynamic Hero Section with 3D Foreground Elements */}
           <HeroSection />
 
