@@ -15,9 +15,7 @@ import {
   ArrowUpRight, 
   Maximize2,
   Monitor,
-  Smartphone,
-  Wifi,
-  BatteryMedium
+  Smartphone
 } from 'lucide-react';
 
 const BASE_CATEGORIES = [
@@ -55,8 +53,6 @@ function orderProjectsForAlternatingDisplay(
   const mobiles = list.filter(isMobileProj);
   const desktops = list.filter((p) => !isMobileProj(p));
 
-  // If there are no mobiles or no desktops in this view (e.g. filtered to a specific category),
-  // return the list as-is so the alternating visual frames still apply
   if (mobiles.length === 0 || desktops.length === 0) {
     return list;
   }
@@ -68,8 +64,8 @@ function orderProjectsForAlternatingDisplay(
   for (let idx = 0; idx < list.length; idx++) {
     const rowIndex = Math.floor(idx / 2);
     const isEvenRow = rowIndex % 2 === 0;
-    // Row 0, 2, 4... (even): 1st is Mobile, 2nd is Window ("mobile window")
-    // Row 1, 3, 5... (odd):  1st is Window, 2nd is Mobile ("window mobile")
+    // Row 0, 2... (even): 1st is Mobile, 2nd is Window ("mobile window")
+    // Row 1, 3... (odd):  1st is Window, 2nd is Mobile ("window mobile")
     const wantsMobile = isEvenRow ? (idx % 2 === 0) : (idx % 2 === 1);
 
     if (wantsMobile) {
@@ -91,37 +87,38 @@ function orderProjectsForAlternatingDisplay(
 }
 
 /**
- * Calculates card display mode ('mobile' or 'window') and column spans per row.
+ * Calculates card display mode ('mobile' or 'desktop') and column spans per row.
  * Alternates rows:
  * - Even rows (0, 2, 4...): Mobile (4 cols) then Window (8 cols) -> "mobile window"
  * - Odd rows (1, 3, 5...):  Window (8 cols) then Mobile (4 cols) -> "window mobile"
+ * - Mobile projects on solo rows remain compact mobile size (4 cols) without filling.
  */
 function getCardLayout(
   index: number,
   total: number,
   isNaturallyMobile = false
 ): {
-  displayMode: 'mobile' | 'window';
   spanClass: string;
   isWide: boolean;
   isSolo: boolean;
+  scale: 'mobile' | 'desktop';
 } {
   // If single project in category:
-  // If mobile, keep authentic mobile phone size (does not fill); if window, showcase width
+  // If mobile, keep authentic mobile size (4 cols); if desktop, 12 cols showcase
   if (total === 1) {
     if (isNaturallyMobile) {
       return {
-        displayMode: 'mobile',
         spanClass: 'col-span-1 md:col-span-5 lg:col-span-4',
         isWide: false,
         isSolo: false,
+        scale: 'mobile',
       };
     }
     return {
-      displayMode: 'window',
       spanClass: 'col-span-1 md:col-span-12 lg:col-span-12',
       isWide: true,
       isSolo: true,
+      scale: 'desktop',
     };
   }
 
@@ -132,24 +129,23 @@ function getCardLayout(
   // Even row: 1st is Mobile, 2nd is Window ("mobile window")
   // Odd row:  1st is Window, 2nd is Mobile ("window mobile")
   const isMobile = isEvenRow ? isFirstInRow : !isFirstInRow;
-  const displayMode: 'mobile' | 'window' = isMobile ? 'mobile' : 'window';
+  const scale: 'mobile' | 'desktop' = isMobile ? 'mobile' : 'desktop';
 
-  // Mobile project: ALWAYS stays compact mobile size (does not fill to 12 cols even if on its own row)
-  if (displayMode === 'mobile') {
+  // Mobile project: ALWAYS stays compact mobile size (4 cols), even if solo on its row
+  if (scale === 'mobile') {
     return {
-      displayMode: 'mobile',
       spanClass: 'col-span-1 md:col-span-5 lg:col-span-4',
       isWide: false,
       isSolo: false,
+      scale: 'mobile',
     };
   }
 
-  // Window displayed project stays 8 cols (7 on md)
   return {
-    displayMode: 'window',
     spanClass: 'col-span-1 md:col-span-7 lg:col-span-8',
     isWide: true,
     isSolo: false,
+    scale: 'desktop',
   };
 }
 
@@ -236,7 +232,7 @@ export const ProjectGallery: React.FC = () => {
         </div>
       </div>
 
-      {/* Dynamic Projects Grid: Alternating Mobile / Window Rows */}
+      {/* Dynamic Projects Grid: Alternating Mobile / Window Rows with Original Clean Cards */}
       {loading ? (
         <div className="py-24 text-center text-xs font-mono text-[#94949e] space-y-3">
           <div className="w-6 h-6 border-2 border-[#e50914] border-t-transparent rounded-full animate-spin mx-auto" />
@@ -253,7 +249,7 @@ export const ProjectGallery: React.FC = () => {
           <AnimatePresence>
             {filteredProjects.map((project, idx) => {
               const isNaturallyMobile = (detectedScales[project.id] || getInitialScale(project)) === 'mobile';
-              const { displayMode, spanClass, isWide, isSolo } = getCardLayout(
+              const { spanClass, isWide, isSolo, scale } = getCardLayout(
                 idx,
                 filteredProjects.length,
                 isNaturallyMobile
@@ -266,53 +262,45 @@ export const ProjectGallery: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={{ duration: 0.35 }}
-                  className={`${spanClass} flex flex-col h-auto md:h-full`}
+                  className={`${spanClass} flex flex-col md:h-full`}
                 >
-                  <Card className="flex flex-col justify-between group overflow-hidden bg-[#0c0c0f] border-white/10 hover:border-[#e50914]/50 p-4 sm:p-5 md:p-6 transition-all duration-300 h-auto md:h-full w-full">
+                  <Card className="flex flex-col justify-between group overflow-hidden bg-[#0c0c0f] border-white/10 hover:border-[#e50914]/50 p-5 sm:p-6 transition-all duration-300 h-auto md:h-full w-full">
                     {/* Solo 12-col showcase: dual-pane widescreen presentation */}
                     {isSolo ? (
-                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center flex-1 h-auto md:h-full">
-                        <div className="lg:col-span-7 w-full rounded-xl overflow-hidden border border-white/10 bg-[#121217] shadow-lg group/img flex flex-col md:h-[380px] lg:h-[420px]">
-                          {/* Desktop Window Title Bar */}
-                          <div className="flex items-center justify-between px-3.5 py-2 bg-[#121217] border-b border-white/10 shrink-0">
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
-                              <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
-                              <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center flex-1 md:h-full">
+                        {/* Widescreen image */}
+                        <div className="lg:col-span-7 w-full">
+                          <AdaptiveProjectImage
+                            src={project.thumbnail_url}
+                            alt={project.title}
+                            minRatio={0.72}
+                            onScaleDetected={(s) => handleScaleDetected(project.id, s)}
+                            onClick={() => setActiveModalProject(project)}
+                            className="rounded-xl border border-white/10 cursor-pointer group/img w-full shadow-lg md:!aspect-auto md:h-[340px] lg:h-[360px]"
+                            imgClassName="transition-transform duration-500 group-hover/img:scale-105"
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0f] via-transparent to-transparent opacity-60" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              <span className="p-2.5 rounded-full bg-[#e50914] text-white shadow-lg">
+                                <Maximize2 className="w-4 h-4" />
+                              </span>
+                              <span className="text-xs font-mono font-medium text-white">View Deep Dive</span>
                             </div>
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-950/80 border border-purple-500/30 text-purple-300 backdrop-blur-sm shrink-0">
-                              <Monitor className="w-3 h-3" />
-                              <span className="hidden sm:inline">Windows View</span>
-                            </span>
-                          </div>
 
-                          <div className="relative aspect-[16/10] sm:aspect-[16/9] md:aspect-auto md:flex-1 w-full overflow-hidden bg-[#0c0c0f]">
-                            <AdaptiveProjectImage
-                              src={project.thumbnail_url}
-                              alt={project.title}
-                              minRatio={1.0}
-                              onScaleDetected={(s) => handleScaleDetected(project.id, s)}
-                              onClick={() => setActiveModalProject(project)}
-                              className="cursor-pointer w-full h-full"
-                              imgClassName="transition-transform duration-500 group-hover/img:scale-105"
-                            >
-                              <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0f] via-transparent to-transparent opacity-60" />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                <span className="p-2.5 rounded-full bg-[#e50914] text-white shadow-lg">
-                                  <Maximize2 className="w-4 h-4" />
-                                </span>
-                                <span className="text-xs font-mono font-medium text-white">View Deep Dive</span>
-                              </div>
-                              <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
-                                <Badge variant="subtle">{project.category}</Badge>
-                                {project.featured && <Badge variant="crimson" dot>Featured</Badge>}
-                              </div>
-                            </AdaptiveProjectImage>
-                          </div>
+                            {/* Viewport Scale Badge */}
+                            <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
+                              <Badge variant="subtle">{project.category}</Badge>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-950/80 border border-purple-500/30 text-purple-300 backdrop-blur-sm">
+                                <Monitor className="w-3 h-3" />
+                                <span>Windows Scale</span>
+                              </span>
+                              {project.featured && <Badge variant="crimson" dot>Featured</Badge>}
+                            </div>
+                          </AdaptiveProjectImage>
                         </div>
 
                         {/* Project Details */}
-                        <div className="lg:col-span-5 flex flex-col justify-between space-y-4 h-auto md:h-full">
+                        <div className="lg:col-span-5 flex flex-col justify-between space-y-4 md:h-full">
                           <div className="space-y-2">
                             <h3
                               onClick={() => setActiveModalProject(project)}
@@ -382,118 +370,52 @@ export const ProjectGallery: React.FC = () => {
                         </div>
                       </div>
                     ) : (
-                      // Multi-project layout: Mobile or Window device display
+                      // Multi-card layout: original clean card presentation with uniform height on desktop
                       <div className="flex flex-col justify-between h-auto md:h-full space-y-4">
                         <div className="space-y-4 flex-1 flex flex-col">
-                          {displayMode === 'mobile' ? (
-                            /* ===== MOBILE DISPLAYED PROJECT (Smartphone Bezel Frame) ===== */
-                            <div className="w-full rounded-2xl border border-white/10 bg-[#121217] p-2.5 sm:p-3 shadow-lg group/img flex flex-col items-center justify-between md:h-[400px] lg:h-[420px]">
-                              {/* Phone Chassis */}
-                              <div className="relative h-[270px] sm:h-[310px] md:h-[330px] lg:h-[350px] aspect-[9/17] rounded-[28px] p-1.5 bg-[#171720] border-2 border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.6)] shrink-0">
-                                {/* Phone Inner Bezel Screen */}
-                                <div className="relative rounded-[22px] overflow-hidden bg-black border border-white/10 w-full h-full">
-                                  {/* Dynamic Island Status Bar */}
-                                  <div className="absolute top-2 inset-x-0 z-20 flex items-center justify-between px-3 pointer-events-none">
-                                    <span className="text-[10px] font-mono font-semibold text-white/80">9:41</span>
-                                    <div className="w-14 h-3 rounded-full bg-black border border-white/15 flex items-center justify-center shadow-inner">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-[#ff1e27]/80" />
-                                    </div>
-                                    <div className="flex items-center gap-1 text-white/80">
-                                      <Wifi className="w-2.5 h-2.5" />
-                                      <BatteryMedium className="w-2.5 h-2.5" />
-                                    </div>
-                                  </div>
+                          {/* Card Thumbnail / Preview Window */}
+                          <AdaptiveProjectImage
+                            src={project.thumbnail_url}
+                            alt={project.title}
+                            minRatio={0.72}
+                            onScaleDetected={(s) => handleScaleDetected(project.id, s)}
+                            onClick={() => setActiveModalProject(project)}
+                            className="rounded-xl border border-white/10 cursor-pointer group/img w-full shadow-md md:!aspect-auto md:h-[340px] lg:h-[360px]"
+                            imgClassName="transition-transform duration-500 group-hover/img:scale-105"
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0f] via-transparent to-transparent opacity-60" />
 
-                                  {/* Phone Viewport */}
-                                  <AdaptiveProjectImage
-                                    src={project.thumbnail_url}
-                                    alt={project.title}
-                                    minRatio={0.5}
-                                    onScaleDetected={(s) => handleScaleDetected(project.id, s)}
-                                    onClick={() => setActiveModalProject(project)}
-                                    className="cursor-pointer w-full h-full pt-6 pb-3"
-                                    imgClassName="transition-transform duration-500 group-hover/img:scale-105"
-                                  >
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                      <span className="p-2.5 rounded-full bg-[#e50914] text-white shadow-lg">
-                                        <Maximize2 className="w-4 h-4" />
-                                      </span>
-                                      <span className="text-xs font-mono font-medium text-white">View Mobile App</span>
-                                    </div>
-                                    <div className="absolute top-8 left-2 flex items-center gap-1 flex-wrap">
-                                      <Badge variant="subtle">{project.category}</Badge>
-                                      {project.featured && <Badge variant="crimson" dot>Featured</Badge>}
-                                    </div>
-                                  </AdaptiveProjectImage>
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              <span className="p-2.5 rounded-full bg-[#e50914] text-white shadow-lg">
+                                <Maximize2 className="w-4 h-4" />
+                              </span>
+                              <span className="text-xs font-mono font-medium text-white">View Architecture</span>
+                            </div>
 
-                                  {/* Home Indicator Bar */}
-                                  <div className="absolute bottom-1 inset-x-0 flex justify-center pointer-events-none z-20">
-                                    <div className="w-14 h-1 rounded-full bg-white/40" />
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Mobile View Badge */}
-                              <div className="mt-2 md:mt-0 flex items-center justify-center w-full shrink-0">
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-blue-950/80 border border-blue-500/30 text-blue-300 backdrop-blur-sm">
+                            {/* Viewport Scale Badge */}
+                            <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
+                              <Badge variant="subtle">{project.category}</Badge>
+                              {scale === 'desktop' ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-950/80 border border-purple-500/30 text-purple-300 backdrop-blur-sm">
+                                  <Monitor className="w-3 h-3" />
+                                  <span>Windows View</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-blue-950/80 border border-blue-500/30 text-blue-300 backdrop-blur-sm">
                                   <Smartphone className="w-3 h-3" />
                                   <span>Mobile View</span>
                                 </span>
-                              </div>
+                              )}
+                              {project.featured && <Badge variant="crimson" dot>Featured</Badge>}
                             </div>
-                          ) : (
-                            /* ===== WINDOW DISPLAYED PROJECT (Desktop Window Frame) ===== */
-                            <div className="w-full rounded-xl overflow-hidden border border-white/10 bg-[#121217] shadow-lg group/img flex flex-col md:h-[400px] lg:h-[420px]">
-                              {/* Desktop Window Title Bar */}
-                              <div className="flex items-center justify-between px-3.5 py-2 bg-[#121217] border-b border-white/10 shrink-0">
-                                {/* Traffic Lights */}
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                  <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
-                                  <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
-                                  <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
-                                </div>
-
-                                {/* Windows View Badge */}
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-950/80 border border-purple-500/30 text-purple-300 backdrop-blur-sm shrink-0">
-                                  <Monitor className="w-3 h-3" />
-                                  <span className="hidden sm:inline">Windows View</span>
-                                </span>
-                              </div>
-
-                              {/* Widescreen Viewport: Natural aspect on mobile screens (shrinks cleanly), fills full height on desktop */}
-                              <div className="relative aspect-[16/10] sm:aspect-[16/9] md:aspect-auto md:flex-1 w-full overflow-hidden bg-[#0c0c0f]">
-                                <AdaptiveProjectImage
-                                  src={project.thumbnail_url}
-                                  alt={project.title}
-                                  minRatio={1.0}
-                                  onScaleDetected={(s) => handleScaleDetected(project.id, s)}
-                                  onClick={() => setActiveModalProject(project)}
-                                  className="cursor-pointer w-full h-full"
-                                  imgClassName="transition-transform duration-500 group-hover/img:scale-105"
-                                >
-                                  <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0f] via-transparent to-transparent opacity-60" />
-                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                    <span className="p-2.5 rounded-full bg-[#e50914] text-white shadow-lg">
-                                      <Maximize2 className="w-4 h-4" />
-                                    </span>
-                                    <span className="text-xs font-mono font-medium text-white">View Architecture</span>
-                                  </div>
-                                  <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
-                                    <Badge variant="subtle">{project.category}</Badge>
-                                    {project.featured && <Badge variant="crimson" dot>Featured</Badge>}
-                                  </div>
-                                </AdaptiveProjectImage>
-                              </div>
-                            </div>
-                          )}
+                          </AdaptiveProjectImage>
 
                           {/* Project Meta & Headlines */}
-                          <div className="space-y-1.5 pt-1">
+                          <div className="space-y-1.5 md:min-h-[58px]">
                             <div className="flex items-center justify-between gap-2">
                               <h3
                                 onClick={() => setActiveModalProject(project)}
-                                className="text-lg sm:text-xl font-bold text-white group-hover:text-[#ff4d55] transition-colors cursor-pointer flex items-center gap-1.5 line-clamp-1"
+                                className="text-lg sm:text-xl font-bold text-white group-hover:text-[#ff4d55] transition-colors cursor-pointer flex items-center gap-1.5"
                               >
                                 <span>{project.title}</span>
                                 <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -506,13 +428,13 @@ export const ProjectGallery: React.FC = () => {
                               </p>
                             )}
 
-                            <p className="text-xs text-[#94949e] line-clamp-2 leading-relaxed md:min-h-[32px]">
+                            <p className="text-xs text-[#94949e] line-clamp-2 leading-relaxed pt-1 md:min-h-[36px]">
                               {project.description}
                             </p>
                           </div>
 
                           {/* Technology Chips */}
-                          <div className="flex flex-wrap gap-1.5 pt-1 md:min-h-[26px]">
+                          <div className="flex flex-wrap gap-1.5 pt-1 md:min-h-[28px]">
                             {project.tags.slice(0, isWide ? 6 : 4).map((tag, tIdx) => (
                               <span
                                 key={tIdx}
