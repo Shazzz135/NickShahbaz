@@ -15,7 +15,10 @@ import {
   ArrowUpRight, 
   Maximize2,
   Monitor,
-  Smartphone
+  Smartphone,
+  Lock,
+  Wifi,
+  BatteryMedium
 } from 'lucide-react';
 
 const BASE_CATEGORIES = [
@@ -38,86 +41,113 @@ function getInitialScale(project: ProjectRow): 'mobile' | 'desktop' {
   return 'desktop';
 }
 
-function getCardSpan(
-  project: ProjectRow,
-  index: number,
-  all: ProjectRow[],
+/**
+ * Arranges projects so naturally mobile projects land in mobile slots and
+ * naturally desktop projects land in window slots whenever possible.
+ */
+function orderProjectsForAlternatingDisplay(
+  list: ProjectRow[],
   scales: Record<string, 'mobile' | 'desktop'>
-): { spanClass: string; isWide: boolean; isSolo: boolean } {
-  const total = all.length;
-  const scale = scales[project.id] || getInitialScale(project);
+): ProjectRow[] {
+  if (list.length <= 1) return list;
 
-  // Single project: full width showcase that fills maximum space
+  const isMobileProj = (p: ProjectRow) => (scales[p.id] || getInitialScale(p)) === 'mobile';
+
+  const mobiles = list.filter(isMobileProj);
+  const desktops = list.filter((p) => !isMobileProj(p));
+
+  // If there are no mobiles or no desktops in this view (e.g. filtered to a specific category),
+  // return the list as-is so the alternating visual frames still apply
+  if (mobiles.length === 0 || desktops.length === 0) {
+    return list;
+  }
+
+  const mQueue = [...mobiles];
+  const dQueue = [...desktops];
+  const ordered: ProjectRow[] = [];
+
+  for (let idx = 0; idx < list.length; idx++) {
+    const rowIndex = Math.floor(idx / 2);
+    const isEvenRow = rowIndex % 2 === 0;
+    // Row 0, 2, 4... (even): 1st is Mobile, 2nd is Window ("mobile window")
+    // Row 1, 3, 5... (odd):  1st is Window, 2nd is Mobile ("window mobile")
+    const wantsMobile = isEvenRow ? (idx % 2 === 0) : (idx % 2 === 1);
+
+    if (wantsMobile) {
+      if (mQueue.length > 0) {
+        ordered.push(mQueue.shift()!);
+      } else {
+        ordered.push(dQueue.shift()!);
+      }
+    } else {
+      if (dQueue.length > 0) {
+        ordered.push(dQueue.shift()!);
+      } else {
+        ordered.push(mQueue.shift()!);
+      }
+    }
+  }
+
+  return ordered;
+}
+
+/**
+ * Calculates card display mode ('mobile' or 'window') and column spans per row.
+ * Alternates rows:
+ * - Even rows (0, 2, 4...): Mobile (4 cols) then Window (8 cols) -> "mobile window"
+ * - Odd rows (1, 3, 5...):  Window (8 cols) then Mobile (4 cols) -> "window mobile"
+ */
+function getCardLayout(
+  index: number,
+  total: number
+): {
+  displayMode: 'mobile' | 'window';
+  spanClass: string;
+  isWide: boolean;
+  isSolo: boolean;
+} {
+  // If single project in category: full-width window showcase
   if (total === 1) {
     return {
-      spanClass: 'col-span-1 md:col-span-2 lg:col-span-12',
+      displayMode: 'window',
+      spanClass: 'col-span-1 md:col-span-12 lg:col-span-12',
       isWide: true,
       isSolo: true,
     };
   }
 
-  // Exactly two projects:
-  if (total === 2) {
-    const other = all[1 - index];
-    const otherScale = scales[other.id] || getInitialScale(other);
+  const rowIndex = Math.floor(index / 2);
+  const isEvenRow = rowIndex % 2 === 0;
+  const isFirstInRow = index % 2 === 0;
 
-    // If one is Windows (landscape) and one is Mobile (portrait):
-    if (scale === 'desktop' && otherScale === 'mobile') {
-      return { spanClass: 'col-span-1 md:col-span-2 lg:col-span-8', isWide: true, isSolo: false };
-    }
-    if (scale === 'mobile' && otherScale === 'desktop') {
-      return { spanClass: 'col-span-1 md:col-span-1 lg:col-span-4', isWide: false, isSolo: false };
-    }
-    // Both are Windows desktop or both are mobile: 50/50 split (6 cols each)
-    return { spanClass: 'col-span-1 md:col-span-1 lg:col-span-6', isWide: scale === 'desktop', isSolo: false };
+  // Even row: 1st is Mobile, 2nd is Window ("mobile window")
+  // Odd row:  1st is Window, 2nd is Mobile ("window mobile")
+  const isMobile = isEvenRow ? isFirstInRow : !isFirstInRow;
+  const displayMode: 'mobile' | 'window' = isMobile ? 'mobile' : 'window';
+
+  // Solo item at the end of an odd-lengthed list spans full row cleanly
+  const isSoloRow = index === total - 1 && total % 2 !== 0;
+  if (isSoloRow) {
+    return {
+      displayMode,
+      spanClass: 'col-span-1 md:col-span-12 lg:col-span-12',
+      isWide: true,
+      isSolo: false,
+    };
   }
 
-  // 3 or more projects:
-  // Mobile projects take 4 columns (1/3 of the 12-col grid)
-  if (scale === 'mobile') {
+  if (displayMode === 'mobile') {
     return {
-      spanClass: 'col-span-1 md:col-span-1 lg:col-span-4',
+      displayMode: 'mobile',
+      spanClass: 'col-span-1 md:col-span-5 lg:col-span-4',
       isWide: false,
       isSolo: false,
     };
   }
 
-  // Windows / Desktop projects: expand to fill maximum available space
-  const prev = index > 0 ? all[index - 1] : null;
-  const next = index < total - 1 ? all[index + 1] : null;
-  const prevScale = prev ? (scales[prev.id] || getInitialScale(prev)) : null;
-  const nextScale = next ? (scales[next.id] || getInitialScale(next)) : null;
-
-  // If paired with an adjacent mobile card, expand to 8 cols (8 + 4 = 12 cols row fill)
-  if (nextScale === 'mobile' || prevScale === 'mobile') {
-    return {
-      spanClass: 'col-span-1 md:col-span-2 lg:col-span-8',
-      isWide: true,
-      isSolo: false,
-    };
-  }
-
-  // If it is the last item in an odd list, span full width to fill space
-  if (index === total - 1 && total % 2 !== 0) {
-    return {
-      spanClass: 'col-span-1 md:col-span-2 lg:col-span-12',
-      isWide: true,
-      isSolo: false,
-    };
-  }
-
-  // Featured desktop card gets 8 columns
-  if (project.featured) {
-    return {
-      spanClass: 'col-span-1 md:col-span-2 lg:col-span-8',
-      isWide: true,
-      isSolo: false,
-    };
-  }
-
-  // Standard Windows cards split 50/50 across 6 cols each
   return {
-    spanClass: 'col-span-1 md:col-span-1 lg:col-span-6',
+    displayMode: 'window',
+    spanClass: 'col-span-1 md:col-span-7 lg:col-span-8',
     isWide: true,
     isSolo: false,
   };
@@ -137,19 +167,21 @@ export const ProjectGallery: React.FC = () => {
     return Array.from(new Set([...BASE_CATEGORIES, ...customCats]));
   }, [projects]);
 
-  // Filter projects by category and ensure featured / starred projects sort first
+  // Filter projects by category, sort featured first, and alternate pairing
   const filteredProjects = useMemo(() => {
     const list = selectedCategory === 'All'
       ? projects
       : projects.filter((p) => p.category.toLowerCase() === selectedCategory.toLowerCase());
 
-    return [...list].sort((a, b) => {
+    const sorted = [...list].sort((a, b) => {
       // Featured / starred projects display first
       if (a.featured && !b.featured) return -1;
       if (!a.featured && b.featured) return 1;
       return (a.sort_order ?? 0) - (b.sort_order ?? 0);
     });
-  }, [projects, selectedCategory]);
+
+    return orderProjectsForAlternatingDisplay(sorted, detectedScales);
+  }, [projects, selectedCategory, detectedScales]);
 
   const handleScaleDetected = (projectId: string, scale: 'mobile' | 'desktop') => {
     setDetectedScales((prev) => {
@@ -204,7 +236,7 @@ export const ProjectGallery: React.FC = () => {
         </div>
       </div>
 
-      {/* Dynamic Projects Grid: Windows cards expand to fill maximum space */}
+      {/* Dynamic Projects Grid: Alternating Mobile / Window Rows */}
       {loading ? (
         <div className="py-24 text-center text-xs font-mono text-[#94949e] space-y-3">
           <div className="w-6 h-6 border-2 border-[#e50914] border-t-transparent rounded-full animate-spin mx-auto" />
@@ -217,16 +249,13 @@ export const ProjectGallery: React.FC = () => {
           <p className="text-xs text-[#94949e]">Select another filter or check back soon.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 pt-12 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-12 gap-6 pt-12 items-stretch">
           <AnimatePresence>
             {filteredProjects.map((project, idx) => {
-              const { spanClass, isWide, isSolo } = getCardSpan(
-                project,
+              const { displayMode, spanClass, isWide, isSolo } = getCardLayout(
                 idx,
-                filteredProjects,
-                detectedScales
+                filteredProjects.length
               );
-              const scale = detectedScales[project.id] || getInitialScale(project);
 
               return (
                 <motion.div
@@ -238,38 +267,50 @@ export const ProjectGallery: React.FC = () => {
                   className={`${spanClass} flex flex-col`}
                 >
                   <Card className="flex flex-col justify-between group overflow-hidden bg-[#0c0c0f] border-white/10 hover:border-[#e50914]/50 p-5 sm:p-6 transition-all duration-300 h-full w-full">
-                    {/* If solo card or full-row card on wide screens, show side-by-side showcase */}
+                    {/* Solo 12-col showcase: dual-pane widescreen presentation */}
                     {isSolo ? (
                       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center flex-1">
-                        {/* Widescreen image */}
-                        <div className="lg:col-span-7 w-full">
-                          <AdaptiveProjectImage
-                            src={project.thumbnail_url}
-                            alt={project.title}
-                            minRatio={0.72}
-                            onScaleDetected={(s) => handleScaleDetected(project.id, s)}
-                            onClick={() => setActiveModalProject(project)}
-                            className="rounded-xl border border-white/10 cursor-pointer group/img w-full shadow-lg"
-                            imgClassName="transition-transform duration-500 group-hover/img:scale-105"
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0f] via-transparent to-transparent opacity-60" />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                              <span className="p-2.5 rounded-full bg-[#e50914] text-white shadow-lg">
-                                <Maximize2 className="w-4 h-4" />
-                              </span>
-                              <span className="text-xs font-mono font-medium text-white">View Deep Dive</span>
+                        <div className="lg:col-span-7 w-full rounded-xl overflow-hidden border border-white/10 bg-[#121217] shadow-lg group/img">
+                          {/* Desktop Window Title Bar */}
+                          <div className="flex items-center justify-between px-3.5 py-2 bg-[#121217] border-b border-white/10">
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+                              <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+                              <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
                             </div>
+                            <div className="flex items-center gap-1.5 px-3 py-0.5 rounded-md bg-black/40 border border-white/5 text-[10px] font-mono text-[#94949e] truncate max-w-[200px] sm:max-w-xs">
+                              <Lock className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
+                              <span className="truncate">nickshahbaz.com/apps/{project.slug}</span>
+                            </div>
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-950/80 border border-purple-500/30 text-purple-300 backdrop-blur-sm shrink-0">
+                              <Monitor className="w-3 h-3" />
+                              <span className="hidden sm:inline">Windows View</span>
+                            </span>
+                          </div>
 
-                            {/* Viewport Scale Badge */}
-                            <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
-                              <Badge variant="subtle">{project.category}</Badge>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-950/80 border border-purple-500/30 text-purple-300 backdrop-blur-sm">
-                                <Monitor className="w-3 h-3" />
-                                <span>Windows Scale</span>
-                              </span>
-                              {project.featured && <Badge variant="crimson" dot>Featured</Badge>}
-                            </div>
-                          </AdaptiveProjectImage>
+                          <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#0c0c0f]">
+                            <AdaptiveProjectImage
+                              src={project.thumbnail_url}
+                              alt={project.title}
+                              minRatio={1.0}
+                              onScaleDetected={(s) => handleScaleDetected(project.id, s)}
+                              onClick={() => setActiveModalProject(project)}
+                              className="cursor-pointer w-full h-full"
+                              imgClassName="transition-transform duration-500 group-hover/img:scale-105"
+                            >
+                              <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0f] via-transparent to-transparent opacity-60" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                <span className="p-2.5 rounded-full bg-[#e50914] text-white shadow-lg">
+                                  <Maximize2 className="w-4 h-4" />
+                                </span>
+                                <span className="text-xs font-mono font-medium text-white">View Deep Dive</span>
+                              </div>
+                              <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
+                                <Badge variant="subtle">{project.category}</Badge>
+                                {project.featured && <Badge variant="crimson" dot>Featured</Badge>}
+                              </div>
+                            </AdaptiveProjectImage>
+                          </div>
                         </div>
 
                         {/* Project Details */}
@@ -294,7 +335,6 @@ export const ProjectGallery: React.FC = () => {
                             </p>
                           </div>
 
-                          {/* Tech stack */}
                           <div className="flex flex-wrap gap-1.5 pt-2">
                             {project.tags.map((tag, tIdx) => (
                               <span
@@ -306,7 +346,6 @@ export const ProjectGallery: React.FC = () => {
                             ))}
                           </div>
 
-                          {/* Actions */}
                           <div className="pt-4 border-t border-white/5 flex items-center justify-between gap-3">
                             <Button
                               variant="primary"
@@ -345,45 +384,117 @@ export const ProjectGallery: React.FC = () => {
                         </div>
                       </div>
                     ) : (
-                      // Multi-card layout: fills maximum space horizontally and vertically
+                      // Multi-project layout: Mobile or Window device display
                       <div className="flex flex-col justify-between h-full space-y-4">
                         <div className="space-y-4">
-                          {/* Card Thumbnail / Preview Window */}
-                          <AdaptiveProjectImage
-                            src={project.thumbnail_url}
-                            alt={project.title}
-                            minRatio={0.72}
-                            onScaleDetected={(s) => handleScaleDetected(project.id, s)}
-                            onClick={() => setActiveModalProject(project)}
-                            className="rounded-xl border border-white/10 cursor-pointer group/img w-full shadow-md"
-                            imgClassName="transition-transform duration-500 group-hover/img:scale-105"
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0f] via-transparent to-transparent opacity-60" />
+                          {displayMode === 'mobile' ? (
+                            /* ===== MOBILE DISPLAYED PROJECT (Smartphone Bezel Frame) ===== */
+                            <div className="rounded-2xl border border-white/10 bg-[#121217] p-2.5 sm:p-3 shadow-lg group/img flex flex-col items-center">
+                              {/* Phone Chassis */}
+                              <div className="relative w-full max-w-[270px] sm:max-w-[290px] rounded-[28px] p-1.5 bg-[#171720] border-2 border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
+                                {/* Phone Inner Bezel Screen */}
+                                <div className="relative rounded-[22px] overflow-hidden bg-black border border-white/10 aspect-[9/13] sm:aspect-[9/14] w-full">
+                                  {/* Dynamic Island Status Bar */}
+                                  <div className="absolute top-2 inset-x-0 z-20 flex items-center justify-between px-3.5 pointer-events-none">
+                                    <span className="text-[10px] font-mono font-semibold text-white/80">9:41</span>
+                                    <div className="w-16 h-3 rounded-full bg-black border border-white/15 flex items-center justify-center shadow-inner">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[#ff1e27]/80" />
+                                    </div>
+                                    <div className="flex items-center gap-1 text-white/80">
+                                      <Wifi className="w-2.5 h-2.5" />
+                                      <BatteryMedium className="w-2.5 h-2.5" />
+                                    </div>
+                                  </div>
 
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                              <span className="p-2.5 rounded-full bg-[#e50914] text-white shadow-lg">
-                                <Maximize2 className="w-4 h-4" />
-                              </span>
-                              <span className="text-xs font-mono font-medium text-white">View Architecture</span>
-                            </div>
+                                  {/* Phone Viewport */}
+                                  <AdaptiveProjectImage
+                                    src={project.thumbnail_url}
+                                    alt={project.title}
+                                    minRatio={0.5}
+                                    onScaleDetected={(s) => handleScaleDetected(project.id, s)}
+                                    onClick={() => setActiveModalProject(project)}
+                                    className="cursor-pointer w-full h-full pt-6 pb-3"
+                                    imgClassName="transition-transform duration-500 group-hover/img:scale-105"
+                                  >
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                      <span className="p-2.5 rounded-full bg-[#e50914] text-white shadow-lg">
+                                        <Maximize2 className="w-4 h-4" />
+                                      </span>
+                                      <span className="text-xs font-mono font-medium text-white">View Mobile App</span>
+                                    </div>
+                                    <div className="absolute top-8 left-2 flex items-center gap-1 flex-wrap">
+                                      <Badge variant="subtle">{project.category}</Badge>
+                                      {project.featured && <Badge variant="crimson" dot>Featured</Badge>}
+                                    </div>
+                                  </AdaptiveProjectImage>
 
-                            {/* Viewport Scale Badge */}
-                            <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
-                              <Badge variant="subtle">{project.category}</Badge>
-                              {scale === 'desktop' ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-950/80 border border-purple-500/30 text-purple-300 backdrop-blur-sm">
-                                  <Monitor className="w-3 h-3" />
-                                  <span>Windows View</span>
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-blue-950/80 border border-blue-500/30 text-blue-300 backdrop-blur-sm">
+                                  {/* Home Indicator Bar */}
+                                  <div className="absolute bottom-1 inset-x-0 flex justify-center pointer-events-none z-20">
+                                    <div className="w-16 h-1 rounded-full bg-white/40" />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Mobile View Badge */}
+                              <div className="mt-2.5 flex items-center justify-center w-full">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-blue-950/80 border border-blue-500/30 text-blue-300 backdrop-blur-sm">
                                   <Smartphone className="w-3 h-3" />
                                   <span>Mobile View</span>
                                 </span>
-                              )}
-                              {project.featured && <Badge variant="crimson" dot>Featured</Badge>}
+                              </div>
                             </div>
-                          </AdaptiveProjectImage>
+                          ) : (
+                            /* ===== WINDOW DISPLAYED PROJECT (Desktop Window Frame) ===== */
+                            <div className="rounded-xl overflow-hidden border border-white/10 bg-[#121217] shadow-lg group/img">
+                              {/* Desktop Window Title Bar */}
+                              <div className="flex items-center justify-between px-3.5 py-2 bg-[#121217] border-b border-white/10">
+                                {/* Traffic Lights */}
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+                                  <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+                                  <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
+                                </div>
+
+                                {/* URL Bar */}
+                                <div className="flex items-center gap-1.5 px-3 py-0.5 rounded-md bg-black/40 border border-white/5 text-[10px] font-mono text-[#94949e] truncate max-w-[200px] sm:max-w-xs">
+                                  <Lock className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
+                                  <span className="truncate">nickshahbaz.com/apps/{project.slug}</span>
+                                </div>
+
+                                {/* Windows View Badge */}
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-950/80 border border-purple-500/30 text-purple-300 backdrop-blur-sm shrink-0">
+                                  <Monitor className="w-3 h-3" />
+                                  <span className="hidden sm:inline">Windows View</span>
+                                </span>
+                              </div>
+
+                              {/* Widescreen Viewport */}
+                              <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full overflow-hidden bg-[#0c0c0f]">
+                                <AdaptiveProjectImage
+                                  src={project.thumbnail_url}
+                                  alt={project.title}
+                                  minRatio={1.0}
+                                  onScaleDetected={(s) => handleScaleDetected(project.id, s)}
+                                  onClick={() => setActiveModalProject(project)}
+                                  className="cursor-pointer w-full h-full"
+                                  imgClassName="transition-transform duration-500 group-hover/img:scale-105"
+                                >
+                                  <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0f] via-transparent to-transparent opacity-60" />
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                    <span className="p-2.5 rounded-full bg-[#e50914] text-white shadow-lg">
+                                      <Maximize2 className="w-4 h-4" />
+                                    </span>
+                                    <span className="text-xs font-mono font-medium text-white">View Architecture</span>
+                                  </div>
+                                  <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
+                                    <Badge variant="subtle">{project.category}</Badge>
+                                    {project.featured && <Badge variant="crimson" dot>Featured</Badge>}
+                                  </div>
+                                </AdaptiveProjectImage>
+                              </div>
+                            </div>
+                          )}
 
                           {/* Project Meta & Headlines */}
                           <div className="space-y-1.5">
