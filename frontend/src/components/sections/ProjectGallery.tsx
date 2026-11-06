@@ -99,15 +99,25 @@ function orderProjectsForAlternatingDisplay(
  */
 function getCardLayout(
   index: number,
-  total: number
+  total: number,
+  isNaturallyMobile = false
 ): {
   displayMode: 'mobile' | 'window';
   spanClass: string;
   isWide: boolean;
   isSolo: boolean;
 } {
-  // If single project in category: full-width window showcase
+  // If single project in category:
+  // If mobile, keep authentic mobile phone size (does not fill); if window, showcase width
   if (total === 1) {
+    if (isNaturallyMobile) {
+      return {
+        displayMode: 'mobile',
+        spanClass: 'col-span-1 md:col-span-5 lg:col-span-4',
+        isWide: false,
+        isSolo: false,
+      };
+    }
     return {
       displayMode: 'window',
       spanClass: 'col-span-1 md:col-span-12 lg:col-span-12',
@@ -125,17 +135,7 @@ function getCardLayout(
   const isMobile = isEvenRow ? isFirstInRow : !isFirstInRow;
   const displayMode: 'mobile' | 'window' = isMobile ? 'mobile' : 'window';
 
-  // Solo item at the end of an odd-lengthed list spans full row cleanly
-  const isSoloRow = index === total - 1 && total % 2 !== 0;
-  if (isSoloRow) {
-    return {
-      displayMode,
-      spanClass: 'col-span-1 md:col-span-12 lg:col-span-12',
-      isWide: true,
-      isSolo: false,
-    };
-  }
-
+  // Mobile project: ALWAYS stays compact mobile size (does not fill to 12 cols even if on its own row)
   if (displayMode === 'mobile') {
     return {
       displayMode: 'mobile',
@@ -145,6 +145,7 @@ function getCardLayout(
     };
   }
 
+  // Window displayed project stays 8 cols (7 on md)
   return {
     displayMode: 'window',
     spanClass: 'col-span-1 md:col-span-7 lg:col-span-8',
@@ -252,9 +253,11 @@ export const ProjectGallery: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-12 gap-6 pt-12 items-stretch">
           <AnimatePresence>
             {filteredProjects.map((project, idx) => {
+              const isNaturallyMobile = (detectedScales[project.id] || getInitialScale(project)) === 'mobile';
               const { displayMode, spanClass, isWide, isSolo } = getCardLayout(
                 idx,
-                filteredProjects.length
+                filteredProjects.length,
+                isNaturallyMobile
               );
 
               return (
@@ -264,15 +267,15 @@ export const ProjectGallery: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={{ duration: 0.35 }}
-                  className={`${spanClass} flex flex-col`}
+                  className={`${spanClass} flex flex-col h-full`}
                 >
                   <Card className="flex flex-col justify-between group overflow-hidden bg-[#0c0c0f] border-white/10 hover:border-[#e50914]/50 p-5 sm:p-6 transition-all duration-300 h-full w-full">
                     {/* Solo 12-col showcase: dual-pane widescreen presentation */}
                     {isSolo ? (
-                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center flex-1">
-                        <div className="lg:col-span-7 w-full rounded-xl overflow-hidden border border-white/10 bg-[#121217] shadow-lg group/img">
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center flex-1 h-full">
+                        <div className="lg:col-span-7 w-full h-[380px] sm:h-[420px] rounded-xl overflow-hidden border border-white/10 bg-[#121217] shadow-lg group/img flex flex-col">
                           {/* Desktop Window Title Bar */}
-                          <div className="flex items-center justify-between px-3.5 py-2 bg-[#121217] border-b border-white/10">
+                          <div className="flex items-center justify-between px-3.5 py-2 bg-[#121217] border-b border-white/10 shrink-0">
                             <div className="flex items-center gap-1.5 shrink-0">
                               <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
                               <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
@@ -288,7 +291,7 @@ export const ProjectGallery: React.FC = () => {
                             </span>
                           </div>
 
-                          <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#0c0c0f]">
+                          <div className="relative flex-1 w-full overflow-hidden bg-[#0c0c0f]">
                             <AdaptiveProjectImage
                               src={project.thumbnail_url}
                               alt={project.title}
@@ -314,7 +317,7 @@ export const ProjectGallery: React.FC = () => {
                         </div>
 
                         {/* Project Details */}
-                        <div className="lg:col-span-5 flex flex-col justify-between space-y-4">
+                        <div className="lg:col-span-5 flex flex-col justify-between space-y-4 h-full">
                           <div className="space-y-2">
                             <h3
                               onClick={() => setActiveModalProject(project)}
@@ -346,7 +349,7 @@ export const ProjectGallery: React.FC = () => {
                             ))}
                           </div>
 
-                          <div className="pt-4 border-t border-white/5 flex items-center justify-between gap-3">
+                          <div className="pt-4 border-t border-white/5 flex items-center justify-between gap-3 mt-auto">
                             <Button
                               variant="primary"
                               size="sm"
@@ -384,20 +387,20 @@ export const ProjectGallery: React.FC = () => {
                         </div>
                       </div>
                     ) : (
-                      // Multi-project layout: Mobile or Window device display
+                      // Multi-project layout: Mobile or Window device display with matching uniform heights
                       <div className="flex flex-col justify-between h-full space-y-4">
-                        <div className="space-y-4">
+                        <div className="space-y-4 flex-1 flex flex-col">
                           {displayMode === 'mobile' ? (
                             /* ===== MOBILE DISPLAYED PROJECT (Smartphone Bezel Frame) ===== */
-                            <div className="rounded-2xl border border-white/10 bg-[#121217] p-2.5 sm:p-3 shadow-lg group/img flex flex-col items-center">
+                            <div className="h-[380px] sm:h-[420px] rounded-2xl border border-white/10 bg-[#121217] p-2.5 shadow-lg group/img flex flex-col items-center justify-between">
                               {/* Phone Chassis */}
-                              <div className="relative w-full max-w-[270px] sm:max-w-[290px] rounded-[28px] p-1.5 bg-[#171720] border-2 border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
+                              <div className="relative h-[320px] sm:h-[350px] aspect-[9/17] rounded-[28px] p-1.5 bg-[#171720] border-2 border-white/15 shadow-[0_10px_30px_rgba(0,0,0,0.6)] shrink-0">
                                 {/* Phone Inner Bezel Screen */}
-                                <div className="relative rounded-[22px] overflow-hidden bg-black border border-white/10 aspect-[9/13] sm:aspect-[9/14] w-full">
+                                <div className="relative rounded-[22px] overflow-hidden bg-black border border-white/10 w-full h-full">
                                   {/* Dynamic Island Status Bar */}
-                                  <div className="absolute top-2 inset-x-0 z-20 flex items-center justify-between px-3.5 pointer-events-none">
+                                  <div className="absolute top-2 inset-x-0 z-20 flex items-center justify-between px-3 pointer-events-none">
                                     <span className="text-[10px] font-mono font-semibold text-white/80">9:41</span>
-                                    <div className="w-16 h-3 rounded-full bg-black border border-white/15 flex items-center justify-center shadow-inner">
+                                    <div className="w-14 h-3 rounded-full bg-black border border-white/15 flex items-center justify-center shadow-inner">
                                       <span className="w-1.5 h-1.5 rounded-full bg-[#ff1e27]/80" />
                                     </div>
                                     <div className="flex items-center gap-1 text-white/80">
@@ -431,13 +434,13 @@ export const ProjectGallery: React.FC = () => {
 
                                   {/* Home Indicator Bar */}
                                   <div className="absolute bottom-1 inset-x-0 flex justify-center pointer-events-none z-20">
-                                    <div className="w-16 h-1 rounded-full bg-white/40" />
+                                    <div className="w-14 h-1 rounded-full bg-white/40" />
                                   </div>
                                 </div>
                               </div>
 
                               {/* Mobile View Badge */}
-                              <div className="mt-2.5 flex items-center justify-center w-full">
+                              <div className="flex items-center justify-center w-full shrink-0">
                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-blue-950/80 border border-blue-500/30 text-blue-300 backdrop-blur-sm">
                                   <Smartphone className="w-3 h-3" />
                                   <span>Mobile View</span>
@@ -446,9 +449,9 @@ export const ProjectGallery: React.FC = () => {
                             </div>
                           ) : (
                             /* ===== WINDOW DISPLAYED PROJECT (Desktop Window Frame) ===== */
-                            <div className="rounded-xl overflow-hidden border border-white/10 bg-[#121217] shadow-lg group/img">
+                            <div className="h-[380px] sm:h-[420px] rounded-xl overflow-hidden border border-white/10 bg-[#121217] shadow-lg group/img flex flex-col">
                               {/* Desktop Window Title Bar */}
-                              <div className="flex items-center justify-between px-3.5 py-2 bg-[#121217] border-b border-white/10">
+                              <div className="flex items-center justify-between px-3.5 py-2 bg-[#121217] border-b border-white/10 shrink-0">
                                 {/* Traffic Lights */}
                                 <div className="flex items-center gap-1.5 shrink-0">
                                   <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
@@ -469,8 +472,8 @@ export const ProjectGallery: React.FC = () => {
                                 </span>
                               </div>
 
-                              {/* Widescreen Viewport */}
-                              <div className="relative aspect-[16/10] sm:aspect-[16/9] w-full overflow-hidden bg-[#0c0c0f]">
+                              {/* Widescreen Viewport filling the remainder */}
+                              <div className="relative flex-1 w-full overflow-hidden bg-[#0c0c0f]">
                                 <AdaptiveProjectImage
                                   src={project.thumbnail_url}
                                   alt={project.title}
@@ -497,11 +500,11 @@ export const ProjectGallery: React.FC = () => {
                           )}
 
                           {/* Project Meta & Headlines */}
-                          <div className="space-y-1.5">
+                          <div className="space-y-1.5 pt-1">
                             <div className="flex items-center justify-between gap-2">
                               <h3
                                 onClick={() => setActiveModalProject(project)}
-                                className="text-lg sm:text-xl font-bold text-white group-hover:text-[#ff4d55] transition-colors cursor-pointer flex items-center gap-1.5"
+                                className="text-lg sm:text-xl font-bold text-white group-hover:text-[#ff4d55] transition-colors cursor-pointer flex items-center gap-1.5 line-clamp-1"
                               >
                                 <span>{project.title}</span>
                                 <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -514,13 +517,13 @@ export const ProjectGallery: React.FC = () => {
                               </p>
                             )}
 
-                            <p className="text-xs text-[#94949e] line-clamp-2 leading-relaxed pt-1">
+                            <p className="text-xs text-[#94949e] line-clamp-2 leading-relaxed min-h-[32px]">
                               {project.description}
                             </p>
                           </div>
 
                           {/* Technology Chips */}
-                          <div className="flex flex-wrap gap-1.5 pt-1">
+                          <div className="flex flex-wrap gap-1.5 pt-1 min-h-[26px]">
                             {project.tags.slice(0, isWide ? 6 : 4).map((tag, tIdx) => (
                               <span
                                 key={tIdx}
@@ -537,8 +540,8 @@ export const ProjectGallery: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Action Links Bar */}
-                        <div className="pt-4 mt-2 border-t border-white/5 flex items-center justify-between gap-2">
+                        {/* Action Links Bar pinned to bottom */}
+                        <div className="pt-4 mt-auto border-t border-white/5 flex items-center justify-between gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
