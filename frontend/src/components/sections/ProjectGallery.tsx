@@ -16,7 +16,6 @@ import {
   Maximize2,
   Monitor,
   Smartphone,
-  Lock,
   Wifi,
   BatteryMedium
 } from 'lucide-react';
@@ -281,10 +280,6 @@ export const ProjectGallery: React.FC = () => {
                               <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
                               <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
                             </div>
-                            <div className="flex items-center gap-1.5 px-3 py-0.5 rounded-md bg-black/40 border border-white/5 text-[10px] font-mono text-[#94949e] truncate max-w-[200px] sm:max-w-xs">
-                              <Lock className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
-                              <span className="truncate">nickshahbaz.com/apps/{project.slug}</span>
-                            </div>
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-950/80 border border-purple-500/30 text-purple-300 backdrop-blur-sm shrink-0">
                               <Monitor className="w-3 h-3" />
                               <span className="hidden sm:inline">Windows View</span>
@@ -457,12 +452,6 @@ export const ProjectGallery: React.FC = () => {
                                   <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
                                   <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
                                   <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
-                                </div>
-
-                                {/* URL Bar */}
-                                <div className="flex items-center gap-1.5 px-3 py-0.5 rounded-md bg-black/40 border border-white/5 text-[10px] font-mono text-[#94949e] truncate max-w-[200px] sm:max-w-xs">
-                                  <Lock className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
-                                  <span className="truncate">nickshahbaz.com/apps/{project.slug}</span>
                                 </div>
 
                                 {/* Windows View Badge */}
