@@ -3,6 +3,19 @@
   "framework": "vite",
   "buildCommand": "pnpm --filter frontend build",
   "outputDirectory": "frontend/dist",
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "nick-shahbaz-shazzzs-projects.vercel.app"
+        }
+      ],
+      "destination": "https://nickshahbaz.ca/$1",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",

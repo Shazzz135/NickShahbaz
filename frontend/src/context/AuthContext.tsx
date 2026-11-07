@@ -169,13 +169,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (!error && data.session && isMounted) {
                 updateSessionState(data.session);
                 setLoading(false);
-                const inProgress = sessionStorage.getItem('nickshahbaz_login_in_progress');
-                if (inProgress === 'true') {
-                  sessionStorage.removeItem('nickshahbaz_login_in_progress');
-                  if (window.location.pathname !== '/admin/dashboard') {
-                    window.location.href = '/admin/dashboard';
-                    return;
-                  }
+                sessionStorage.removeItem('nickshahbaz_login_in_progress');
+                if (window.location.pathname !== '/admin/dashboard') {
+                  window.location.href = '/admin/dashboard';
+                  return;
                 }
                 // Clean query parameter from URL without reloading
                 const cleanUrl = window.location.pathname + (window.location.hash || '');
