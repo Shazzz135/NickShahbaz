@@ -1,51 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth, ADMIN_EMAIL } from '../hooks/useAuth';
 import { Badge } from '../components/common/Badge';
-import { Button } from '../components/common/Button';
 import { Card } from '../components/common/Card';
-import { Lock, Mail, AlertCircle, ArrowLeft, Shield } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Shield, CheckCircle2 } from 'lucide-react';
 
 export const AdminLogin: React.FC = () => {
-  const { signInWithGoogle, signInWithEmail, user } = useAuth();
+  const { signInWithGoogle, user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // If already authenticated, redirect straight to dashboard
-  React.useEffect(() => {
-    if (user) {
+  // If already authenticated and authorized, redirect straight to dashboard
+  useEffect(() => {
+    if (!loading && user && isAdmin) {
       const destination = (location.state as { from?: { pathname: string } })?.from?.pathname || '/admin/dashboard';
       navigate(destination, { replace: true });
     }
-  }, [user, navigate, location]);
+  }, [user, isAdmin, loading, navigate, location]);
 
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
     setErrorMessage(null);
     const { error } = await signInWithGoogle();
     if (error) {
-      setErrorMessage(error.message);
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleEmailSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      setErrorMessage('Please enter both email and password.');
-      return;
-    }
-
-    setIsSubmitting(true);
-    setErrorMessage(null);
-    const { error } = await signInWithEmail(email, password);
-    if (error) {
-      setErrorMessage(error.message);
+      setErrorMessage(error.message || 'Failed to authenticate with Google. Please try again.');
       setIsSubmitting(false);
     }
   };
@@ -67,7 +48,7 @@ export const AdminLogin: React.FC = () => {
       <div className="w-full max-w-md relative z-10 space-y-6">
         <div className="text-center space-y-2">
           <div className="flex justify-center mb-3">
-            <span className="p-3 rounded-2xl bg-[#0f0f13] border border-white/10 text-[#ff1e27] shadow-[0_0_20px_rgba(229,9,20,0.3)]">
+            <span className="p-3.5 rounded-2xl bg-[#0f0f13] border border-white/10 text-[#ff1e27] shadow-[0_0_20px_rgba(229,9,20,0.3)]">
               <Shield className="w-6 h-6" />
             </span>
           </div>
@@ -80,7 +61,7 @@ export const AdminLogin: React.FC = () => {
           </p>
         </div>
 
-        <Card className="p-8 backdrop-blur-xl bg-[#0d0d10]/95 border-white/10 space-y-6">
+        <Card className="p-8 backdrop-blur-xl bg-[#0d0d10]/95 border-white/10 space-y-6 shadow-2xl">
           {errorMessage && (
             <div className="p-3.5 rounded-xl bg-red-950/40 border border-[#e50914]/40 flex items-start gap-3 text-xs text-[#ff6b72]">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -88,16 +69,16 @@ export const AdminLogin: React.FC = () => {
             </div>
           )}
 
-          {/* Primary: Google OAuth Sign-in */}
-          <div>
+          {/* Primary & Sole Sign-in Method: Google OAuth Single Sign-On */}
+          <div className="space-y-4">
             <button
               type="button"
               onClick={handleGoogleSignIn}
-              disabled={isSubmitting}
-              className="w-full relative flex items-center justify-center gap-3 px-5 py-3 rounded-xl bg-[#141419] hover:bg-[#1a1a22] text-white border border-white/15 hover:border-white/30 text-sm font-medium transition-all shadow-md active:scale-[0.98] cursor-pointer disabled:opacity-50"
+              disabled={isSubmitting || loading}
+              className="w-full relative flex items-center justify-center gap-3 px-5 py-3.5 rounded-xl bg-[#141419] hover:bg-[#1c1c24] text-white border border-white/15 hover:border-white/30 text-sm font-medium transition-all shadow-lg active:scale-[0.98] cursor-pointer disabled:opacity-50 group"
             >
               {/* Official Google Vector Icon */}
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 shrink-0 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -115,57 +96,19 @@ export const AdminLogin: React.FC = () => {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                 />
               </svg>
-              <span>Sign in with Google</span>
+              <span>{isSubmitting ? 'Connecting to Google...' : 'Sign in with Google'}</span>
             </button>
-          </div>
 
-          <div className="relative flex items-center justify-center">
-            <div className="border-t border-white/10 w-full" />
-            <span className="bg-[#0d0d10] px-3 text-[10px] uppercase tracking-widest text-[#94949e] font-mono">
-              or credentials
-            </span>
-            <div className="border-t border-white/10 w-full" />
-          </div>
-
-          {/* Fallback: Email & Password */}
-          <form onSubmit={handleEmailSignIn} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-mono text-[#94949e]">Admin Email</label>
-              <div className="relative">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@nickshahbaz.com"
-                  className="w-full bg-[#141419] border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27] transition-colors"
-                />
-                <Mail className="w-4 h-4 text-[#94949e] absolute left-3.5 top-3" />
+            <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-1.5">
+              <div className="flex items-center gap-2 text-xs font-mono text-[#c4c4cc]">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Persistent JWT Session & Auto-Refresh</span>
               </div>
+              <p className="text-[11px] text-[#94949e] font-mono leading-relaxed">
+                Authorized for <span className="text-white">{ADMIN_EMAIL}</span>. Authenticated sessions stay active automatically with background JWT refresh tokens.
+              </p>
             </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-mono text-[#94949e]">Password</label>
-              <div className="relative">
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full bg-[#141419] border border-white/10 rounded-xl px-4 py-2.5 pl-10 text-sm text-white placeholder-[#5a5a66] focus:outline-none focus:border-[#ff1e27] transition-colors"
-                />
-                <Lock className="w-4 h-4 text-[#94949e] absolute left-3.5 top-3" />
-              </div>
-            </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full mt-2"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Authenticating...' : 'Sign In with Password'}
-            </Button>
-          </form>
+          </div>
         </Card>
 
         <div className="text-center">
