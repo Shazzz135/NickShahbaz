@@ -87,7 +87,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   });
 
-  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sessionRef = useRef<Session | null>(session);
+  sessionRef.current = session;
+
+  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isAdmin = Boolean(
     user?.email && ADMIN_EMAIL && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()
@@ -96,13 +99,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateSessionState = useCallback((newSession: Session | null) => {
     setSession(newSession);
     setUser(newSession?.user ?? null);
+    sessionRef.current = newSession;
     persistSession(newSession);
   }, []);
 
   const refreshAuthToken = useCallback(async (): Promise<boolean> => {
     try {
-      const stored = loadStoredSession();
-      const currentRefreshToken = session?.refresh_token || stored?.refresh_token;
+      const current = sessionRef.current || loadStoredSession();
+      const currentRefreshToken = current?.refresh_token;
 
       if (!currentRefreshToken) {
         return false;
@@ -123,7 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('Exception during token refresh:', err);
       return false;
     }
-  }, [session, updateSessionState]);
+  }, [updateSessionState]);
 
   // Set up background token refresher
   useEffect(() => {
@@ -149,9 +153,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [session?.expires_at, refreshAuthToken]);
 
-  // Handle initialization and OAuth redirect code exchange
+  // Handle initialization and OAuth subscription - run strictly once on mount
   useEffect(() => {
     if (!isSupabaseConfigured) {
+      setLoading(false);
       return;
     }
 
@@ -159,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     async function initializeAuth() {
       try {
-        // 1. Check for OAuth code in URL (Google redirect back with PKCE code)
+        // 1. Check for OAuth code in URL
         if (typeof window !== 'undefined' && window.location.search.includes('code=')) {
           const params = new URLSearchParams(window.location.search);
           const code = params.get('code');
@@ -170,11 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 updateSessionState(data.session);
                 setLoading(false);
                 sessionStorage.removeItem('nickshahbaz_login_in_progress');
-                if (window.location.pathname !== '/admin/dashboard') {
-                  window.location.href = '/admin/dashboard';
-                  return;
-                }
-                // Clean query parameter from URL without reloading
+                // Clean URL search parameters without page reload
                 const cleanUrl = window.location.pathname + (window.location.hash || '');
                 window.history.replaceState({}, document.title, cleanUrl);
                 return;
@@ -193,17 +194,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (activeSession) {
           updateSessionState(activeSession);
           if (typeof window !== 'undefined') {
-            const inProgress = sessionStorage.getItem('nickshahbaz_login_in_progress');
-            if (inProgress === 'true') {
-              sessionStorage.removeItem('nickshahbaz_login_in_progress');
-              if (window.location.pathname !== '/admin/dashboard') {
-                window.location.href = '/admin/dashboard';
-                return;
-              }
+            sessionStorage.removeItem('nickshahbaz_login_in_progress');
+            // Clean any trailing query parameters
+            if (window.location.search.includes('code=')) {
+              const cleanUrl = window.location.pathname + (window.location.hash || '');
+              window.history.replaceState({}, document.title, cleanUrl);
             }
           }
         } else if (cachedSession?.refresh_token) {
-          // If Supabase client has no active session, attempt silent refresh with cached refresh token
           const refreshed = await refreshAuthToken();
           if (!refreshed && isMounted) {
             updateSessionState(null);
@@ -223,18 +221,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // 3. Subscribe to onAuthStateChange (SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, currentSession) => {
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       if (!isMounted) return;
       updateSessionState(currentSession);
       setLoading(false);
 
-      if ((event === 'SIGNED_IN' || currentSession?.user) && typeof window !== 'undefined') {
-        const inProgress = sessionStorage.getItem('nickshahbaz_login_in_progress');
-        if (inProgress === 'true') {
-          sessionStorage.removeItem('nickshahbaz_login_in_progress');
-          if (window.location.pathname !== '/admin/dashboard') {
-            window.location.href = '/admin/dashboard';
-          }
+      if (currentSession?.user && typeof window !== 'undefined') {
+        sessionStorage.removeItem('nickshahbaz_login_in_progress');
+        if (window.location.search.includes('code=')) {
+          const cleanUrl = window.location.pathname + (window.location.hash || '');
+          window.history.replaceState({}, document.title, cleanUrl);
         }
       }
     });
@@ -246,7 +242,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         clearTimeout(refreshTimeoutRef.current);
       }
     };
-  }, [cachedSession?.refresh_token, refreshAuthToken, updateSessionState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const signInWithGoogle = async () => {
     try {

@@ -17,6 +17,7 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ count = 450 }) => 
   const groupRef = useRef<THREE.Group>(null);
   const pointsRef = useRef<THREE.Points>(null);
   const tilt = useRef(new THREE.Vector2());
+  const elapsedTime = useRef(0);
 
   const positions = useMemo(() => {
     const pos = new Float32Array(count * 3);
@@ -30,14 +31,15 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ count = 450 }) => 
     return pos;
   }, [count]);
 
-  useFrame((state, delta) => {
+  useFrame((_state, delta) => {
     const group = groupRef.current;
     const points = pointsRef.current;
     if (!group || !points) return;
     const dt = Math.min(delta, 0.05);
+    elapsedTime.current += dt;
 
     // Slow constant drift on the inner points
-    points.rotation.y = state.clock.getElapsedTime() * 0.02;
+    points.rotation.y = elapsedTime.current * 0.02;
 
     // Smoothed parallax tilt on the outer group, driven by the global cursor
     tilt.current.x += (globalPointer.y * 0.08 - tilt.current.x) * damp(3, dt);

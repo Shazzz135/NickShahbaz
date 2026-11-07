@@ -152,6 +152,7 @@ export const CyberTerrain: React.FC<CyberTerrainProps> = ({ size = 60, segments 
   const target = useRef(new THREE.Vector2());
   const groundPlane = useRef(new THREE.Plane(new THREE.Vector3(0, 1, 0), 2.4));
   const travel = useRef(0);
+  const elapsedTime = useRef(0);
   const lastScroll = useRef(0);
   const scrollBoost = useRef(0);
 
@@ -162,8 +163,9 @@ export const CyberTerrain: React.FC<CyberTerrainProps> = ({ size = 60, segments 
 
     // Clamp delta so a backgrounded tab doesn't cause a huge jump on return
     const dt = Math.min(delta, 0.05);
+    elapsedTime.current += dt;
     const u = material.uniforms;
-    u.uTime.value = state.clock.getElapsedTime();
+    u.uTime.value = elapsedTime.current;
 
     // Forward flight: constant cruise + boost from scroll velocity (Lenis drives window.scrollY)
     const scrollY = window.scrollY;

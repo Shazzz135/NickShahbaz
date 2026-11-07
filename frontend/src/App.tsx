@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { SmoothScroll } from './components/layout/SmoothScroll';
 import { Preloader } from './components/layout/Preloader';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { HeroSection } from './components/sections/HeroSection';
 import { AboutSection } from './components/sections/AboutSection';
 import { ProjectGallery } from './components/sections/ProjectGallery';
@@ -80,33 +81,35 @@ function PublicPortfolio() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <GlobalBranding />
-      <BrowserRouter>
-        <Suspense fallback={<div className="min-h-screen bg-[#08080a]" />}>
-          <Routes>
-            {/* Public Website */}
-            <Route path="/" element={<PublicPortfolio />} />
+    <ErrorBoundary>
+      <AuthProvider>
+        <GlobalBranding />
+        <BrowserRouter>
+          <Suspense fallback={<div className="min-h-screen bg-[#08080a]" />}>
+            <Routes>
+              {/* Public Website */}
+              <Route path="/" element={<PublicPortfolio />} />
 
-            {/* Admin Login & Fallbacks */}
-            <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
+              {/* Admin Login & Fallbacks */}
+              <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
 
-            {/* Protected Admin Routes */}
-            <Route
-              path="/admin/dashboard"
-              element={
-                <ProtectedRoute>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
+              {/* Protected Admin Routes */}
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Catch-all */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </AuthProvider>
+              {/* Catch-all */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

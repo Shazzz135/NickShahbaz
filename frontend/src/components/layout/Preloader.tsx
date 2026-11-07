@@ -48,7 +48,6 @@ export const Preloader: React.FC<PreloaderProps> = ({
   const [isReadyToExit, setIsReadyToExit] = useState(isBypassed);
   const [isFinished, setIsFinished] = useState(isBypassed);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const exitFallbackRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const glowFilterId = useId();
 
@@ -113,18 +112,25 @@ export const Preloader: React.FC<PreloaderProps> = ({
         }
       }, 80);
 
-      // Failsafe: Unconditionally unmount preloader 900ms after triggering exit
-      exitFallbackRef.current = setTimeout(() => {
-        setIsFinished(true);
-        onComplete?.();
-      }, 900);
-
       return () => {
         clearTimeout(exitTimer);
-        if (exitFallbackRef.current) clearTimeout(exitFallbackRef.current);
       };
     }
-  }, [progress, isReadyToExit, isBypassed, onComplete]);
+  }, [progress, isReadyToExit, isBypassed]);
+
+  // Failsafe: Guarantee complete unmount within 650ms once exit shutter starts
+  useEffect(() => {
+    if (isReadyToExit && !isFinished) {
+      const exitFallbackTimer = setTimeout(() => {
+        setIsFinished(true);
+        onComplete?.();
+      }, 650);
+
+      return () => {
+        clearTimeout(exitFallbackTimer);
+      };
+    }
+  }, [isReadyToExit, isFinished, onComplete]);
 
   if (isFinished) return null;
 

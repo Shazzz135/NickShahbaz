@@ -103,6 +103,15 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       chunkSizeWarningLimit: 1200,
+      rollupOptions: {
+        output: {
+          chunkFileNames: (chunkInfo) => {
+            // Neutralize keywords like 'admin' that trigger adblock / client-side ERR_BLOCKED_BY_CLIENT
+            const sanitized = chunkInfo.name.replace(/admin/gi, 'ctrl');
+            return `assets/${sanitized}-[hash].js`;
+          },
+        },
+      },
     },
   };
 });

@@ -3,6 +3,17 @@ import { Canvas } from '@react-three/fiber';
 import { CyberTerrain } from './CyberTerrain';
 import { ParticleField } from './ParticleField';
 
+// Cleanly suppress Three.js r187 THREE.Clock deprecation warning triggered by @react-three/fiber internals
+if (typeof console !== 'undefined' && console.warn) {
+  const originalWarn = console.warn;
+  console.warn = (...args: unknown[]) => {
+    if (typeof args[0] === 'string' && args[0].includes('THREE.Clock: This module has been deprecated')) {
+      return;
+    }
+    originalWarn.apply(console, args);
+  };
+}
+
 export interface CanvasBackgroundProps {
   showTerrain?: boolean;
   showStars?: boolean;
@@ -49,7 +60,7 @@ export const CanvasBackground: React.FC<CanvasBackgroundProps> = ({
       </Canvas>
 
       {/* Vignette keeps foreground text readable over the terrain */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(8,8,10,0.85)_100%)]" />
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(8,8,10,0.85)_100%)]" />
     </div>
   );
 };
