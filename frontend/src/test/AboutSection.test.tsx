@@ -38,11 +38,23 @@ describe('AboutSection', () => {
     expect(screen.getByText('Zero Runtime Errors')).toBeDefined();
   });
 
-  it('renders skills matrix and filters by category', async () => {
+  it('renders skills matrix in 3-section card layout without percentage bars', async () => {
     render(<AboutSection />);
 
     expect(await screen.findByText(/Categorized Skills Matrix/i)).toBeDefined();
     expect(screen.getByText(/TypeScript/i)).toBeDefined();
+
+    // Check transparent logo PNG is rendered
+    const tsLogo = screen.getByAltText('TypeScript') as HTMLImageElement;
+    expect(tsLogo).toBeDefined();
+    expect(tsLogo.src).toContain('/skills/typescript.png');
+
+    // Check years pill
+    expect(screen.getAllByText('5 yrs').length).toBeGreaterThan(0);
+
+    // Ensure no percentage indicators or progress bars exist
+    expect(screen.queryByText(/96%/)).toBeNull();
+    expect(screen.queryByText(/90%/)).toBeNull();
 
     // Click filter pill
     const backendPill = screen.getByRole('button', { name: /Filter skills by Backend & Cloud/i });
@@ -50,6 +62,9 @@ describe('AboutSection', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Node\.js & Express/i)).toBeDefined();
+      const nodeLogo = screen.getByAltText('Node.js & Express') as HTMLImageElement;
+      expect(nodeLogo).toBeDefined();
+      expect(nodeLogo.src).toContain('/skills/nodejs.png');
     });
   });
 });

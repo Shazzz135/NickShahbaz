@@ -11,6 +11,7 @@ import {
 } from '../../types/siteMeta';
 import { Badge } from '../common/Badge';
 import { normalizeTechName } from '../../lib/timelineUtils';
+import { getSkillLogo } from '../../lib/skillLogos';
 import { 
   User, 
   Save, 
@@ -59,10 +60,15 @@ export const AboutManager: React.FC = () => {
   // Skills Filter in CMS
   const [selectedSkillCategory, setSelectedSkillCategory] = useState<string>('All');
 
+  // Skill Logo Upload & Form States
+  const [newSkillLogoUrl, setNewSkillLogoUrl] = useState('');
+  const [quickSkillLogoUrl, setQuickSkillLogoUrl] = useState('');
+  const [uploadingSkillLogo, setUploadingSkillLogo] = useState(false);
+  const [uploadingSkillId, setUploadingSkillId] = useState<string | null>(null);
+
   // New Skill form state (modal)
   const [newSkillName, setNewSkillName] = useState('');
   const [newSkillCategory, setNewSkillCategory] = useState<SkillCategory>('Frontend & 3D');
-  const [newSkillLevel, setNewSkillLevel] = useState(90);
   const [newSkillYears, setNewSkillYears] = useState('3 yrs');
   const [newSkillFeatured, setNewSkillFeatured] = useState(false);
   const [isAddingSkill, setIsAddingSkill] = useState(false);
@@ -70,7 +76,6 @@ export const AboutManager: React.FC = () => {
   // Quick Add State (Inline Bar)
   const [quickSkillName, setQuickSkillName] = useState('');
   const [quickSkillCategory, setQuickSkillCategory] = useState<SkillCategory>('Frontend & 3D');
-  const [quickSkillLevel, setQuickSkillLevel] = useState(90);
   const [quickSkillYears, setQuickSkillYears] = useState('3 yrs');
 
   // Dynamic Editing & Deletion Management
@@ -94,11 +99,16 @@ export const AboutManager: React.FC = () => {
         setStatusMsg({ type: 'error', text: `Fetch failed: ${error.message}` });
       } else if (data && data.value) {
         const val = data.value as unknown as Partial<AboutMetaConfig>;
-        const rawSkills = Array.isArray(val.skills) ? val.skills : DEFAULT_ABOUT_META.skills;
-        const normalizedSkills: SkillItem[] = rawSkills.map((s, idx) => ({
-          ...s,
-          id: s.id || `sk-${idx}-${s.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`,
-        }));
+        type LegacySkill = SkillItem & { level?: number };
+        const rawSkills: LegacySkill[] = (Array.isArray(val.skills) ? val.skills : DEFAULT_ABOUT_META.skills) as LegacySkill[];
+        const normalizedSkills: SkillItem[] = rawSkills.map((s, idx) => {
+          const { level: _, ...rest } = s;
+          void _;
+          return {
+            ...rest,
+            id: s.id || `sk-${idx}-${(s.name || '').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`,
+          };
+        });
 
         let prefix = val.headlinePrefix;
         let gradient = val.headlineGradient;
@@ -148,6 +158,60 @@ export const AboutManager: React.FC = () => {
     };
   }, []);
 
+  const handleSkillLogoUpload = async (file: File, onSuccess: (url: string) => void) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setStatusMsg({ type: 'error', text: 'Please upload an image file (PNG, SVG, WEBP, JPG).' });
+      return;
+    }
+
+    setUploadingSkillLogo(true);
+    setStatusMsg(null);
+
+    try {
+      const fileExt = file.name.split('.').pop() || 'png';
+      const fileName = `skill-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const filePath = `skills/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('portfolio-media')
+        .upload(filePath, file, { cacheControl: '3600', upsert: true });
+
+      if (uploadError) {
+        // Fallback to data URL if storage is unconfigured or offline
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          onSuccess(dataUrl);
+          setStatusMsg({ type: 'success', text: 'Skill logo loaded! Click "Save Changes" to commit.' });
+          setUploadingSkillLogo(false);
+          setHasUnsavedChanges(true);
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('portfolio-media')
+        .getPublicUrl(filePath);
+
+      onSuccess(publicUrl);
+      setStatusMsg({ type: 'success', text: 'Skill logo uploaded successfully! Click "Save Changes" to commit.' });
+      setHasUnsavedChanges(true);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        onSuccess(dataUrl);
+        setUploadingSkillLogo(false);
+        setHasUnsavedChanges(true);
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setUploadingSkillLogo(false);
+    }
+  };
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -194,10 +258,17 @@ export const AboutManager: React.FC = () => {
       headlineGradient: config.headlineGradient || DEFAULT_ABOUT_META.headlineGradient,
       headline: config.headline || `${config.headlinePrefix || ''} ${config.headlineGradient || ''}`.trim(),
       bioParagraphs: parsedParagraphs.length > 0 ? parsedParagraphs : DEFAULT_ABOUT_META.bioParagraphs,
-      skills: (config.skills || []).map((s) => ({
-        ...s,
-        name: normalizeTechName(s.name),
-      })),
+      skills: (config.skills || []).map((s: SkillItem) => {
+        const { id, name, category, years, featured, logoUrl } = s;
+        return {
+          ...(id ? { id } : {}),
+          name: normalizeTechName(name),
+          category,
+          years,
+          ...(featured ? { featured: true } : {}),
+          ...(logoUrl ? { logoUrl } : {}),
+        };
+      }),
     };
 
     const { error } = await supabase
@@ -317,8 +388,8 @@ export const AboutManager: React.FC = () => {
       id: generateUniqueId('sk'),
       name: trimmed,
       category: quickSkillCategory,
-      level: Number(quickSkillLevel),
       years: quickSkillYears.trim() || '1 yr',
+      ...(quickSkillLogoUrl.trim() ? { logoUrl: quickSkillLogoUrl.trim() } : {}),
       featured: false,
     };
 
@@ -327,6 +398,7 @@ export const AboutManager: React.FC = () => {
       skills: [...prev.skills, newSkill],
     }));
     setQuickSkillName('');
+    setQuickSkillLogoUrl('');
     setStatusMsg({ type: 'success', text: `Added "${trimmed}". Click "Save Changes" to commit.` });
     setHasUnsavedChanges(true);
   };
@@ -339,8 +411,8 @@ export const AboutManager: React.FC = () => {
       id: generateUniqueId('sk'),
       name: newSkillName.trim(),
       category: newSkillCategory,
-      level: Number(newSkillLevel),
       years: newSkillYears.trim() || '1 yr',
+      ...(newSkillLogoUrl.trim() ? { logoUrl: newSkillLogoUrl.trim() } : {}),
       featured: newSkillFeatured,
     };
 
@@ -350,6 +422,7 @@ export const AboutManager: React.FC = () => {
     }));
 
     setNewSkillName('');
+    setNewSkillLogoUrl('');
     setIsAddingSkill(false);
     setStatusMsg({ type: 'success', text: `Added "${newSkill.name}". Click "Save Changes" to commit.` });
     setHasUnsavedChanges(true);
@@ -401,7 +474,7 @@ export const AboutManager: React.FC = () => {
     .sort((a, b) => {
       if (a.featured && !b.featured) return -1;
       if (!a.featured && b.featured) return 1;
-      return (b.level ?? 0) - (a.level ?? 0);
+      return a.name.localeCompare(b.name);
     });
 
   return (
@@ -809,7 +882,7 @@ export const AboutManager: React.FC = () => {
                     )}
                   </h3>
                   <p className="text-xs text-[#94949e] mt-0.5">
-                    Drag the proficiency sliders live, produce items with quick-add or 1-click presets, and click ★ to feature.
+                    Manage tools, technologies, and experience years. Click ★ to feature core competencies.
                   </p>
                 </div>
 
@@ -848,7 +921,7 @@ export const AboutManager: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
-                  <div className="sm:col-span-5 relative">
+                  <div className="sm:col-span-4 relative">
                     <input
                       type="text"
                       value={quickSkillName}
@@ -880,11 +953,29 @@ export const AboutManager: React.FC = () => {
                     />
                   </div>
 
-                  <div className="sm:col-span-2 flex items-center justify-end">
+                  <div className="sm:col-span-2 flex items-center">
+                    <label className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg bg-[#16161e] hover:bg-[#1a1a24] border border-white/10 hover:border-white/20 text-[#94949e] hover:text-white text-xs font-mono cursor-pointer transition-colors truncate">
+                      <Upload className="w-3.5 h-3.5 text-[#ff1e27] shrink-0" />
+                      <span className="truncate">{uploadingSkillLogo ? 'Uploading...' : quickSkillLogoUrl ? 'Logo Uploaded' : 'Upload Logo'}</span>
+                      <input
+                        type="file"
+                        accept="image/png,image/svg+xml,image/webp,image/jpeg"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleSkillLogoUpload(file, (url) => setQuickSkillLogoUrl(url));
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="sm:col-span-1 flex items-center justify-end">
                     <button
                       type="submit"
                       disabled={!quickSkillName.trim()}
-                      className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-[#e50914] hover:bg-[#ff1e27] text-white text-xs font-mono font-medium disabled:opacity-40 transition-colors cursor-pointer"
+                      className="w-full inline-flex items-center justify-center gap-1 py-2 px-2 rounded-lg bg-[#e50914] hover:bg-[#ff1e27] text-white text-xs font-mono font-medium disabled:opacity-40 transition-colors cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Add</span>
@@ -892,21 +983,21 @@ export const AboutManager: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Live Proficiency Drag on Quick-Add */}
-                <div className="flex items-center gap-3 pt-1">
-                  <label className="text-[11px] font-mono text-[#94949e] shrink-0">
-                    Proficiency: <span className="text-[#ff1e27] font-bold">{quickSkillLevel}%</span>
-                  </label>
-                  <input
-                    type="range"
-                    min="20"
-                    max="100"
-                    value={quickSkillLevel}
-                    onChange={(e) => setQuickSkillLevel(Number(e.target.value))}
-                    className="w-40 sm:w-64 accent-[#e50914] cursor-pointer"
-                    title={`Drag to adjust proficiency (${quickSkillLevel}%)`}
-                  />
-                </div>
+                {quickSkillLogoUrl && (
+                  <div className="flex items-center gap-2 pt-1 text-xs font-mono text-[#94949e]">
+                    <span className="text-[10px]">Logo preview:</span>
+                    <img src={quickSkillLogoUrl} alt="Quick logo preview" className="w-6 h-6 object-contain rounded bg-white/5 p-0.5" />
+                    <button
+                      type="button"
+                      onClick={() => setQuickSkillLogoUrl('')}
+                      className="text-[#ff1e27] text-[10px] hover:underline cursor-pointer"
+                    >
+                      Remove logo
+                    </button>
+                  </div>
+                )}
+
+
               </form>
 
               {/* Full Modal Form (if opened) */}
@@ -955,31 +1046,62 @@ export const AboutManager: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-                    <div className="flex items-center gap-3">
-                      <div className="space-y-0.5">
-                        <label className="text-[10px] font-mono text-[#94949e]">Proficiency ({newSkillLevel}%)</label>
+                  {/* Image Upload for New Skill */}
+                  <div className="space-y-1.5 pt-1">
+                    <label className="text-[10px] font-mono text-[#94949e]">Skill Logo Image (Upload Transparent PNG / SVG or URL)</label>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
+                      <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#16161e] border border-white/10 hover:border-white/20 text-xs font-mono text-white cursor-pointer transition-colors shrink-0">
+                        <Upload className="w-3.5 h-3.5 text-[#ff1e27]" />
+                        <span>{uploadingSkillLogo ? 'Uploading...' : 'Upload Image File'}</span>
                         <input
-                          type="range"
-                          min="20"
-                          max="100"
-                          value={newSkillLevel}
-                          onChange={(e) => setNewSkillLevel(Number(e.target.value))}
-                          className="accent-[#e50914] cursor-pointer w-48"
-                          title={`Drag to adjust proficiency (${newSkillLevel}%)`}
+                          type="file"
+                          accept="image/png,image/svg+xml,image/webp,image/jpeg"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleSkillLogoUpload(file, (url) => setNewSkillLogoUrl(url));
+                            }
+                          }}
                         />
-                      </div>
-
-                      <label className="flex items-center gap-1.5 text-xs text-[#94949e] cursor-pointer pt-3">
-                        <input
-                          type="checkbox"
-                          checked={newSkillFeatured}
-                          onChange={(e) => setNewSkillFeatured(e.target.checked)}
-                          className="accent-[#e50914] rounded cursor-pointer"
-                        />
-                        <span>Featured Chip</span>
                       </label>
+
+                      <input
+                        type="text"
+                        value={newSkillLogoUrl}
+                        onChange={(e) => setNewSkillLogoUrl(e.target.value)}
+                        placeholder="Optional logo URL (/skills/tool.png or https://...)"
+                        className="flex-1 bg-[#16161e] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#ff1e27]"
+                      />
+
+                      {newSkillLogoUrl && (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <img src={newSkillLogoUrl} alt="Preview" className="w-7 h-7 object-contain rounded bg-white/5 p-1" />
+                          <button
+                            type="button"
+                            onClick={() => setNewSkillLogoUrl('')}
+                            className="text-[#ff1e27] text-xs font-mono hover:underline cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      )}
                     </div>
+                    <p className="text-[10px] font-mono text-[#5a5a66]">
+                      If no image is provided, nothing will be displayed for the logo.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                    <label className="flex items-center gap-1.5 text-xs text-[#94949e] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newSkillFeatured}
+                        onChange={(e) => setNewSkillFeatured(e.target.checked)}
+                        className="accent-[#e50914] rounded cursor-pointer"
+                      />
+                      <span>Featured Chip</span>
+                    </label>
 
                     <div className="flex items-center gap-2">
                       <button
@@ -1088,24 +1210,76 @@ export const AboutManager: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Proficiency & Range Scroll Bar */}
-                      <div className="space-y-1.5 pt-1">
-                        <div className="flex items-center justify-between text-[10px] font-mono">
-                          <span className="text-[#94949e]">Proficiency</span>
-                          <span className="text-[#ff1e27] font-bold">{sk.level}%</span>
-                        </div>
+                      {/* Middle: Tool Logo & Experience Preview */}
+                      {(() => {
+                        const logoSrc = getSkillLogo(sk.name, sk.logoUrl);
+                        return (
+                          <div className="flex items-center gap-3 py-1">
+                            {logoSrc ? (
+                              <div className="w-9 h-9 shrink-0 flex items-center justify-center p-1 rounded-lg bg-white/[0.04] border border-white/5">
+                                <img
+                                  src={logoSrc}
+                                  alt={sk.name}
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    const parent = e.currentTarget.parentElement;
+                                    if (parent) parent.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            ) : null}
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[10px] font-mono text-[#94949e]">Experience</div>
+                              <div className="text-xs font-mono text-white font-medium">{sk.years}</div>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
-                        <input
-                          type="range"
-                          min="20"
-                          max="100"
-                          step="1"
-                          value={sk.level}
-                          onChange={(e) => handleUpdateSkill(sId, { level: Number(e.target.value) })}
-                          className="w-full accent-[#e50914] cursor-pointer"
-                          title={`Drag to adjust ${sk.name} proficiency (${sk.level}%)`}
-                        />
-                      </div>
+                      {isEditing && (
+                        <div className="space-y-1.5 pt-2 border-t border-white/5">
+                          <div className="flex items-center justify-between text-[10px] font-mono text-[#94949e]">
+                            <span>Logo Image</span>
+                            {sk.logoUrl && (
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateSkill(sId, { logoUrl: '' })}
+                                className="text-[#ff1e27] hover:underline cursor-pointer"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <label className="inline-flex items-center gap-1 px-2 py-1 rounded bg-[#16161e] border border-white/10 hover:border-white/20 text-[10px] font-mono text-white cursor-pointer shrink-0">
+                              <Upload className="w-3 h-3 text-[#ff1e27]" />
+                              <span>{uploadingSkillId === sId ? 'Uploading...' : 'Upload'}</span>
+                              <input
+                                type="file"
+                                accept="image/png,image/svg+xml,image/webp,image/jpeg"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    setUploadingSkillId(sId);
+                                    handleSkillLogoUpload(file, (url) => {
+                                      handleUpdateSkill(sId, { logoUrl: url });
+                                      setUploadingSkillId(null);
+                                    });
+                                  }
+                                }}
+                              />
+                            </label>
+                            <input
+                              type="text"
+                              value={sk.logoUrl || ''}
+                              onChange={(e) => handleUpdateSkill(sId, { logoUrl: e.target.value })}
+                              placeholder="Or paste image URL..."
+                              className="w-full bg-[#16161e] border border-white/20 rounded px-1.5 py-0.5 text-[10px] font-mono text-white focus:outline-none focus:border-[#ff1e27]"
+                            />
+                          </div>
+                        </div>
+                      )}
 
                       {/* Action Bar: Duplicate, Edit Inline, Delete Confirmation */}
                       <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">

@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Sparkles, 
   MapPin, 
   ShieldCheck, 
   Layers, 
   Terminal 
 } from 'lucide-react';
 import { useAboutMeta } from '../../hooks/useAboutMeta';
+import { getSkillLogo } from '../../lib/skillLogos';
 import type { SkillCategory, SkillItem } from '../../types/siteMeta';
 
 const SKILL_CATEGORIES: (SkillCategory | 'All')[] = [
@@ -22,7 +22,7 @@ export const AboutSection: React.FC = () => {
   const { aboutMeta, loading } = useAboutMeta();
   const [selectedCategory, setSelectedCategory] = useState<SkillCategory | 'All'>('All');
 
-  // Starred / featured skills are sorted first, then by proficiency level
+  // Starred / featured skills are sorted first, then alphabetically
   const filteredSkills = useMemo(() => {
     return aboutMeta.skills
       .filter((s: SkillItem) => {
@@ -32,7 +32,7 @@ export const AboutSection: React.FC = () => {
       .sort((a, b) => {
         if (a.featured && !b.featured) return -1;
         if (!a.featured && b.featured) return 1;
-        return (b.level ?? 0) - (a.level ?? 0);
+        return a.name.localeCompare(b.name);
       });
   }, [aboutMeta.skills, selectedCategory]);
 
@@ -254,52 +254,57 @@ export const AboutSection: React.FC = () => {
               </div>
             </div>
 
-            {/* Skills Grid: Starred/Featured skills display first */}
+            {/* Skills Grid: 3-Section Card (Logo on left, Tool & Category in middle, Years on right) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
               <AnimatePresence mode="popLayout">
-                {filteredSkills.map((skill: SkillItem, idx: number) => (
-                  <motion.div
-                    key={skill.name}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.25, delay: 0.02 * idx }}
-                    className="relative rounded-xl bg-[#0f0f13]/90 border border-white/10 p-4 backdrop-blur-md space-y-2.5 hover:border-white/20 transition-all duration-300 group"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        {skill.featured && (
-                          <span title="Featured Core Competency" className="inline-flex shrink-0">
-                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                          </span>
-                        )}
-                        <span className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-[#ff3b44] transition-colors">
+                {filteredSkills.map((skill: SkillItem, idx: number) => {
+                  const logoSrc = getSkillLogo(skill.name, skill.logoUrl);
+
+                  return (
+                    <motion.div
+                      key={skill.name}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.25, delay: 0.02 * idx }}
+                      className="relative rounded-xl bg-[#0f0f13]/90 border border-white/10 p-3.5 sm:p-4 backdrop-blur-md hover:border-white/20 transition-all duration-300 group flex items-center justify-between gap-3.5"
+                    >
+                      {/* Section 1: Image on the Left (only if image exists; if no image is provided display nothing) */}
+                      {logoSrc ? (
+                        <div className="w-10 h-10 shrink-0 flex items-center justify-center p-1 rounded-lg bg-white/[0.03] border border-white/5 group-hover:border-white/15 transition-colors">
+                          <img
+                            src={logoSrc}
+                            alt={skill.name}
+                            loading="lazy"
+                            className="w-full h-full object-contain filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300"
+                            onError={(e) => {
+                              // If image fails to load, display nothing
+                              const parent = e.currentTarget.parentElement;
+                              if (parent) parent.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      ) : null}
+
+                      {/* Section 2: Tool and Category */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-center">
+                        <span className="text-sm font-bold text-white truncate group-hover:text-[#ff3b44] transition-colors leading-snug">
                           {skill.name}
                         </span>
+                        <span className="text-xs font-mono text-[#94949e] truncate leading-tight mt-0.5">
+                          {skill.category}
+                        </span>
                       </div>
-                      <span className="text-[10px] font-mono text-[#94949e] shrink-0">
-                        {skill.years}
-                      </span>
-                    </div>
 
-                    {/* Proficiency Bar */}
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[10px] font-mono text-[#94949e]">
-                        <span>{skill.category}</span>
-                        <span>{skill.level}%</span>
+                      {/* Section 3: Years on the Right */}
+                      <div className="shrink-0 flex items-center">
+                        <span className="text-xs font-mono text-[#c4c4cc] px-2.5 py-1 rounded-md bg-white/5 border border-white/10 whitespace-nowrap">
+                          {skill.years}
+                        </span>
                       </div>
-                      <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          whileInView={{ width: `${skill.level}%` }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.8, delay: 0.03 * idx, ease: 'easeOut' }}
-                          className="h-full rounded-full bg-gradient-to-r from-[#e50914] via-[#ff1e27] to-[#ff6b72]"
-                        />
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
             </div>
           </div>

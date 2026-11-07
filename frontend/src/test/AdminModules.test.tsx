@@ -79,7 +79,7 @@ describe('Admin Modules - Full Functionality Verification', () => {
       expect(screen.getByText('TypeScript')).toBeDefined();
     });
 
-    it('allows dragging and updating proficiency live', async () => {
+    it('allows editing skill years and updating live', async () => {
       render(<AboutManager />);
 
       await waitFor(() => {
@@ -89,15 +89,22 @@ describe('Admin Modules - Full Functionality Verification', () => {
       const skillsTab = await screen.findByRole('button', { name: /Skills Matrix/i });
       fireEvent.click(skillsTab);
 
-      // Find proficiency sliders for skills
-      const tsSlider = screen.getByTitle(/Drag to adjust TypeScript proficiency/i) as HTMLInputElement;
-      expect(tsSlider).toBeDefined();
+      // Verify skill logo is present
+      const tsLogo = screen.getByAltText('TypeScript') as HTMLImageElement;
+      expect(tsLogo).toBeDefined();
+      expect(tsLogo.src).toContain('/skills/typescript.png');
 
-      // Drag proficiency from 96% to 80%
-      fireEvent.change(tsSlider, { target: { value: '80' } });
+      // Click Edit button for TypeScript
+      const editButtons = screen.getAllByTitle(/Edit Name & Years/i);
+      expect(editButtons.length).toBeGreaterThan(0);
+      fireEvent.click(editButtons[0]);
 
-      // Verify level is updated live and unsaved changes badge is active
-      expect(tsSlider.value).toBe('80');
+      // Edit years
+      const yearsInput = screen.getByPlaceholderText('yrs') as HTMLInputElement;
+      expect(yearsInput).toBeDefined();
+      fireEvent.change(yearsInput, { target: { value: '7 yrs' } });
+
+      // Verify unsaved changes badge is active
       expect(screen.getByText(/Unsaved Edits/i)).toBeDefined();
     });
 
@@ -140,7 +147,7 @@ describe('Admin Modules - Full Functionality Verification', () => {
 
       // Verify duplicate is present
       await waitFor(() => {
-        expect(screen.getByText(/TypeScript \(Copy\)/i)).toBeDefined();
+        expect(screen.getByText(/\(Copy\)/i)).toBeDefined();
       });
     });
 

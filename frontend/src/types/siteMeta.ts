@@ -34,8 +34,8 @@ export interface SkillItem {
   id?: string;
   name: string;
   category: SkillCategory;
-  level: number; // 0 - 100 percentage
   years: string;
+  logoUrl?: string;
   featured?: boolean;
 }
 
@@ -111,35 +111,35 @@ export const DEFAULT_ABOUT_META: AboutMetaConfig = {
   ],
   skills: [
     // Languages
-    { name: 'TypeScript', category: 'Languages', level: 96, years: '5 yrs', featured: true },
-    { name: 'JavaScript (ESNext)', category: 'Languages', level: 95, years: '6 yrs' },
-    { name: 'Python', category: 'Languages', level: 88, years: '4 yrs', featured: true },
-    { name: 'SQL (PostgreSQL)', category: 'Languages', level: 92, years: '5 yrs', featured: true },
-    { name: 'C++', category: 'Languages', level: 78, years: '3 yrs' },
-    { name: 'HTML5 / CSS3', category: 'Languages', level: 95, years: '6 yrs' },
+    { name: 'TypeScript', category: 'Languages', years: '5 yrs', logoUrl: '/skills/typescript.png', featured: true },
+    { name: 'JavaScript (ESNext)', category: 'Languages', years: '6 yrs', logoUrl: '/skills/javascript.png' },
+    { name: 'Python', category: 'Languages', years: '4 yrs', logoUrl: '/skills/python.png', featured: true },
+    { name: 'SQL (PostgreSQL)', category: 'Languages', years: '5 yrs', logoUrl: '/skills/postgresql.png', featured: true },
+    { name: 'C++', category: 'Languages', years: '3 yrs', logoUrl: '/skills/cpp.png' },
+    { name: 'HTML5 / CSS3', category: 'Languages', years: '6 yrs', logoUrl: '/skills/html5.png' },
 
     // Frontend & 3D
-    { name: 'React 19 / Next.js', category: 'Frontend & 3D', level: 96, years: '5 yrs', featured: true },
-    { name: 'Three.js / WebGL', category: 'Frontend & 3D', level: 90, years: '3 yrs', featured: true },
-    { name: 'React Three Fiber (R3F)', category: 'Frontend & 3D', level: 88, years: '3 yrs' },
-    { name: 'GLSL Custom Shaders', category: 'Frontend & 3D', level: 82, years: '2 yrs' },
-    { name: 'Tailwind CSS v4', category: 'Frontend & 3D', level: 95, years: '4 yrs' },
-    { name: 'Motion / Framer', category: 'Frontend & 3D', level: 92, years: '4 yrs' },
+    { name: 'React 19 / Next.js', category: 'Frontend & 3D', years: '5 yrs', logoUrl: '/skills/react.png', featured: true },
+    { name: 'Three.js / WebGL', category: 'Frontend & 3D', years: '3 yrs', logoUrl: '/skills/threejs.png', featured: true },
+    { name: 'React Three Fiber (R3F)', category: 'Frontend & 3D', years: '3 yrs', logoUrl: '/skills/r3f.png' },
+    { name: 'GLSL Custom Shaders', category: 'Frontend & 3D', years: '2 yrs', logoUrl: '/skills/glsl.png' },
+    { name: 'Tailwind CSS v4', category: 'Frontend & 3D', years: '4 yrs', logoUrl: '/skills/tailwind.png' },
+    { name: 'Motion / Framer', category: 'Frontend & 3D', years: '4 yrs', logoUrl: '/skills/framer.png' },
 
     // Backend & Cloud
-    { name: 'Node.js & Express', category: 'Backend & Cloud', level: 94, years: '5 yrs', featured: true },
-    { name: 'Supabase (Auth, RLS, Storage)', category: 'Backend & Cloud', level: 95, years: '3 yrs', featured: true },
-    { name: 'PostgreSQL & pgvector', category: 'Backend & Cloud', level: 90, years: '5 yrs' },
-    { name: 'Docker & Containers', category: 'Backend & Cloud', level: 88, years: '4 yrs', featured: true },
-    { name: 'WebSockets & Realtime', category: 'Backend & Cloud', level: 90, years: '4 yrs' },
-    { name: 'AWS Cloud Architecture', category: 'Backend & Cloud', level: 85, years: '3 yrs' },
-    { name: 'Redis Caching', category: 'Backend & Cloud', level: 84, years: '3 yrs' },
+    { name: 'Node.js & Express', category: 'Backend & Cloud', years: '5 yrs', logoUrl: '/skills/nodejs.png', featured: true },
+    { name: 'Supabase (Auth, RLS, Storage)', category: 'Backend & Cloud', years: '3 yrs', logoUrl: '/skills/supabase.png', featured: true },
+    { name: 'PostgreSQL & pgvector', category: 'Backend & Cloud', years: '5 yrs', logoUrl: '/skills/pgvector.png' },
+    { name: 'Docker & Containers', category: 'Backend & Cloud', years: '4 yrs', logoUrl: '/skills/docker.png', featured: true },
+    { name: 'WebSockets & Realtime', category: 'Backend & Cloud', years: '4 yrs', logoUrl: '/skills/websocket.png' },
+    { name: 'AWS Cloud Architecture', category: 'Backend & Cloud', years: '3 yrs', logoUrl: '/skills/aws.png' },
+    { name: 'Redis Caching', category: 'Backend & Cloud', years: '3 yrs', logoUrl: '/skills/redis.png' },
 
     // Systems & DevOps
-    { name: 'GitHub Actions CI/CD', category: 'Systems & DevOps', level: 92, years: '4 yrs', featured: true },
-    { name: 'Vitest & RTL Testing', category: 'Systems & DevOps', level: 90, years: '3 yrs' },
-    { name: 'Linux / Shell Scripting', category: 'Systems & DevOps', level: 86, years: '4 yrs' },
-    { name: 'Vite & Build Optimization', category: 'Systems & DevOps', level: 92, years: '4 yrs' },
-    { name: 'Git Workflow & Code Review', category: 'Systems & DevOps', level: 95, years: '5 yrs' },
+    { name: 'GitHub Actions CI/CD', category: 'Systems & DevOps', years: '4 yrs', logoUrl: '/skills/github-actions.png', featured: true },
+    { name: 'Vitest & RTL Testing', category: 'Systems & DevOps', years: '3 yrs', logoUrl: '/skills/vitest.png' },
+    { name: 'Linux / Shell Scripting', category: 'Systems & DevOps', years: '4 yrs', logoUrl: '/skills/linux.png' },
+    { name: 'Vite & Build Optimization', category: 'Systems & DevOps', years: '4 yrs', logoUrl: '/skills/vite.png' },
+    { name: 'Git Workflow & Code Review', category: 'Systems & DevOps', years: '5 yrs', logoUrl: '/skills/git.png' },
   ],
 };
