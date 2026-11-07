@@ -88,7 +88,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const sessionRef = useRef<Session | null>(session);
-  sessionRef.current = session;
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -156,7 +159,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Handle initialization and OAuth subscription - run strictly once on mount
   useEffect(() => {
     if (!isSupabaseConfigured) {
-      setLoading(false);
       return;
     }
 
