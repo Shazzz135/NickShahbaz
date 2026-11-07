@@ -5,6 +5,7 @@ import { Magnetic } from '../common/Magnetic';
 import { FloatingTechChips } from './FloatingTechChips';
 import { useSmoothScroll } from '../../hooks/useSmoothScroll';
 import { useSiteMeta } from '../../hooks/useSiteMeta';
+import { useAuth } from '../../hooks/useAuth';
 import { DEFAULT_HERO_META, type HeroMetaConfig } from '../../types/siteMeta';
 import { 
   ArrowRight, 
@@ -25,6 +26,7 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
   const { scrollTo } = useSmoothScroll();
   const { data: rawHeroData } = useSiteMeta('hero', DEFAULT_HERO_META);
   const hero = { ...DEFAULT_HERO_META, ...rawHeroData } as HeroMetaConfig;
+  const { isAdmin } = useAuth();
 
   const handleScrollToProjects = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -137,15 +139,17 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
             </Button>
           </Magnetic>
 
-          <Magnetic strength={0.15}>
+          {isAdmin && (
+            <Magnetic strength={0.15}>
             <a
-              href="/admin/login"
+              href="/admin/dashboard"
               className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-xs font-mono text-[#94949e] hover:text-white bg-transparent hover:bg-white/5 border border-transparent hover:border-white/10 transition-colors"
             >
               <Lock className="w-3.5 h-3.5" />
               <span>Admin Portal</span>
             </a>
           </Magnetic>
+          )}
         </motion.div>
 
         {/* Interactive 3D Foreground Elements (Physics Tech Chips) */}

@@ -1,25 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth, ADMIN_EMAIL } from '../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth';
 import { Badge } from '../components/common/Badge';
 import { Card } from '../components/common/Card';
-import { AlertCircle, ArrowLeft, Shield, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Shield } from 'lucide-react';
 
 export const AdminLogin: React.FC = () => {
-  const { signInWithGoogle, user, isAdmin, loading } = useAuth();
+  const { signInWithGoogle, user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // If already authenticated and authorized, redirect straight to dashboard
+  // If already authenticated, redirect straight to admin dashboard
   useEffect(() => {
-    if (!loading && user && isAdmin) {
+    if (!loading && user) {
       const destination = (location.state as { from?: { pathname: string } })?.from?.pathname || '/admin/dashboard';
       navigate(destination, { replace: true });
     }
-  }, [user, isAdmin, loading, navigate, location]);
+  }, [user, loading, navigate, location]);
 
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
@@ -99,15 +99,6 @@ export const AdminLogin: React.FC = () => {
               <span>{isSubmitting ? 'Connecting to Google...' : 'Sign in with Google'}</span>
             </button>
 
-            <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 space-y-1.5">
-              <div className="flex items-center gap-2 text-xs font-mono text-[#c4c4cc]">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>Persistent JWT Session & Auto-Refresh</span>
-              </div>
-              <p className="text-[11px] text-[#94949e] font-mono leading-relaxed">
-                Authorized for <span className="text-white">{ADMIN_EMAIL}</span>. Authenticated sessions stay active automatically with background JWT refresh tokens.
-              </p>
-            </div>
           </div>
         </Card>
 

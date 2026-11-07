@@ -70,6 +70,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(cachedSession?.user ?? null);
   const [loading, setLoading] = useState<boolean>(() => {
     if (!isSupabaseConfigured) return false;
+    // If returning from OAuth redirect with code or token, force loading until exchange completes
+    if (typeof window !== 'undefined') {
+      const href = window.location.href;
+      if (href.includes('code=') || href.includes('access_token=') || href.includes('error=')) {
+        return true;
+      }
+    }
     // If we have an unexpired cached session, we are ready immediately
     if (cachedSession && cachedSession.expires_at) {
       const now = Math.floor(Date.now() / 1000);
@@ -83,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const isAdmin = Boolean(
-    user?.email && (!ADMIN_EMAIL || user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase())
+    user?.email && ADMIN_EMAIL && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()
   );
 
   const updateSessionState = useCallback((newSession: Session | null) => {
@@ -157,14 +164,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const params = new URLSearchParams(window.location.search);
           const code = params.get('code');
           if (code) {
-            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-            if (!error && data.session && isMounted) {
-              updateSessionState(data.session);
-              setLoading(false);
-              // Clean query parameter from URL without reloading
-              const cleanUrl = window.location.pathname + (window.location.hash || '');
-              window.history.replaceState({}, document.title, cleanUrl);
-              return;
+            try {
+              const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+              if (!error && data.session && isMounted) {
+                updateSessionState(data.session);
+                setLoading(false);
+                const inProgress = sessionStorage.getItem('nickshahbaz_login_in_progress');
+                if (inProgress === 'true') {
+                  sessionStorage.removeItem('nickshahbaz_login_in_progress');
+                  if (window.location.pathname !== '/admin/dashboard') {
+                    window.location.href = '/admin/dashboard';
+                    return;
+                  }
+                }
+                // Clean query parameter from URL without reloading
+                const cleanUrl = window.location.pathname + (window.location.hash || '');
+                window.history.replaceState({}, document.title, cleanUrl);
+                return;
+              }
+            } catch (err) {
+              console.warn('Code exchange notice:', err);
             }
           }
         }
@@ -176,6 +195,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (activeSession) {
           updateSessionState(activeSession);
+          if (typeof window !== 'undefined') {
+            const inProgress = sessionStorage.getItem('nickshahbaz_login_in_progress');
+            if (inProgress === 'true') {
+              sessionStorage.removeItem('nickshahbaz_login_in_progress');
+              if (window.location.pathname !== '/admin/dashboard') {
+                window.location.href = '/admin/dashboard';
+                return;
+              }
+            }
+          }
         } else if (cachedSession?.refresh_token) {
           // If Supabase client has no active session, attempt silent refresh with cached refresh token
           const refreshed = await refreshAuthToken();
@@ -197,10 +226,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // 3. Subscribe to onAuthStateChange (SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+    } = supabase.auth.onAuthStateChange((event, currentSession) => {
       if (!isMounted) return;
       updateSessionState(currentSession);
       setLoading(false);
+
+      if ((event === 'SIGNED_IN' || currentSession?.user) && typeof window !== 'undefined') {
+        const inProgress = sessionStorage.getItem('nickshahbaz_login_in_progress');
+        if (inProgress === 'true') {
+          sessionStorage.removeItem('nickshahbaz_login_in_progress');
+          if (window.location.pathname !== '/admin/dashboard') {
+            window.location.href = '/admin/dashboard';
+          }
+        }
+      }
     });
 
     return () => {
@@ -214,6 +253,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithGoogle = async () => {
     try {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('nickshahbaz_login_in_progress', 'true');
+      }
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -226,6 +268,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       return { error };
     } catch (err) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('nickshahbaz_login_in_progress');
+      }
       return { error: err as Error };
     }
   };
