@@ -91,4 +91,24 @@ describe('ProjectGallery', () => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });
   });
+
+  it('makes two windows items sharing a row split the row equally with 6 columns each', async () => {
+    render(<ProjectGallery />);
+
+    // In Full-Stack category, both mock projects are windows (desktop) applications
+    const fullStackBtn = screen.getByRole('button', { name: /Full-Stack/i });
+    fireEvent.click(fullStackBtn);
+
+    const proj1 = await screen.findByText(/Enterprise AI Workflow Platform/i);
+    const proj2 = await screen.findByText(/Kinetic 3D Commerce Engine/i);
+
+    // Both cards should have equal 6-column spans
+    const card1 = proj1.closest('.md\\:col-span-6');
+    const card2 = proj2.closest('.md\\:col-span-6');
+
+    expect(card1).not.toBeNull();
+    expect(card2).not.toBeNull();
+    expect(card1?.className).toContain('lg:col-span-6');
+    expect(card2?.className).toContain('lg:col-span-6');
+  });
 });

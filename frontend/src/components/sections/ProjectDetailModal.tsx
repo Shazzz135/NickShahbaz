@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { ProjectRow } from '../../lib/mockData';
 import { Badge } from '../common/Badge';
@@ -12,9 +12,7 @@ import {
   Layers, 
   Sparkles, 
   Activity, 
-  Calendar,
-  Smartphone,
-  Monitor
+  Calendar
 } from 'lucide-react';
 
 interface ProjectDetailModalProps {
@@ -23,15 +21,7 @@ interface ProjectDetailModalProps {
 }
 
 export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project, onClose }) => {
-  const [prevId, setPrevId] = useState<string | null>(null);
-  const [detectedScale, setDetectedScale] = useState<'mobile' | 'desktop' | null>(null);
   const { lenis } = useSmoothScroll();
-
-  // Reset scale state when project changes without effect-driven cascading render
-  if (project && project.id !== prevId) {
-    setPrevId(project.id);
-    setDetectedScale(null);
-  }
 
   // Lock background scroll (including Lenis) and activate internal modal scrolling
   useEffect(() => {
@@ -102,20 +92,6 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
               <Badge variant="crimson">{project.category}</Badge>
               {project.featured && <Badge variant="emerald" dot>Featured Application</Badge>}
 
-              {/* Dynamic Viewport Scale Indicator */}
-              {detectedScale === 'mobile' && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-blue-500/10 text-blue-400 border border-blue-500/25">
-                  <Smartphone className="w-3 h-3" />
-                  <span>Mobile View</span>
-                </span>
-              )}
-              {detectedScale === 'desktop' && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono bg-purple-500/10 text-purple-400 border border-purple-500/25">
-                  <Monitor className="w-3 h-3" />
-                  <span>Windows / Desktop</span>
-                </span>
-              )}
-
               <span className="text-[11px] font-mono text-[#94949e] hidden sm:inline-flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
                 <span>{new Date(project.created_at).getFullYear()}</span>
@@ -149,7 +125,6 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
                         src={project.thumbnail_url}
                         alt={project.title}
                         minRatio={0.72}
-                        onScaleDetected={(scale) => setDetectedScale(scale)}
                         className="rounded-lg border border-white/5 max-h-[65vh] w-full mx-auto shadow-inner"
                       />
                     </div>

@@ -13,9 +13,7 @@ import {
   Code, 
   Sparkles, 
   ArrowUpRight, 
-  Maximize2,
-  Monitor,
-  Smartphone
+  Maximize2
 } from 'lucide-react';
 
 const BASE_CATEGORIES = [
@@ -26,128 +24,7 @@ const BASE_CATEGORIES = [
   'Tools/Web3',
 ];
 
-function getInitialScale(project: ProjectRow): 'mobile' | 'desktop' {
-  const metricScale = (project.metrics as Record<string, unknown> | null)?.scale_type;
-  if (metricScale === 'mobile' || metricScale === 'desktop') return metricScale;
-  const cat = (project.category || '').toLowerCase();
-  if (cat.includes('mobile') || cat.includes('ios') || cat.includes('android')) return 'mobile';
-  const tags = (project.tags || []).map((t) => t.toLowerCase());
-  if (tags.some((t) => t.includes('swift') || t.includes('react native') || t.includes('flutter') || t.includes('ios') || t.includes('android'))) {
-    return 'mobile';
-  }
-  return 'desktop';
-}
-
-/**
- * Arranges projects so naturally mobile projects land in mobile slots and
- * naturally desktop projects land in window slots whenever possible.
- */
-function orderProjectsForAlternatingDisplay(
-  list: ProjectRow[],
-  scales: Record<string, 'mobile' | 'desktop'>
-): ProjectRow[] {
-  if (list.length <= 1) return list;
-
-  const isMobileProj = (p: ProjectRow) => (scales[p.id] || getInitialScale(p)) === 'mobile';
-
-  const mobiles = list.filter(isMobileProj);
-  const desktops = list.filter((p) => !isMobileProj(p));
-
-  if (mobiles.length === 0 || desktops.length === 0) {
-    return list;
-  }
-
-  const mQueue = [...mobiles];
-  const dQueue = [...desktops];
-  const ordered: ProjectRow[] = [];
-
-  for (let idx = 0; idx < list.length; idx++) {
-    const rowIndex = Math.floor(idx / 2);
-    const isEvenRow = rowIndex % 2 === 0;
-    // Row 0, 2... (even): 1st is Mobile, 2nd is Window ("mobile window")
-    // Row 1, 3... (odd):  1st is Window, 2nd is Mobile ("window mobile")
-    const wantsMobile = isEvenRow ? (idx % 2 === 0) : (idx % 2 === 1);
-
-    if (wantsMobile) {
-      if (mQueue.length > 0) {
-        ordered.push(mQueue.shift()!);
-      } else {
-        ordered.push(dQueue.shift()!);
-      }
-    } else {
-      if (dQueue.length > 0) {
-        ordered.push(dQueue.shift()!);
-      } else {
-        ordered.push(mQueue.shift()!);
-      }
-    }
-  }
-
-  return ordered;
-}
-
-/**
- * Calculates card display mode ('mobile' or 'desktop') and column spans per row.
- * Alternates rows:
- * - Even rows (0, 2, 4...): Mobile (4 cols) then Window (8 cols) -> "mobile window"
- * - Odd rows (1, 3, 5...):  Window (8 cols) then Mobile (4 cols) -> "window mobile"
- * - Mobile projects on solo rows remain compact mobile size (4 cols) without filling.
- */
-function getCardLayout(
-  index: number,
-  total: number,
-  isNaturallyMobile = false
-): {
-  spanClass: string;
-  isWide: boolean;
-  isSolo: boolean;
-  scale: 'mobile' | 'desktop';
-} {
-  // If single project in category:
-  // If mobile, keep authentic mobile size (4 cols); if desktop, 12 cols showcase
-  if (total === 1) {
-    if (isNaturallyMobile) {
-      return {
-        spanClass: 'col-span-1 md:col-span-5 lg:col-span-4',
-        isWide: false,
-        isSolo: false,
-        scale: 'mobile',
-      };
-    }
-    return {
-      spanClass: 'col-span-1 md:col-span-12 lg:col-span-12',
-      isWide: true,
-      isSolo: true,
-      scale: 'desktop',
-    };
-  }
-
-  const rowIndex = Math.floor(index / 2);
-  const isEvenRow = rowIndex % 2 === 0;
-  const isFirstInRow = index % 2 === 0;
-
-  // Even row: 1st is Mobile, 2nd is Window ("mobile window")
-  // Odd row:  1st is Window, 2nd is Mobile ("window mobile")
-  const isMobile = isEvenRow ? isFirstInRow : !isFirstInRow;
-  const scale: 'mobile' | 'desktop' = isMobile ? 'mobile' : 'desktop';
-
-  // Mobile project: ALWAYS stays compact mobile size (4 cols), even if solo on its row
-  if (scale === 'mobile') {
-    return {
-      spanClass: 'col-span-1 md:col-span-5 lg:col-span-4',
-      isWide: false,
-      isSolo: false,
-      scale: 'mobile',
-    };
-  }
-
-  return {
-    spanClass: 'col-span-1 md:col-span-7 lg:col-span-8',
-    isWide: true,
-    isSolo: false,
-    scale: 'desktop',
-  };
-}
+import { layoutProjects } from '../../lib/projectLayout';
 
 export const ProjectGallery: React.FC = () => {
   const { projects, loading } = useProjects();
@@ -163,8 +40,8 @@ export const ProjectGallery: React.FC = () => {
     return Array.from(new Set([...BASE_CATEGORIES, ...customCats]));
   }, [projects]);
 
-  // Filter projects by category, sort featured first, and alternate pairing
-  const filteredProjects = useMemo(() => {
+  // Filter projects by category, sort featured first, and apply layout rules
+  const laidOutProjects = useMemo(() => {
     const list = selectedCategory === 'All'
       ? projects
       : projects.filter((p) => p.category.toLowerCase() === selectedCategory.toLowerCase());
@@ -176,7 +53,7 @@ export const ProjectGallery: React.FC = () => {
       return (a.sort_order ?? 0) - (b.sort_order ?? 0);
     });
 
-    return orderProjectsForAlternatingDisplay(sorted, detectedScales);
+    return layoutProjects(sorted, detectedScales);
   }, [projects, selectedCategory, detectedScales]);
 
   const handleScaleDetected = (projectId: string, scale: 'mobile' | 'desktop') => {
@@ -238,7 +115,7 @@ export const ProjectGallery: React.FC = () => {
           <div className="w-6 h-6 border-2 border-[#e50914] border-t-transparent rounded-full animate-spin mx-auto" />
           <p>Syncing application portfolio from Supabase...</p>
         </div>
-      ) : filteredProjects.length === 0 ? (
+      ) : laidOutProjects.length === 0 ? (
         <div className="py-20 text-center rounded-2xl bg-[#0f0f13] border border-white/5 space-y-3">
           <Layers className="w-8 h-8 text-[#5a5a66] mx-auto" />
           <p className="text-white font-medium text-sm">No applications found in this category.</p>
@@ -247,14 +124,7 @@ export const ProjectGallery: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-12 lg:grid-cols-12 gap-6 pt-12 items-stretch">
           <AnimatePresence>
-            {filteredProjects.map((project, idx) => {
-              const isNaturallyMobile = (detectedScales[project.id] || getInitialScale(project)) === 'mobile';
-              const { spanClass, isWide, isSolo, scale } = getCardLayout(
-                idx,
-                filteredProjects.length,
-                isNaturallyMobile
-              );
-
+            {laidOutProjects.map(({ project, spanClass, isWide, isSolo }) => {
               return (
                 <motion.div
                   key={project.id}
@@ -287,13 +157,9 @@ export const ProjectGallery: React.FC = () => {
                               <span className="text-xs font-mono font-medium text-white">View Deep Dive</span>
                             </div>
 
-                            {/* Viewport Scale Badge */}
+                            {/* Card Category & Featured Badges */}
                             <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
                               <Badge variant="subtle">{project.category}</Badge>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-950/80 border border-purple-500/30 text-purple-300 backdrop-blur-sm">
-                                <Monitor className="w-3 h-3" />
-                                <span>Windows Scale</span>
-                              </span>
                               {project.featured && <Badge variant="crimson" dot>Featured</Badge>}
                             </div>
                           </AdaptiveProjectImage>
@@ -392,20 +258,9 @@ export const ProjectGallery: React.FC = () => {
                               <span className="text-xs font-mono font-medium text-white">View Architecture</span>
                             </div>
 
-                            {/* Viewport Scale Badge */}
+                            {/* Card Category & Featured Badges */}
                             <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
                               <Badge variant="subtle">{project.category}</Badge>
-                              {scale === 'desktop' ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-purple-950/80 border border-purple-500/30 text-purple-300 backdrop-blur-sm">
-                                  <Monitor className="w-3 h-3" />
-                                  <span>Windows View</span>
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-blue-950/80 border border-blue-500/30 text-blue-300 backdrop-blur-sm">
-                                  <Smartphone className="w-3 h-3" />
-                                  <span>Mobile View</span>
-                                </span>
-                              )}
                               {project.featured && <Badge variant="crimson" dot>Featured</Badge>}
                             </div>
                           </AdaptiveProjectImage>
