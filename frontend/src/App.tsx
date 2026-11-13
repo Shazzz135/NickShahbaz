@@ -9,6 +9,7 @@ import { HeroSection } from './components/sections/HeroSection';
 import { AboutSection } from './components/sections/AboutSection';
 import { ProjectGallery } from './components/sections/ProjectGallery';
 import { ExperienceTimeline } from './components/sections/ExperienceTimeline';
+import { HeroSpotifyPlayer } from './components/sections/HeroSpotifyPlayer';
 import { useSiteMeta } from './hooks/useSiteMeta';
 import { useAboutMeta } from './hooks/useAboutMeta';
 import { useProjects } from './hooks/useProjects';
@@ -75,6 +76,9 @@ function PublicPortfolio() {
           </Suspense>
         </div>
       </SmoothScroll>
+
+      {/* Global Spotify Floating Player anchored to highest foreground */}
+      <HeroSpotifyPlayer />
     </>
   );
 }
