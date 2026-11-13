@@ -49,7 +49,22 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
   };
 
   return (
-    <section className="relative z-10 min-h-screen flex flex-col justify-center px-4 sm:px-6 lg:px-12 pt-16 pb-16 max-w-7xl mx-auto">
+    <>
+      {/* Static Fixed Top-Right Admin Portal Launcher (Admin Only) */}
+      {isAdmin && (
+        <aside className="fixed top-4 right-4 sm:top-6 sm:right-6 z-40 pointer-events-auto">
+          <a
+            href="/admin/dashboard"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#0c0c10]/95 hover:bg-[#15151c] border border-white/10 hover:border-[#e50914]/50 shadow-xl text-xs font-mono text-[#94949e] hover:text-white transition-all backdrop-blur-md group cursor-pointer"
+            aria-label="Admin Portal"
+          >
+            <Lock className="w-3.5 h-3.5 text-[#e50914] group-hover:scale-110 transition-transform" />
+            <span>Admin Portal</span>
+          </a>
+        </aside>
+      )}
+
+      <section className="relative z-10 min-h-screen flex flex-col justify-center px-4 sm:px-6 lg:px-12 pt-16 pb-16 max-w-7xl mx-auto">
       {/* Top Status & Telemetry Header */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
@@ -138,18 +153,6 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
               Initiate Collaboration
             </Button>
           </Magnetic>
-
-          {isAdmin && (
-            <Magnetic strength={0.15}>
-            <a
-              href="/admin/dashboard"
-              className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-xs font-mono text-[#94949e] hover:text-white bg-transparent hover:bg-white/5 border border-transparent hover:border-white/10 transition-colors"
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>Admin Portal</span>
-            </a>
-          </Magnetic>
-          )}
         </motion.div>
 
         {/* Interactive 3D Foreground Elements (Physics Tech Chips) */}
@@ -214,5 +217,6 @@ export const HeroSection: React.FC<HeroSectionProps> = () => {
         </div>
       </motion.div>
     </section>
+    </>
   );
 };
