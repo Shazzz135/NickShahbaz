@@ -28,7 +28,9 @@ import {
   Copy,
   Undo2,
   Edit2,
-  Check
+  Check,
+  Terminal,
+  Database
 } from 'lucide-react';
 
 const SKILL_CATEGORIES: SkillCategory[] = [
@@ -38,10 +40,26 @@ const SKILL_CATEGORIES: SkillCategory[] = [
   'Systems & DevOps',
 ];
 
-let idCounter = 0;
 function generateUniqueId(prefix: string = 'sk'): string {
-  idCounter += 1;
-  return `${prefix}-${idCounter}`;
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+}
+
+function getCategoryIcon(category: SkillCategory) {
+  switch (category) {
+    case 'Languages':
+      return <Terminal className="w-4 h-4" />;
+    case 'Frontend & 3D':
+      return <Layers className="w-4 h-4" />;
+    case 'Backend & Cloud':
+      return <Database className="w-4 h-4" />;
+    case 'Systems & DevOps':
+      return <ShieldCheck className="w-4 h-4" />;
+    default:
+      return <Cpu className="w-4 h-4" />;
+  }
 }
 
 export const AboutManager: React.FC = () => {
@@ -101,12 +119,18 @@ export const AboutManager: React.FC = () => {
         const val = data.value as unknown as Partial<AboutMetaConfig>;
         type LegacySkill = SkillItem & { level?: number };
         const rawSkills: LegacySkill[] = (Array.isArray(val.skills) ? val.skills : DEFAULT_ABOUT_META.skills) as LegacySkill[];
-        const normalizedSkills: SkillItem[] = rawSkills.map((s, idx) => {
+        const seenSkillIds = new Set<string>();
+        const normalizedSkills: SkillItem[] = rawSkills.map((s) => {
           const { level: _, ...rest } = s;
           void _;
+          let skillId = s.id;
+          if (!skillId || seenSkillIds.has(skillId)) {
+            skillId = generateUniqueId('sk');
+          }
+          seenSkillIds.add(skillId);
           return {
             ...rest,
-            id: s.id || `sk-${idx}-${(s.name || '').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`,
+            id: skillId,
           };
         });
 
@@ -143,9 +167,9 @@ export const AboutManager: React.FC = () => {
         setConfig(merged);
         setBioInput(merged.bioParagraphs.join('\n\n'));
       } else {
-        const defaultSkillsWithIds: SkillItem[] = DEFAULT_ABOUT_META.skills.map((s, idx) => ({
+        const defaultSkillsWithIds: SkillItem[] = DEFAULT_ABOUT_META.skills.map((s) => ({
           ...s,
-          id: s.id || `sk-${idx}-${s.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`,
+          id: s.id || generateUniqueId('sk'),
         }));
         setConfig({ ...DEFAULT_ABOUT_META, skills: defaultSkillsWithIds });
         setBioInput(DEFAULT_ABOUT_META.bioParagraphs.join('\n\n'));
@@ -261,7 +285,7 @@ export const AboutManager: React.FC = () => {
       skills: (config.skills || []).map((s: SkillItem) => {
         const { id, name, category, years, featured, logoUrl } = s;
         return {
-          ...(id ? { id } : {}),
+          id: id || generateUniqueId('sk'),
           name: normalizeTechName(name),
           category,
           years,
@@ -294,9 +318,9 @@ export const AboutManager: React.FC = () => {
 
   const handleResetDefaults = () => {
     if (!confirm('Reset About & Skills to recommended defaults? Any custom edits will be replaced.')) return;
-    const defaultSkillsWithIds: SkillItem[] = DEFAULT_ABOUT_META.skills.map((s, idx) => ({
+    const defaultSkillsWithIds: SkillItem[] = DEFAULT_ABOUT_META.skills.map((s) => ({
       ...s,
-      id: `sk-${idx}-${s.name.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`,
+      id: generateUniqueId('sk'),
     }));
     setConfig({ ...DEFAULT_ABOUT_META, skills: defaultSkillsWithIds });
     setBioInput(DEFAULT_ABOUT_META.bioParagraphs.join('\n\n'));
@@ -360,7 +384,7 @@ export const AboutManager: React.FC = () => {
   const handleUpdateSkill = (skillId: string, updates: Partial<SkillItem>) => {
     setConfig((prev) => ({
       ...prev,
-      skills: prev.skills.map((s) => (s.id === skillId || s.name === skillId ? { ...s, ...updates } : s)),
+      skills: prev.skills.map((s) => (s.id === skillId ? { ...s, ...updates } : s)),
     }));
     setHasUnsavedChanges(true);
   };
@@ -429,13 +453,18 @@ export const AboutManager: React.FC = () => {
   };
 
   const handleRemoveSkill = (skillId: string, skillName: string) => {
-    const target = config.skills.find((s) => s.id === skillId || s.name === skillId);
+    const target = config.skills.find((s) => s.id === skillId) || config.skills.find((s) => s.name === skillName);
     if (!target) return;
 
     setLastDeletedSkill(target);
     setConfig((prev) => ({
       ...prev,
-      skills: prev.skills.filter((s) => s.id !== skillId && s.name !== skillId),
+      skills: prev.skills.filter((s) => {
+        if (target.id && s.id) {
+          return s.id !== target.id;
+        }
+        return s !== target;
+      }),
     }));
     setDeletingSkillId(null);
     setStatusMsg({
@@ -447,9 +476,13 @@ export const AboutManager: React.FC = () => {
 
   const handleUndoDeleteSkill = () => {
     if (!lastDeletedSkill) return;
+    const restoredSkill = {
+      ...lastDeletedSkill,
+      id: lastDeletedSkill.id || generateUniqueId('sk'),
+    };
     setConfig((prev) => ({
       ...prev,
-      skills: [...prev.skills, lastDeletedSkill],
+      skills: [...prev.skills, restoredSkill],
     }));
     setStatusMsg({ type: 'success', text: `Restored "${lastDeletedSkill.name}".` });
     setLastDeletedSkill(null);
@@ -460,7 +493,7 @@ export const AboutManager: React.FC = () => {
     setConfig((prev) => ({
       ...prev,
       skills: prev.skills.map((s) =>
-        s.id === skillId || s.name === skillId ? { ...s, featured: !s.featured } : s
+        s.id === skillId ? { ...s, featured: !s.featured } : s
       ),
     }));
     setHasUnsavedChanges(true);
@@ -1146,192 +1179,269 @@ export const AboutManager: React.FC = () => {
                 </span>
               </div>
 
-              {/* Skills Grid with Dynamic Draggable Proficiency */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {filteredSkills.map((sk) => {
-                  const sId = sk.id || sk.name;
-                  const isDeleting = deletingSkillId === sId;
-                  const isEditing = editingSkillId === sId;
+              {/* Organized by Categories */}
+              <div className="space-y-6 pt-2">
+                {(selectedSkillCategory === 'All'
+                  ? SKILL_CATEGORIES
+                  : SKILL_CATEGORIES.filter((c) => c === selectedSkillCategory)
+                ).map((cat) => {
+                  const skillsInCat = config.skills
+                    .filter((s) => s.category === cat)
+                    .sort((a, b) => {
+                      if (a.featured && !b.featured) return -1;
+                      if (!a.featured && b.featured) return 1;
+                      return a.name.localeCompare(b.name);
+                    });
 
                   return (
-                    <div
-                      key={sId}
-                      className={`p-3.5 rounded-xl bg-[#0d0d10] border transition-all ${
-                        isDeleting
-                          ? 'border-[#ff1e27]/80 bg-[#ff1e27]/5'
-                          : 'border-white/10 hover:border-white/20'
-                      } flex flex-col justify-between gap-3 group`}
-                    >
-                      {/* Top: Star, Name, Years, Edit toggle */}
-                      <div>
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                            <button
-                              type="button"
-                              onClick={() => handleToggleSkillFeatured(sId)}
-                              className={`text-xs cursor-pointer ${sk.featured ? 'text-amber-400' : 'text-white/20 hover:text-white/60'}`}
-                              title={sk.featured ? 'Featured skill' : 'Click to feature'}
-                            >
-                              ★
-                            </button>
-
-                            {isEditing ? (
-                              <input
-                                type="text"
-                                value={sk.name}
-                                onChange={(e) => handleUpdateSkill(sId, { name: e.target.value })}
-                                className="w-full bg-[#16161e] border border-white/20 rounded px-1.5 py-0.5 text-xs font-bold text-white focus:outline-none focus:border-[#ff1e27]"
-                              />
-                            ) : (
-                              <span className="text-xs font-bold text-white truncate" title={sk.name}>
-                                {sk.name}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-1 shrink-0">
-                            {isEditing ? (
-                              <input
-                                type="text"
-                                value={sk.years}
-                                onChange={(e) => handleUpdateSkill(sId, { years: e.target.value })}
-                                placeholder="yrs"
-                                className="w-14 bg-[#16161e] border border-white/20 rounded px-1 py-0.5 text-[10px] font-mono text-[#94949e] focus:outline-none"
-                              />
-                            ) : (
-                              <span className="text-[10px] font-mono text-[#94949e]">({sk.years})</span>
-                            )}
-                          </div>
+                    <div key={cat} className="p-4 sm:p-5 rounded-xl bg-[#0d0d10] border border-white/10 space-y-4">
+                      {/* Category Header */}
+                      <div className="flex items-center justify-between pb-3 border-b border-white/5">
+                        <div className="flex items-center gap-2">
+                          <span className="p-1.5 rounded-lg bg-[#e50914]/10 text-[#ff1e27] border border-[#e50914]/20 flex items-center justify-center">
+                            {getCategoryIcon(cat)}
+                          </span>
+                          <h4 className="text-sm font-bold font-mono tracking-tight text-white">
+                            {cat}
+                          </h4>
+                          <span className="text-[10px] font-mono text-[#94949e] px-2 py-0.5 rounded-full bg-white/5 border border-white/5">
+                            {skillsInCat.length} {skillsInCat.length === 1 ? 'skill' : 'skills'}
+                          </span>
                         </div>
 
-                        <div className="text-[10px] font-mono text-[#5a5a66] flex items-center justify-between">
-                          <span>{sk.category}</span>
-                          {sk.featured && <span className="text-amber-400/80">★ Featured</span>}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setQuickSkillCategory(cat);
+                            setNewSkillCategory(cat);
+                            window.scrollTo({ top: 350, behavior: 'smooth' });
+                          }}
+                          className="text-[11px] font-mono text-[#94949e] hover:text-[#ff1e27] transition-colors cursor-pointer flex items-center gap-1"
+                          title={`Quick add to ${cat}`}
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Add to {cat}</span>
+                        </button>
                       </div>
 
-                      {/* Middle: Tool Logo & Experience Preview */}
-                      {(() => {
-                        const logoSrc = getSkillLogo(sk.name, sk.logoUrl);
-                        return (
-                          <div className="flex items-center gap-3 py-1">
-                            {logoSrc ? (
-                              <div className="w-9 h-9 shrink-0 flex items-center justify-center p-1 rounded-lg bg-white/[0.04] border border-white/5">
-                                <img
-                                  src={logoSrc}
-                                  alt={sk.name}
-                                  className="w-full h-full object-contain"
-                                  onError={(e) => {
-                                    const parent = e.currentTarget.parentElement;
-                                    if (parent) parent.style.display = 'none';
-                                  }}
-                                />
-                              </div>
-                            ) : null}
-                            <div className="min-w-0 flex-1">
-                              <div className="text-[10px] font-mono text-[#94949e]">Experience</div>
-                              <div className="text-xs font-mono text-white font-medium">{sk.years}</div>
-                            </div>
-                          </div>
-                        );
-                      })()}
+                      {/* Skills in Category */}
+                      {skillsInCat.length === 0 ? (
+                        <div className="py-6 text-center text-xs font-mono text-[#5a5a66] border border-dashed border-white/5 rounded-lg">
+                          No skills in {cat} yet. Use the Quick Add bar above to add one.
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                          {skillsInCat.map((sk) => {
+                            const sId = sk.id || sk.name;
+                            const isDeleting = deletingSkillId === sId;
+                            const isEditing = editingSkillId === sId;
 
-                      {isEditing && (
-                        <div className="space-y-1.5 pt-2 border-t border-white/5">
-                          <div className="flex items-center justify-between text-[10px] font-mono text-[#94949e]">
-                            <span>Logo Image</span>
-                            {sk.logoUrl && (
-                              <button
-                                type="button"
-                                onClick={() => handleUpdateSkill(sId, { logoUrl: '' })}
-                                className="text-[#ff1e27] hover:underline cursor-pointer"
+                            return (
+                              <div
+                                key={sId}
+                                className={`p-3.5 rounded-xl bg-[#141419] border transition-all ${
+                                  isDeleting
+                                    ? 'border-[#ff1e27]/80 bg-[#ff1e27]/5'
+                                    : 'border-white/10 hover:border-white/20'
+                                } flex flex-col justify-between gap-3 group`}
                               >
-                                Remove
-                              </button>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <label className="inline-flex items-center gap-1 px-2 py-1 rounded bg-[#16161e] border border-white/10 hover:border-white/20 text-[10px] font-mono text-white cursor-pointer shrink-0">
-                              <Upload className="w-3 h-3 text-[#ff1e27]" />
-                              <span>{uploadingSkillId === sId ? 'Uploading...' : 'Upload'}</span>
-                              <input
-                                type="file"
-                                accept="image/png,image/svg+xml,image/webp,image/jpeg"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    setUploadingSkillId(sId);
-                                    handleSkillLogoUpload(file, (url) => {
-                                      handleUpdateSkill(sId, { logoUrl: url });
-                                      setUploadingSkillId(null);
-                                    });
-                                  }
-                                }}
-                              />
-                            </label>
-                            <input
-                              type="text"
-                              value={sk.logoUrl || ''}
-                              onChange={(e) => handleUpdateSkill(sId, { logoUrl: e.target.value })}
-                              placeholder="Or paste image URL..."
-                              className="w-full bg-[#16161e] border border-white/20 rounded px-1.5 py-0.5 text-[10px] font-mono text-white focus:outline-none focus:border-[#ff1e27]"
-                            />
-                          </div>
+                                {/* Top: Star, Name, Years */}
+                                <div>
+                                  <div className="flex items-center justify-between gap-2 mb-1">
+                                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleToggleSkillFeatured(sId)}
+                                        className={`text-xs cursor-pointer ${sk.featured ? 'text-amber-400' : 'text-white/20 hover:text-white/60'}`}
+                                        title={sk.featured ? 'Featured skill' : 'Click to feature'}
+                                      >
+                                        ★
+                                      </button>
+
+                                      {isEditing ? (
+                                        <input
+                                          type="text"
+                                          value={sk.name}
+                                          onChange={(e) => handleUpdateSkill(sId, { name: e.target.value })}
+                                          className="w-full bg-[#16161e] border border-white/20 rounded px-1.5 py-0.5 text-xs font-bold text-white focus:outline-none focus:border-[#ff1e27]"
+                                        />
+                                      ) : (
+                                        <span className="text-xs font-bold text-white truncate" title={sk.name}>
+                                          {sk.name}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      {isEditing ? (
+                                        <input
+                                          type="text"
+                                          value={sk.years}
+                                          onChange={(e) => handleUpdateSkill(sId, { years: e.target.value })}
+                                          placeholder="yrs"
+                                          className="w-14 bg-[#16161e] border border-white/20 rounded px-1 py-0.5 text-[10px] font-mono text-[#94949e] focus:outline-none"
+                                        />
+                                      ) : (
+                                        <span className="text-[10px] font-mono text-[#94949e]">({sk.years})</span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Category / Tag Selection */}
+                                  {isEditing ? (
+                                    <div className="pt-1.5 space-y-1">
+                                      <label htmlFor={`cat-select-${sId}`} className="text-[10px] font-mono text-[#94949e] flex items-center justify-between">
+                                        <span>Category / Tag:</span>
+                                      </label>
+                                      <select
+                                        id={`cat-select-${sId}`}
+                                        aria-label="Category / Tag"
+                                        value={sk.category}
+                                        onChange={(e) => handleUpdateSkill(sId, { category: e.target.value as SkillCategory })}
+                                        className="w-full bg-[#16161e] border border-white/20 rounded px-2 py-1 text-xs font-mono text-white focus:outline-none focus:border-[#ff1e27]"
+                                      >
+                                        {SKILL_CATEGORIES.map((catOpt) => (
+                                          <option key={catOpt} value={catOpt}>
+                                            {catOpt}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  ) : (
+                                    <div className="text-[10px] font-mono text-[#5a5a66] flex items-center justify-between">
+                                      <span className="px-1.5 py-0.5 rounded bg-white/5 text-[#94949e] border border-white/5">{sk.category}</span>
+                                      {sk.featured && <span className="text-amber-400/80">★ Featured</span>}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Middle: Tool Logo & Experience Preview */}
+                                {(() => {
+                                  const logoSrc = getSkillLogo(sk.name, sk.logoUrl);
+                                  return (
+                                    <div className="flex items-center gap-3 py-1">
+                                      {logoSrc ? (
+                                        <div className="w-9 h-9 shrink-0 flex items-center justify-center p-1 rounded-lg bg-white/[0.04] border border-white/5">
+                                          <img
+                                            src={logoSrc}
+                                            alt={sk.name}
+                                            className="w-full h-full object-contain"
+                                            onError={(e) => {
+                                              const parent = e.currentTarget.parentElement;
+                                              if (parent) parent.style.display = 'none';
+                                            }}
+                                          />
+                                        </div>
+                                      ) : null}
+                                      <div className="min-w-0 flex-1">
+                                        <div className="text-[10px] font-mono text-[#94949e]">Experience</div>
+                                        <div className="text-xs font-mono text-white font-medium">{sk.years}</div>
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
+
+                                {isEditing && (
+                                  <div className="space-y-1.5 pt-2 border-t border-white/5">
+                                    <div className="flex items-center justify-between text-[10px] font-mono text-[#94949e]">
+                                      <span>Logo Image</span>
+                                      {sk.logoUrl && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleUpdateSkill(sId, { logoUrl: '' })}
+                                          className="text-[#ff1e27] hover:underline cursor-pointer"
+                                        >
+                                          Remove
+                                        </button>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <label className="inline-flex items-center gap-1 px-2 py-1 rounded bg-[#16161e] border border-white/10 hover:border-white/20 text-[10px] font-mono text-white cursor-pointer shrink-0">
+                                        <Upload className="w-3 h-3 text-[#ff1e27]" />
+                                        <span>{uploadingSkillId === sId ? 'Uploading...' : 'Upload'}</span>
+                                        <input
+                                          type="file"
+                                          accept="image/png,image/svg+xml,image/webp,image/jpeg"
+                                          className="hidden"
+                                          onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                              setUploadingSkillId(sId);
+                                              handleSkillLogoUpload(file, (url) => {
+                                                handleUpdateSkill(sId, { logoUrl: url });
+                                                setUploadingSkillId(null);
+                                              });
+                                            }
+                                          }}
+                                        />
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={sk.logoUrl || ''}
+                                        onChange={(e) => handleUpdateSkill(sId, { logoUrl: e.target.value })}
+                                        placeholder="Or paste image URL..."
+                                        className="w-full bg-[#16161e] border border-white/20 rounded px-1.5 py-0.5 text-[10px] font-mono text-white focus:outline-none focus:border-[#ff1e27]"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Action Bar: Duplicate, Edit Inline, Delete Confirmation */}
+                                <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingSkillId(isEditing ? null : sId)}
+                                      className="p-1 rounded text-[#94949e] hover:text-white hover:bg-white/5 cursor-pointer transition-colors"
+                                      title={isEditing ? 'Done Editing' : 'Edit Name & Years'}
+                                    >
+                                      {isEditing ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Edit2 className="w-3.5 h-3.5" />}
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDuplicateSkill(sk)}
+                                      className="p-1 rounded text-[#94949e] hover:text-white hover:bg-white/5 cursor-pointer transition-colors"
+                                      title="Duplicate skill item"
+                                    >
+                                      <Copy className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+
+                                  {/* Deletion with Clean Confirmation State */}
+                                  {isDeleting ? (
+                                    <div className="flex items-center gap-1 animate-fadeIn">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveSkill(sId, sk.name)}
+                                        className="px-2 py-0.5 rounded bg-[#ff1e27] text-white text-[10px] font-mono font-bold hover:bg-[#d91921] cursor-pointer"
+                                      >
+                                        Delete?
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setDeletingSkillId(null)}
+                                        className="px-1.5 py-0.5 rounded bg-white/10 text-white/80 text-[10px] font-mono hover:bg-white/20 cursor-pointer"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => setDeletingSkillId(sId)}
+                                      className="p-1 rounded text-[#94949e] hover:text-[#ff1e27] hover:bg-[#ff1e27]/10 cursor-pointer transition-colors"
+                                      title="Delete skill"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
-
-                      {/* Action Bar: Duplicate, Edit Inline, Delete Confirmation */}
-                      <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setEditingSkillId(isEditing ? null : sId)}
-                            className="p-1 rounded text-[#94949e] hover:text-white hover:bg-white/5 cursor-pointer transition-colors"
-                            title={isEditing ? 'Done Editing' : 'Edit Name & Years'}
-                          >
-                            {isEditing ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Edit2 className="w-3.5 h-3.5" />}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDuplicateSkill(sk)}
-                            className="p-1 rounded text-[#94949e] hover:text-white hover:bg-white/5 cursor-pointer transition-colors"
-                            title="Duplicate skill item"
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-
-                        {/* Deletion with Clean Confirmation State */}
-                        {isDeleting ? (
-                          <div className="flex items-center gap-1 animate-fadeIn">
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveSkill(sId, sk.name)}
-                              className="px-2 py-0.5 rounded bg-[#ff1e27] text-white text-[10px] font-mono font-bold hover:bg-[#d91921] cursor-pointer"
-                            >
-                              Delete?
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setDeletingSkillId(null)}
-                              className="px-1.5 py-0.5 rounded bg-white/10 text-white/80 text-[10px] font-mono hover:bg-white/20 cursor-pointer"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setDeletingSkillId(sId)}
-                            className="p-1 rounded text-[#94949e] hover:text-[#ff1e27] hover:bg-[#ff1e27]/10 cursor-pointer transition-colors"
-                            title="Delete skill"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
                     </div>
                   );
                 })}

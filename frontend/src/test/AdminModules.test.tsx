@@ -180,6 +180,65 @@ describe('Admin Modules - Full Functionality Verification', () => {
       });
     });
 
+    it('allows editing skill category/tag and updates live', async () => {
+      render(<AboutManager />);
+
+      await waitFor(() => {
+        expect(screen.queryByText(/Syncing About metadata/i)).toBeNull();
+      });
+
+      const skillsTab = await screen.findByRole('button', { name: /Skills Matrix/i });
+      fireEvent.click(skillsTab);
+
+      // Click Edit on the first skill
+      const editButtons = screen.getAllByTitle(/Edit Name & Years/i);
+      fireEvent.click(editButtons[0]);
+
+      // Category / Tag dropdown should be visible
+      const categorySelect = screen.getByLabelText(/Category \/ Tag:/i) as HTMLSelectElement;
+      expect(categorySelect).toBeDefined();
+
+      // Change category to "Backend & Cloud"
+      fireEvent.change(categorySelect, { target: { value: 'Backend & Cloud' } });
+      expect(categorySelect.value).toBe('Backend & Cloud');
+
+      // Unsaved edits badge should be visible
+      expect(screen.getByText(/Unsaved Edits/i)).toBeDefined();
+    });
+
+    it('deletes the selected skill object specifically rather than the first item in the stack', async () => {
+      render(<AboutManager />);
+
+      await waitFor(() => {
+        expect(screen.queryByText(/Syncing About metadata/i)).toBeNull();
+      });
+
+      const skillsTab = await screen.findByRole('button', { name: /Skills Matrix/i });
+      fireEvent.click(skillsTab);
+
+      // Verify skills exist before deletion
+      expect(screen.getByText('Python')).toBeDefined();
+      expect(screen.getByText('TypeScript')).toBeDefined();
+
+      // In Languages (featured sorted): Python is index 0, SQL is index 1, TypeScript is index 2
+      const deleteButtons = screen.getAllByTitle(/Delete skill/i);
+      expect(deleteButtons.length).toBeGreaterThan(3);
+      
+      // Click delete on the 2nd button (SQL)
+      fireEvent.click(deleteButtons[1]);
+
+      // Confirm button should appear for this selected item
+      const confirmBtn = await screen.findByRole('button', { name: /Delete\?/i });
+      fireEvent.click(confirmBtn);
+
+      // Confirm banner specifically states SQL was removed
+      expect(screen.getByText(/Removed "SQL \(PostgreSQL\)"/i)).toBeDefined();
+
+      // Both the item before (Python) and the item after (TypeScript) still exist!
+      expect(screen.getByText('Python')).toBeDefined();
+      expect(screen.getByText('TypeScript')).toBeDefined();
+    });
+
     it('saves all about metadata to Supabase', async () => {
       const mockChain = createQueryMock();
       const fromSpy = vi.spyOn(supabase, 'from').mockReturnValue(mockChain as unknown as ReturnType<typeof supabase.from>);

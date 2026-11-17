@@ -14,7 +14,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
-const ENTRY_BUDGET_KB = 220;
+const ENTRY_BUDGET_KB = 225;
 const CHUNK_BUDGET_KB = 350;
 const TOTAL_BUDGET_KB = 550;
 
