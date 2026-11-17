@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Badge } from '../components/common/Badge';
 import { SiteSettingsManager } from '../components/admin/SiteSettingsManager';
@@ -47,15 +48,13 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2.5 self-start sm:self-auto w-full sm:w-auto">
-            <a
-              href="/"
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              to="/"
               className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#141419] hover:bg-[#1a1a22] border border-white/10 text-xs font-mono text-[#94949e] hover:text-white transition-colors"
             >
               <span>View Portfolio</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
-            </a>
+            </Link>
 
             <button
               onClick={() => signOut()}
